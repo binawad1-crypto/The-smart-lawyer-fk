@@ -29,9 +29,13 @@ const getFirebaseAuthErrorMessage = (errorCode: string): string => {
       return 'تم تعطيل الوصول إلى هذا الحساب مؤقتًا بسبب كثرة محاولات تسجيل الدخول الفاشلة. يمكنك استعادته عن طريق إعادة تعيين كلمة المرور أو المحاولة مرة أخرى لاحقًا.';
     case 'auth/popup-closed-by-user':
         return 'تم إغلاق النافذة قبل إتمام تسجيل الدخول.';
+    case 'auth/operation-not-allowed':
+        return 'طريقة الدخول هذه غير مفعلة. يرجى تفعيل مزود الدخول في إعدادات Firebase.';
+    case 'auth/unauthorized-domain':
+        return 'هذا النطاق (Domain) غير مصرح له باستخدام تسجيل الدخول. يرجى إضافته في إعدادات Firebase Authentication.';
     default:
       console.error(`Unhandled Firebase Auth Error: ${errorCode}`);
-      return 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+      return `حدث خطأ غير متوقع (${errorCode}). يرجى المحاولة مرة أخرى.`;
   }
 };
 
@@ -93,7 +97,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = 'l
           handleClose();
 
       } catch (err) {
-          setError(getFirebaseAuthErrorMessage((err as any).code));
+          const errorCode = (err as any).code;
+          console.error("Google Sign In Error:", err);
+          setError(getFirebaseAuthErrorMessage(errorCode));
       }
   }
 
@@ -197,7 +203,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = 'l
           </div>
 
           <form onSubmit={handleAuthAction}>
-            {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+            {error && <p className="text-red-500 text-sm mb-4 text-center" dir="rtl">{error}</p>}
             <div className="mb-4">
               <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="email">
                 {t('email')}
