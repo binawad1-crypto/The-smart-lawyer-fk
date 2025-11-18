@@ -1,0 +1,91 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check for admin role safely.
+    // We check if request.auth is not null first to avoid errors.
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper to check if user is authenticated and matches the userId
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Site Settings: Publicly readable for everyone. Writable only by admins.
+    match /site_settings/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Subscription Plans: Publicly readable. Writable only by admins.
+    match /subscription_plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Services: Readable by any authenticated user, writable only by admins.
+    match /services/{serviceId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow delete: if isAdmin();
+
+      match /subscriptions/{subscriptionId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAdmin();
+      }
+
+      match /checkout_sessions/{sessionId} {
+        allow read, write, create: if isOwner(userId);
+      }
+    }
+
+    // Customers collection (used by the Stripe extension)
+    match /customers/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+
+      // Explicit rule for subscriptions created by Stripe extension
+      match /subscriptions/{subscriptionId} {
+         allow read: if isOwner(userId) || isAdmin();
+         allow write: if isAdmin(); // Only admins (or the extension via Admin SDK) should write
+      }
+      
+      // Rules for creating checkout sessions
+      match /checkout_sessions/{sessionId} {
+         allow read, write, create: if isOwner(userId);
+      }
+      
+      // Rules for payments
+      match /payments/{paymentId} {
+         allow read: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Stripe extension's collections for products and prices
+    match /products/{productId} {
+        allow read: if true;
+        allow write: if isAdmin();
+
+        match /prices/{priceId} {
+            allow read: if true;
+            allow write: if isAdmin();
+        }
+        match /roles/{roleId} {
+            allow read: if true;
+            allow write: if isAdmin();
+        }
+    }
+  }
+}
