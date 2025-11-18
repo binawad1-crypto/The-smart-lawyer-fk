@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
@@ -7,7 +8,7 @@ import { functions, db, auth } from '../services/firebase';
 import { collection, getDocs, query, doc, updateDoc } from 'firebase/firestore';
 import { View } from '../App';
 import { Plan } from '../types';
-import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword, AuthError } from 'firebase/auth';
+import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword } from 'firebase/auth';
 
 
 interface ProfilePageProps {
@@ -133,7 +134,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         await updateDoc(userDocRef, { displayName });
         showSuccessMessage(t('profileUpdatedSuccess'));
     } catch (error) {
-        setUpdateError((error as AuthError).message || t('profileUpdatedError'));
+        setUpdateError((error as any).message || t('profileUpdatedError'));
     } finally {
         setIsUpdating(false);
     }
@@ -175,7 +176,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         showSuccessMessage(t('emailUpdateSuccess'));
         setNewEmail('');
     } catch (error) {
-        setUpdateError((error as AuthError).message || t('emailUpdateError'));
+        setUpdateError((error as any).message || t('emailUpdateError'));
     } finally {
         setIsUpdating(false);
     }
@@ -193,7 +194,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         showSuccessMessage(t('passwordUpdateSuccess'));
         setPasswords({ newPassword: '', confirmNewPassword: '' });
     } catch (error) {
-        setUpdateError((error as AuthError).message || t('passwordUpdateError'));
+        setUpdateError((error as any).message || t('passwordUpdateError'));
     } finally {
         setIsUpdating(false);
     }

@@ -321,6 +321,10 @@ export const translations: Translations = {
   aiAssistant: { en: 'AI Assistant', ar: 'المساعد الذكي' },
   chatWithAI: { en: 'Chat with AI', ar: 'تحدث مع المساعد' },
   typeMessage: { en: 'Type a message...', ar: 'اكتب رسالة...' },
+  
+  // Google Auth
+  signInWithGoogle: { en: 'Continue with Google', ar: 'المتابعة باستخدام Google' },
+  or: { en: 'OR', ar: 'أو' },
 
   // Footer
   disclaimerTitle: { en: 'Disclaimer', ar: 'تنبيه' },
