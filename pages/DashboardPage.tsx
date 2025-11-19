@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, Download } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -8,7 +8,6 @@ import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/
 import { db } from '../services/firebase';
 import { runGemini } from '../services/geminiService';
 import { iconMap } from '../constants';
-import { exportTextToPdf } from '../services/pdfService';
 
 interface DashboardPageProps {
     onNavigate: (view: 'dashboard' | 'admin' | 'profile' | 'subscriptions') => void;
@@ -294,12 +293,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const handleIncreaseFont = () => setFontSize(prev => Math.min(prev + 2, 32));
     const handleDecreaseFont = () => setFontSize(prev => Math.max(prev - 2, 12));
 
-    const handleDownload = async () => {
-        if (!result) return;
-        const title = selectedService?.title[language] || t('results');
-        await exportTextToPdf(title, result, `result-${Date.now()}`, language);
-    };
-
     const renderOutputLanguageSelector = () => (
         <div className="flex items-center gap-3 flex-shrink-0">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('outputLanguage')}</span>
@@ -503,9 +496,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                              <button onClick={handleDecreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom Out">
                                  <ZoomOut size={18} />
                              </button>
-                             <button onClick={handleDownload} className="hover:text-primary-500 transition-colors p-1" title="Download PDF">
-                                 <Download size={18} />
-                             </button>
                              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                              <button onClick={handleListen} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 <Volume2 size={16} />
@@ -528,7 +518,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
                          {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
                          <pre 
-                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200"
+                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
                             style={{ fontSize: `${fontSize}px` }}
                         >
                             {result}

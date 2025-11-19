@@ -1,10 +1,9 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Download, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, File, Loader2, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { runGemini } from '../services/geminiService';
-import { exportTextToPdf } from '../services/pdfService';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
@@ -177,13 +176,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const handleIncreaseFont = () => setFontSize(prev => Math.min(prev + 2, 32));
   const handleDecreaseFont = () => setFontSize(prev => Math.max(prev - 2, 12));
 
-  const handleDownload = async () => {
-    if (!result) return;
-    const title = service?.title[language] || t('results');
-    await exportTextToPdf(title, result, `result-${Date.now()}`, language);
-  };
-
-
   if (!isOpen || !service) return null;
 
   return (
@@ -279,9 +271,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                              <button onClick={handleDecreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom Out">
                                  <ZoomOut size={18} />
                              </button>
-                             <button onClick={handleDownload} className="hover:text-primary-500 transition-colors p-1" title="Download PDF">
-                                 <Download size={18} />
-                             </button>
                              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                              <button onClick={handleListen} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 <Volume2 size={16} />
@@ -304,7 +293,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                      <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
                          {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
                          <pre 
-                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200"
+                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
                             style={{ fontSize: `${fontSize}px` }}
                         >
                             {result}

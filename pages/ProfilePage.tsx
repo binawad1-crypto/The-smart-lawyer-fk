@@ -131,7 +131,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
   const showFeedback = (type: 'success' | 'error', message: string) => {
     setFeedback({ type, message });
-    setTimeout(() => setFeedback(null), 4000);
+    setTimeout(() => setFeedback(null), 6000); // Increased timeout for visibility
   };
   
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -211,9 +211,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const redirectToCustomerPortal = async () => {
     // Prevent redirect for manually granted subscriptions
     if (currentUser?.subscription?.isManual) {
-        showFeedback('error', language === 'ar' 
-            ? 'لا يمكن إدارة الاشتراكات الممنوحة يدوياً من هنا. يرجى التواصل مع الدعم.' 
-            : 'Cannot manage manually granted subscriptions here. Please contact support.');
+        const msg = language === 'ar' 
+            ? 'عذراً، هذا الاشتراك تم منحه يدوياً ولا يمكن إدارته عبر بوابة الدفع الإلكترونية. يرجى التواصل مع الإدارة.' 
+            : 'Sorry, this subscription was granted manually and cannot be managed via the payment portal. Please contact administration.';
+        showFeedback('error', msg);
         return;
     }
 
@@ -221,10 +222,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     try {
       const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
       const { data } = await createPortalLink({ returnUrl: window.location.href });
-      window.location.assign((data as any).url);
+      
+      if (data && (data as any).url) {
+        window.location.assign((data as any).url);
+      } else {
+          throw new Error("No URL returned from payment portal.");
+      }
     } catch (error) {
       console.error("Error redirecting to customer portal:", error);
-      const errorMessage = (error as any).message || 'Unknown error';
+      let errorMessage = (error as any).message || 'Unknown error';
+      // User-friendly mapping for common errors
+      if (errorMessage.includes('internal')) errorMessage = 'System error (Internal). Check console.';
+      if (errorMessage.includes('permission')) errorMessage = 'Permission denied.';
+      
       showFeedback('error', `${t('portalError')} (${errorMessage})`);
     } finally {
       setIsPortalLoading(false);
