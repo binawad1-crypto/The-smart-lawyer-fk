@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
-import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig } from '../types';
 import { iconNames, ADMIN_EMAIL } from '../constants';
@@ -582,9 +582,17 @@ const AdminPage = () => {
         setLoadingSettings(true);
         try {
             const settingsDocRef = doc(db, 'site_settings', 'main');
-            const docSnap = await getDocs(query(collection(db, 'site_settings')));
-            if (!docSnap.empty) {
-                setSiteSettings(docSnap.docs[0].data() as SiteSettings);
+            const docSnap = await getDoc(settingsDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data() as SiteSettings;
+                // Merge with initial settings to ensure all fields exist (defensive)
+                setSiteSettings({
+                    ...initialSiteSettings,
+                    ...data,
+                    siteName: { ...initialSiteSettings.siteName, ...(data.siteName || {}) },
+                    metaDescription: { ...initialSiteSettings.metaDescription, ...(data.metaDescription || {}) },
+                    seoKeywords: { ...initialSiteSettings.seoKeywords, ...(data.seoKeywords || {}) },
+                });
             } else {
                 setSiteSettings(initialSiteSettings);
             }
