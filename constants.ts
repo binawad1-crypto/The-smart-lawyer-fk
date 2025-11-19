@@ -40,6 +40,7 @@ export const translations: Translations = {
   alreadyHaveAccount: { en: 'Already have an account?', ar: 'لديك حساب بالفعل؟' },
   loading: { en: 'Loading...', ar: 'جاري التحميل...' },
   close: { en: 'Close', ar: 'إغلاق' },
+  home: { en: 'Home', ar: 'الرئيسية' },
   
   // Location & Context
   location: { en: 'Jurisdiction / Country', ar: 'النطاق الجغرافي / الدولة' },
@@ -53,6 +54,7 @@ export const translations: Translations = {
   heroTitleHighlight: { en: 'Powered by AI', ar: 'المدعوم بالذكاء الاصطناعي' },
   heroSubtitle: { en: 'Streamline your legal work, from case analysis to document drafting, with the power of artificial intelligence. Get started with a free trial.', ar: 'بسّط أعمالك القانونية، من تحليل القضايا إلى صياغة المستندات، بقوة الذكاء الاصطناعي. ابدأ الآن بتجربة مجانية.' },
   startFreeTrial: { en: 'Start Your Free Trial', ar: 'ابدأ تجربتك المجانية' },
+  goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },
   featuresTitle: { en: 'Unlock Powerful Features', ar: 'اكتشف ميزات قوية' },
   feature1Title: { en: 'Instant Document Analysis', ar: 'تحليل فوري للمستندات' },
   feature1Desc: { en: 'Upload your legal documents and get summaries, risk assessments, and key clause identification in seconds.', ar: 'ارفع مستنداتك القانونية واحصل على ملخصات وتقييمات للمخاطر وتحديد للبلاغات الرئيسية في ثوانٍ.' },

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useLanguage } from './hooks/useLanguage';
@@ -12,7 +13,7 @@ import ProfilePage from './pages/ProfilePage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
-export type View = 'dashboard' | 'admin' | 'profile' | 'subscriptions';
+export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions';
 
 const App: React.FC = () => {
   const { currentUser, loading: authLoading } = useAuth();
@@ -100,6 +101,8 @@ const App: React.FC = () => {
     }
     
     switch(view) {
+        case 'landing':
+             return <LandingPage onSignUpClick={() => setView('dashboard')} onGoToDashboard={() => setView('dashboard')} />;
         case 'admin':
             return <AdminPage />;
         case 'profile':
@@ -122,6 +125,7 @@ const App: React.FC = () => {
         onAdminClick={() => handleNavigate(view === 'admin' ? 'dashboard' : 'admin')} 
         onLogoClick={handleLogoClick}
         onProfileClick={() => handleNavigate('profile')}
+        onHomeClick={() => setView('landing')}
       />
       <main className="flex-grow flex flex-col">
         {renderContent()}

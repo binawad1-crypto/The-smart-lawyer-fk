@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useSiteSettings } from '../hooks/useSiteSettings';
-import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Plan, Translations, LandingPageConfig } from '../types';
@@ -10,11 +11,13 @@ import { iconMap } from '../constants';
 
 interface LandingPageProps {
   onSignUpClick: () => void;
+  onGoToDashboard?: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboard }) => {
   const { t, language } = useLanguage();
   const { settings } = useSiteSettings();
+  const { currentUser } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
 
@@ -87,6 +90,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
     { icon: 'Archive', title: { [language]: t('feature9Title') }, description: { [language]: t('feature9Desc') }, color: 'from-slate-400 to-slate-600' },
   ];
 
+  const handlePrimaryAction = () => {
+      if (currentUser && onGoToDashboard) {
+          onGoToDashboard();
+      } else {
+          onSignUpClick();
+      }
+  }
+
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-gray-800 dark:text-gray-200 font-sans">
@@ -119,11 +130,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-                onClick={onSignUpClick}
+                onClick={handlePrimaryAction}
                 className="px-8 py-4 bg-primary-600 text-white font-bold rounded-full shadow-lg shadow-primary-600/30 hover:bg-primary-700 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg flex items-center gap-2"
             >
-                {t('startFreeTrial')}
-                {language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
+                {currentUser ? t('goToDashboard') : t('startFreeTrial')}
+                {currentUser ? <LayoutDashboard size={20} /> : (language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />)}
             </button>
           </div>
         </div>
@@ -201,10 +212,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
                   </div>
                   <div className="p-8 pt-0">
                     <button
-                      onClick={onSignUpClick}
+                      onClick={handlePrimaryAction}
                       className={`w-full py-4 text-base font-bold rounded-xl transition-all duration-300 transform hover:-translate-y-1 shadow-md hover:shadow-lg ${plan.isPopular ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white'}`}
                     >
-                      {t('choosePlan')}
+                      {currentUser ? t('goToDashboard') : t('choosePlan')}
                     </button>
                   </div>
                 </div>
@@ -227,10 +238,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
             {t('finalCtaSubtitle')}
           </p>
           <button
-            onClick={onSignUpClick}
-            className="px-10 py-5 bg-white text-primary-900 font-bold rounded-full shadow-2xl hover:bg-blue-50 transform hover:scale-105 transition-all duration-300 text-xl"
+            onClick={handlePrimaryAction}
+            className="px-10 py-5 bg-white text-primary-900 font-bold rounded-full shadow-2xl hover:bg-blue-50 transform hover:scale-105 transition-all duration-300 text-xl flex items-center gap-2 mx-auto"
           >
-            {t('signUpForFree')}
+            {currentUser ? t('goToDashboard') : t('signUpForFree')}
+             {currentUser ? <LayoutDashboard size={20} /> : null}
           </button>
         </div>
       </section>
