@@ -42,14 +42,14 @@ const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = (
         <div className="relative" ref={menuRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
             >
                 <UserIcon size={20} />
                 <span className="hidden sm:inline text-sm font-medium">{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
                 <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}/>
             </button>
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-light-card-bg dark:bg-dark-card-bg rounded-md shadow-lg py-1 border dark:border-gray-700">
+                <div className="absolute right-0 mt-2 w-56 bg-light-card-bg dark:bg-dark-card-bg rounded-md shadow-lg py-1 border dark:border-gray-700">
                     <button 
                         onClick={() => { onProfileClick(); setIsOpen(false); }}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"

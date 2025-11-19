@@ -2,7 +2,7 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +16,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 export const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
-  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart,
+  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag,
   // FIX: Alias non-existent 'AspectRatio' icon to 'Ratio' for backward compatibility.
   AspectRatio: Ratio,
   // FIX: Alias non-existent 'Body' icon to 'PersonStanding' to prevent app crash from bad seed data.
@@ -28,7 +28,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
   // General
   appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-  appSubtitle: { en: 'For Law', ar: 'للمحاماه' },
+  appSubtitle: { en: 'For Law', ar: 'للمحاماه و' },
   startWithUs: { en: 'Start With Us', ar: 'ابدأ معنا' },
   login: { en: 'Login', ar: 'تسجيل الدخول' },
   signup: { en: 'Sign Up', ar: 'تسجيل جديد' },
@@ -368,4 +368,30 @@ export const translations: Translations = {
   copyrightText: { en: 'All rights reserved | ai-guid.com', ar: 'كافة الحقوق محفوظة | ai-guid.com' },
   technicalSupport: { en: 'Technical Support', ar: 'الدعم الفني' },
   supportMessage: { en: 'For any technical assistance or inquiry about our services, we are happy to contact you via email:', ar: 'لأي مساعدة تقنية أو استفسار عن خدماتنا، يسعدنا تواصلك عبر البريد:' },
+  
+  // Support System
+  support: { en: 'Support', ar: 'الدعم الفني' },
+  openTicket: { en: 'Open Ticket', ar: 'فتح تذكرة' },
+  myTickets: { en: 'My Tickets', ar: 'تذاكري' },
+  ticketSubject: { en: 'Subject', ar: 'الموضوع' },
+  ticketType: { en: 'Ticket Type', ar: 'نوع الطلب' },
+  selectType: { en: 'Select Type', ar: 'اختر النوع' },
+  technicalSupportType: { en: 'Technical Support', ar: 'دعم فني' },
+  additionalService: { en: 'Request Additional Service', ar: 'طلب خدمة إضافية' },
+  specialSubscription: { en: 'Request Special Subscription', ar: 'طلب اشتراك خاص' },
+  message: { en: 'Message', ar: 'الرسالة' },
+  submitTicket: { en: 'Submit Ticket', ar: 'إرسال التذكرة' },
+  ticketStatus: { en: 'Status', ar: 'الحالة' },
+  open: { en: 'Open', ar: 'مفتوحة' },
+  closed: { en: 'Closed', ar: 'مغلقة' },
+  answered: { en: 'Answered', ar: 'تم الرد' },
+  noTickets: { en: 'No tickets found.', ar: 'لا توجد تذاكر.' },
+  adminReply: { en: 'Admin Reply', ar: 'رد الإدارة' },
+  typeReply: { en: 'Type a reply...', ar: 'اكتب رداً...' },
+  send: { en: 'Send', ar: 'إرسال' },
+  ticketCreated: { en: 'Ticket created successfully!', ar: 'تم إنشاء التذكرة بنجاح!' },
+  manageTicketTypes: { en: 'Manage Ticket Types', ar: 'إدارة أنواع التذاكر' },
+  addType: { en: 'Add Type', ar: 'إضافة نوع' },
+  typePlaceholder: { en: 'Enter type name...', ar: 'أدخل اسم النوع...' },
+  supportSettings: { en: 'Support Settings', ar: 'إعدادات الدعم' },
 };

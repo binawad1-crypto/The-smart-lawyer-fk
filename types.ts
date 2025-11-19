@@ -67,6 +67,7 @@ export interface SiteSettings {
   isMaintenanceMode: boolean;
   landingPageConfig?: LandingPageConfig;
   adPixels?: AdPixels;
+  ticketTypes?: string[]; // List of support ticket types
 }
 
 export interface SiteSettingsContextType {
@@ -137,4 +138,26 @@ export interface StripeProduct {
   description?: string;
   prices?: StripePrice[];
   metadata?: any;
+}
+
+// Support System Types
+export interface TicketMessage {
+  id?: string;
+  content: string;
+  senderId: string;
+  senderRole: 'user' | 'admin';
+  createdAt: any; // Timestamp
+}
+
+export interface Ticket {
+  id: string;
+  userId: string;
+  userEmail: string;
+  subject: string;
+  type: string;
+  status: 'open' | 'closed' | 'answered';
+  createdAt: any; // Timestamp
+  lastUpdate: any; // Timestamp
+  unreadUser?: boolean;
+  unreadAdmin?: boolean;
 }

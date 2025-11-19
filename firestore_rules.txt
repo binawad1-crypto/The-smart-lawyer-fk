@@ -82,6 +82,24 @@ service cloud.firestore {
       }
     }
 
+    // Support Tickets System
+    match /support_tickets/{ticketId} {
+      // Users can create tickets (assigning themselves as userId)
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Users can read/update their own tickets. Admins can read/update all.
+      allow read, update: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Only admins can delete tickets
+      allow delete: if isAdmin();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+         // Allow read/create if user owns the parent ticket or is admin
+         allow read, create: if request.auth != null;
+      }
+    }
+
     // Stripe extension's collections for products and prices
     match /products/{productId} {
         allow read: if true;

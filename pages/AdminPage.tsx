@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
-import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
+import { useAuth } from '../hooks/useAuth';
+import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig, AdPixels } from '../types';
+import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig, AdPixels, Ticket, TicketMessage } from '../types';
 import { iconNames, ADMIN_EMAIL } from '../constants';
 import { Type } from "@google/genai";
 import { generateServiceConfigWithAI } from '../services/geminiService';
@@ -413,6 +414,7 @@ const PlanForm: React.FC<{
 
 const AdminPage = () => {
     const { t, language } = useLanguage();
+    const { currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
     // User management state
     const [users, setUsers] = useState<UserData[]>([]);
@@ -461,6 +463,16 @@ const AdminPage = () => {
     // Landing Page Generator State
     const [landingPagePrompt, setLandingPagePrompt] = useState('');
     const [isGeneratingLanding, setIsGeneratingLanding] = useState(false);
+
+    // Support System State
+    const [supportView, setSupportView] = useState<'list' | 'chat' | 'settings'>('list');
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+    const [messages, setMessages] = useState<TicketMessage[]>([]);
+    const [replyMessage, setReplyMessage] = useState('');
+    const [loadingTickets, setLoadingTickets] = useState(false);
+    const [newTicketType, setNewTicketType] = useState('');
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
 
     const fetchUsers = useCallback(async () => {
@@ -577,14 +589,14 @@ const AdminPage = () => {
             const docSnap = await getDoc(settingsDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data() as SiteSettings;
-                // Merge with initial settings to ensure all fields exist (defensive)
                 setSiteSettings({
                     ...initialSiteSettings,
                     ...data,
                     siteName: { ...initialSiteSettings.siteName, ...(data.siteName || {}) },
                     metaDescription: { ...initialSiteSettings.metaDescription, ...(data.metaDescription || {}) },
                     seoKeywords: { ...initialSiteSettings.seoKeywords, ...(data.seoKeywords || {}) },
-                    adPixels: { ...initialSiteSettings.adPixels, ...(data.adPixels || {}) }
+                    adPixels: { ...initialSiteSettings.adPixels, ...(data.adPixels || {}) },
+                    ticketTypes: data.ticketTypes || []
                 });
             } else {
                 setSiteSettings(initialSiteSettings);
@@ -595,6 +607,47 @@ const AdminPage = () => {
             setLoadingSettings(false);
         }
     }, []);
+
+    // Fetch Tickets Realtime
+    useEffect(() => {
+        if (activeTab !== 'support') return;
+        
+        setLoadingTickets(true);
+        const q = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
+            setTickets(ticketsData);
+            setLoadingTickets(false);
+        });
+
+        return () => unsubscribe();
+    }, [activeTab]);
+
+    // Fetch Messages Realtime
+    useEffect(() => {
+        if (activeTab !== 'support' || !selectedTicket) return;
+
+        const q = query(
+            collection(db, 'support_tickets', selectedTicket.id, 'messages'),
+            orderBy('createdAt', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
+            setMessages(msgs);
+            // Scroll
+            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        });
+
+        // Mark as read by Admin
+        if(selectedTicket.unreadAdmin) {
+            updateDoc(doc(db, 'support_tickets', selectedTicket.id), { unreadAdmin: false });
+        }
+
+        return () => unsubscribe();
+    }, [selectedTicket, activeTab]);
+
 
     useEffect(() => {
         if (activeTab === 'users') {
@@ -607,7 +660,7 @@ const AdminPage = () => {
             fetchPlans();
         } else if (activeTab === 'plans') {
             fetchPlans();
-        } else if (activeTab === 'settings' || activeTab === 'landing' || activeTab === 'marketing') {
+        } else if (activeTab === 'settings' || activeTab === 'landing' || activeTab === 'marketing' || activeTab === 'support') {
             fetchSiteSettings();
         }
     }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings]);
@@ -630,6 +683,7 @@ const AdminPage = () => {
         }
     }, [selectedServices, filteredServices]);
     
+    // ... (Keep existing AI Generator handlers: handleGenerateService, handleGenerateLandingPage) ...
     const handleGenerateService = async () => {
         if (!aiServiceName) {
             alert(t('enterServiceName'));
@@ -1184,6 +1238,49 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }
     };
 
+    // Support System Handlers
+    const handleAdminReply = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if(!currentUser || !selectedTicket || !replyMessage.trim()) return;
+
+        try {
+            await addDoc(collection(db, 'support_tickets', selectedTicket.id, 'messages'), {
+                content: replyMessage,
+                senderId: currentUser.uid,
+                senderRole: 'admin',
+                createdAt: serverTimestamp()
+            });
+
+            await updateDoc(doc(db, 'support_tickets', selectedTicket.id), {
+                status: 'answered',
+                lastUpdate: serverTimestamp(),
+                unreadUser: true,
+                unreadAdmin: false
+            });
+            
+            setReplyMessage('');
+        } catch (error) {
+            console.error("Error sending reply:", error);
+        }
+    };
+
+    const handleAddTicketType = async () => {
+        if(!newTicketType.trim()) return;
+        const updatedTypes = [...(siteSettings.ticketTypes || []), newTicketType.trim()];
+        setSiteSettings({...siteSettings, ticketTypes: updatedTypes});
+        setNewTicketType('');
+        // Save immediately
+        await updateDoc(doc(db, 'site_settings', 'main'), { ticketTypes: updatedTypes });
+    };
+
+    const handleRemoveTicketType = async (index: number) => {
+        if(!window.confirm("Are you sure?")) return;
+        const updatedTypes = (siteSettings.ticketTypes || []).filter((_, i) => i !== index);
+        setSiteSettings({...siteSettings, ticketTypes: updatedTypes});
+        // Save immediately
+        await updateDoc(doc(db, 'site_settings', 'main'), { ticketTypes: updatedTypes });
+    };
+
     const renderUserManagementContent = () => {
         const totalUsers = users.length;
         const totalTokenBalance = users.reduce((acc, user) => acc + (user.tokenBalance || 0), 0);
@@ -1305,7 +1402,8 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             </div>
         );
     };
-
+    
+    // ... (Keep existing render functions: renderServiceManagementContent, renderSubscriptionManagementContent, renderPlanManagementContent, renderLandingPageGenerator, renderMarketingContent, renderSiteSettingsContent) ...
     const renderServiceManagementContent = () => (
         <div>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('manageServices')}</h2>
@@ -1888,6 +1986,132 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             </div>
         );
     }
+
+    // Render Support Content
+    const renderSupportContent = () => (
+        <div className="flex h-[calc(100vh-120px)] bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow border dark:border-gray-700 overflow-hidden">
+            
+            {/* Sidebar / List */}
+            <div className={`${selectedTicket && supportView === 'chat' ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 border-r dark:border-gray-700`}>
+                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
+                    <h3 className="font-bold">{t('support')}</h3>
+                    <button onClick={() => setSupportView('settings')} className="text-gray-500 hover:text-primary-500">
+                        <Cog size={20} />
+                    </button>
+                </div>
+                
+                {supportView === 'settings' ? (
+                    <div className="p-4 space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">{t('manageTicketTypes')}</h4>
+                            <button onClick={() => setSupportView('list')}><X size={20}/></button>
+                        </div>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newTicketType} 
+                                onChange={e => setNewTicketType(e.target.value)} 
+                                placeholder={t('typePlaceholder')}
+                                className="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <button onClick={handleAddTicketType} className="bg-primary-600 text-white p-2 rounded"><Plus size={20}/></button>
+                        </div>
+                        <ul className="space-y-2">
+                            {(siteSettings.ticketTypes || []).map((type, idx) => (
+                                <li key={idx} className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                                    <span>{type}</span>
+                                    <button onClick={() => handleRemoveTicketType(idx)} className="text-red-500"><Trash2 size={16}/></button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : (
+                    <div className="flex-grow overflow-y-auto custom-scrollbar">
+                        {loadingTickets ? (
+                            <div className="p-4 text-center"><Loader2 className="animate-spin inline-block" /></div>
+                        ) : (
+                            tickets.map(ticket => (
+                                <div 
+                                    key={ticket.id} 
+                                    onClick={() => { setSelectedTicket(ticket); setSupportView('chat'); }}
+                                    className={`p-4 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-semibold truncate">{ticket.subject}</span>
+                                        {ticket.unreadAdmin && <span className="w-2 h-2 bg-red-500 rounded-full"></span>}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex justify-between">
+                                        <span>{ticket.userEmail}</span>
+                                        <span>{new Date(ticket.lastUpdate?.seconds * 1000).toLocaleDateString()}</span>
+                                    </div>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full mt-2 inline-block ${ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                                        {t(ticket.status)}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Chat Area */}
+            <div className={`${!selectedTicket || supportView !== 'chat' ? 'hidden md:flex' : 'flex'} flex-col flex-grow w-full md:w-2/3 bg-white dark:bg-gray-900`}>
+                {selectedTicket ? (
+                    <>
+                        <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => {setSelectedTicket(null); setSupportView('list');}} className="md:hidden text-gray-500"><ChevronDown className="rotate-90"/></button>
+                                <div>
+                                    <h3 className="font-bold">{selectedTicket.subject}</h3>
+                                    <p className="text-xs text-gray-500">{selectedTicket.userEmail} | {selectedTicket.type}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => {
+                                        if(window.confirm("Close ticket?")) updateDoc(doc(db, 'support_tickets', selectedTicket.id), { status: 'closed' });
+                                    }}
+                                    className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
+                                >
+                                    {t('close')}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+                            {messages.map(msg => (
+                                <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[75%] p-3 rounded-lg text-sm ${msg.senderRole === 'admin' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border dark:border-gray-600'}`}>
+                                        <p>{msg.content}</p>
+                                        <p className="text-[10px] opacity-70 text-right mt-1">
+                                            {new Date(msg.createdAt?.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        <form onSubmit={handleAdminReply} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                            <input 
+                                type="text" 
+                                value={replyMessage} 
+                                onChange={e => setReplyMessage(e.target.value)} 
+                                placeholder={t('typeReply')}
+                                className="flex-grow p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            />
+                            <button type="submit" disabled={!replyMessage.trim()} className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"><Send size={20}/></button>
+                        </form>
+                    </>
+                ) : (
+                    <div className="flex-grow flex items-center justify-center text-gray-400 flex-col gap-2">
+                        <MessageSquare size={48} />
+                        <p>{t('selectUser')}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
     
     return (
         <div className="container mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row">
@@ -1900,6 +2124,10 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         </button>
                          <button onClick={() => setActiveTab('subscriptions')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'subscriptions' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                             <CreditCard className="mr-3 h-5 w-5" /> {t('subscriptionManagement')}
+                        </button>
+                         {/* New Support Tab */}
+                         <button onClick={() => setActiveTab('support')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'support' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                            <LifeBuoy className="mr-3 h-5 w-5" /> {t('support')}
                         </button>
                         <button onClick={() => setActiveTab('plans')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'plans' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                             <Star className="mr-3 h-5 w-5" /> {t('planManagement')}
@@ -1927,6 +2155,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 {activeTab === 'landing' && renderLandingPageGenerator()}
                 {activeTab === 'settings' && renderSiteSettingsContent()}
                 {activeTab === 'marketing' && renderMarketingContent()}
+                {activeTab === 'support' && renderSupportContent()}
             </main>
             {isExecutionModalOpen && (
                 <ServiceExecutionModal 
