@@ -1,10 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Plan, Translations } from '../types';
+import { Plan, Translations, LandingPageConfig } from '../types';
+import { iconMap } from '../constants';
 
 interface LandingPageProps {
   onSignUpClick: () => void;
@@ -12,6 +14,7 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
   const { t, language } = useLanguage();
+  const { settings } = useSiteSettings();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
 
@@ -34,62 +37,56 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
     fetchPlans();
   }, []);
 
-  const features = [
-    {
-      icon: FileText,
-      title: t('feature1Title'),
-      description: t('feature1Desc'),
-      color: 'from-blue-400 to-blue-600'
-    },
-    {
-      icon: BrainCircuit,
-      title: t('feature2Title'),
-      description: t('feature2Desc'),
-      color: 'from-purple-400 to-purple-600'
-    },
-    {
-      icon: Scale,
-      title: t('feature3Title'),
-      description: t('feature3Desc'),
-      color: 'from-teal-400 to-teal-600'
-    },
-    {
-      icon: ShieldCheck,
-      title: t('feature4Title'),
-      description: t('feature4Desc'),
-      color: 'from-red-400 to-red-600'
-    },
-    {
-      icon: Workflow,
-      title: t('feature5Title'),
-      description: t('feature5Desc'),
-      color: 'from-orange-400 to-orange-600'
-    },
-    {
-      icon: Building2,
-      title: t('feature6Title'),
-      description: t('feature6Desc'),
-      color: 'from-emerald-400 to-emerald-600'
-    },
-    {
-      icon: Users,
-      title: t('feature7Title'),
-      description: t('feature7Desc'),
-      color: 'from-indigo-400 to-indigo-600'
-    },
-    {
-      icon: BookOpen,
-      title: t('feature8Title'),
-      description: t('feature8Desc'),
-      color: 'from-cyan-400 to-cyan-600'
-    },
-    {
-      icon: Archive,
-      title: t('feature9Title'),
-      description: t('feature9Desc'),
-      color: 'from-slate-400 to-slate-600'
-    },
+  // Determine content source: Dynamic Settings or Default Constants
+  const content: LandingPageConfig = useMemo(() => {
+    if (settings?.landingPageConfig) {
+        return settings.landingPageConfig;
+    }
+    // Fallback to hardcoded constants if no dynamic config exists
+    return {
+        heroTitleMain: { en: t('heroTitleMain'), ar: t('heroTitleMain') }, // Note: t() returns string based on current lang, so this reconstruction is a bit hacky for fallback but works for display
+        heroTitleHighlight: { en: t('heroTitleHighlight'), ar: t('heroTitleHighlight') },
+        heroSubtitle: { en: t('heroSubtitle'), ar: t('heroSubtitle') },
+        featuresTitle: { en: t('featuresTitle'), ar: t('featuresTitle') },
+        features: [
+            { icon: 'FileText', title: { en: 'Instant Document Analysis', ar: 'تحليل فوري للمستندات' }, description: { en: 'Upload your legal documents and get summaries.', ar: 'ارفع مستنداتك القانونية واحصل على ملخصات.' }, color: 'from-blue-400 to-blue-600' },
+            { icon: 'BrainCircuit', title: { en: 'Smart Legal Research', ar: 'بحث قانوني ذكي' }, description: { en: 'Ask complex legal questions.', ar: 'اطرح أسئلة قانونية معقدة.' }, color: 'from-purple-400 to-purple-600' },
+            { icon: 'Scale', title: { en: 'Automated Drafting', ar: 'صياغة آلية' }, description: { en: 'Generate first drafts of memos.', ar: 'أنشئ مسودات أولية للمذكرات.' }, color: 'from-teal-400 to-teal-600' },
+            { icon: 'ShieldCheck', title: { en: 'Legal Risk Assessment', ar: 'تقييم المخاطر القانونية' }, description: { en: 'Identify potential liabilities.', ar: 'تحديد الالتزامات المحتملة.' }, color: 'from-red-400 to-red-600' },
+            { icon: 'Workflow', title: { en: 'Strategic Case Planning', ar: 'تخطيط استراتيجية القضايا' }, description: { en: 'Develop data-driven strategies.', ar: 'تطوير استراتيجيات مبنية على البيانات.' }, color: 'from-orange-400 to-orange-600' },
+            { icon: 'Building2', title: { en: 'Regulatory Compliance', ar: 'الامتثال التنظيمي' }, description: { en: 'Stay compliant with regulations.', ar: 'حافظ على الامتثال للوائح.' }, color: 'from-emerald-400 to-emerald-600' },
+            { icon: 'Users', title: { en: 'Client Communication', ar: 'التواصل مع العملاء' }, description: { en: 'Generate professional responses.', ar: 'إنشاء ردود احترافية.' }, color: 'from-indigo-400 to-indigo-600' },
+            { icon: 'BookOpen', title: { en: 'Legal Translation', ar: 'الترجمة القانونية' }, description: { en: 'Accurate translation of terminology.', ar: 'ترجمة دقيقة للمصطلحات.' }, color: 'from-cyan-400 to-cyan-600' },
+            { icon: 'Archive', title: { en: 'Smart Archiving', ar: 'الأرشفة الذكية' }, description: { en: 'Organize legal knowledge.', ar: 'تنظيم المعرفة القانونية.' }, color: 'from-slate-400 to-slate-600' },
+        ]
+    };
+  }, [settings, t]);
+  
+  // Use values from dynamic config (handling Language record) or fallback to t()
+  // The logic below handles cases where "content" might be fully dynamic or reconstructed from t()
+  // If content comes from settings, it has {en, ar}. If from fallback above, it has {currentLang, currentLang} basically.
+  const getValue = (field: Record<string, string> | undefined, fallbackKey: string) => {
+      if (field && field[language]) return field[language];
+      return t(fallbackKey as any);
+  };
+
+  const heroTitleMain = settings?.landingPageConfig ? settings.landingPageConfig.heroTitleMain[language] : t('heroTitleMain');
+  const heroTitleHighlight = settings?.landingPageConfig ? settings.landingPageConfig.heroTitleHighlight[language] : t('heroTitleHighlight');
+  const heroSubtitle = settings?.landingPageConfig ? settings.landingPageConfig.heroSubtitle[language] : t('heroSubtitle');
+  const featuresTitle = settings?.landingPageConfig ? settings.landingPageConfig.featuresTitle[language] : t('featuresTitle');
+  
+  const featureList = settings?.landingPageConfig ? settings.landingPageConfig.features : [
+    { icon: 'FileText', title: { [language]: t('feature1Title') }, description: { [language]: t('feature1Desc') }, color: 'from-blue-400 to-blue-600' },
+    { icon: 'BrainCircuit', title: { [language]: t('feature2Title') }, description: { [language]: t('feature2Desc') }, color: 'from-purple-400 to-purple-600' },
+    { icon: 'Scale', title: { [language]: t('feature3Title') }, description: { [language]: t('feature3Desc') }, color: 'from-teal-400 to-teal-600' },
+    { icon: 'ShieldCheck', title: { [language]: t('feature4Title') }, description: { [language]: t('feature4Desc') }, color: 'from-red-400 to-red-600' },
+    { icon: 'Workflow', title: { [language]: t('feature5Title') }, description: { [language]: t('feature5Desc') }, color: 'from-orange-400 to-orange-600' },
+    { icon: 'Building2', title: { [language]: t('feature6Title') }, description: { [language]: t('feature6Desc') }, color: 'from-emerald-400 to-emerald-600' },
+    { icon: 'Users', title: { [language]: t('feature7Title') }, description: { [language]: t('feature7Desc') }, color: 'from-indigo-400 to-indigo-600' },
+    { icon: 'BookOpen', title: { [language]: t('feature8Title') }, description: { [language]: t('feature8Desc') }, color: 'from-cyan-400 to-cyan-600' },
+    { icon: 'Archive', title: { [language]: t('feature9Title') }, description: { [language]: t('feature9Desc') }, color: 'from-slate-400 to-slate-600' },
   ];
+
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-gray-800 dark:text-gray-200 font-sans">
@@ -109,15 +106,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
           
           <h1 className="flex flex-col items-center justify-center mb-6 leading-tight">
             <span className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight mb-2 md:mb-4">
-                {t('heroTitleMain')}
+                {heroTitleMain}
             </span>
             <span className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-purple-500 to-teal-400 animate-gradient-x">
-                {t('heroTitleHighlight')}
+                {heroTitleHighlight}
             </span>
           </h1>
           
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
-            {t('heroSubtitle')}
+            {heroSubtitle}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -137,20 +134,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick }) => {
          <div className="absolute inset-0 bg-white dark:bg-slate-800/50 transform -skew-y-3 z-0 origin-top-left"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t('featuresTitle')}</h2>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{featuresTitle}</h2>
             <div className="w-24 h-1.5 bg-gradient-to-r from-primary-500 to-purple-600 mx-auto rounded-full"></div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            {features.map((feature, index) => (
+            {featureList.map((feature: any, index: number) => {
+              // Resolve Icon
+              const IconComponent = iconMap[feature.icon] || FileText;
+              // Resolve Text (Handle both Record<Language, string> and simple string fallbacks)
+              const title = feature.title[language] || feature.title;
+              const description = feature.description[language] || feature.description;
+
+              return (
               <div key={index} className="group bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-lg hover:shadow-2xl hover:shadow-primary-900/10 transition-all duration-300 border border-slate-100 dark:border-slate-700 hover:border-primary-500/30 transform hover:-translate-y-2">
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
-                  <feature.icon size={32} strokeWidth={2.5} />
+                  <IconComponent size={32} strokeWidth={2.5} />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">{feature.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
+                <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">{title}</h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{description}</p>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>

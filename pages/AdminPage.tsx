@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, StripeProduct, StripePrice } from '../types';
+import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig } from '../types';
 import { iconNames, ADMIN_EMAIL } from '../constants';
 import { Type } from "@google/genai";
 import { generateServiceConfigWithAI } from '../services/geminiService';
@@ -458,6 +458,10 @@ const AdminPage = () => {
     const [savingSettings, setSavingSettings] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [faviconFile, setFaviconFile] = useState<File | null>(null);
+    
+    // Landing Page Generator State
+    const [landingPagePrompt, setLandingPagePrompt] = useState('');
+    const [isGeneratingLanding, setIsGeneratingLanding] = useState(false);
 
     const seedButtonColorClasses: { [key: string]: string } = {
         blue: 'bg-blue-600 hover:bg-blue-700',
@@ -602,7 +606,7 @@ const AdminPage = () => {
             fetchPlans();
         } else if (activeTab === 'plans') {
             fetchPlans();
-        } else if (activeTab === 'settings') {
+        } else if (activeTab === 'settings' || activeTab === 'landing') {
             fetchSiteSettings();
         }
     }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings]);
@@ -754,6 +758,111 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             setIsGenerating(false);
         }
     };
+
+    const handleGenerateLandingPage = async () => {
+        if (!landingPagePrompt) {
+            alert("Please enter a topic to generate the landing page.");
+            return;
+        }
+        setIsGeneratingLanding(true);
+        try {
+            const schema = {
+                type: Type.OBJECT,
+                properties: {
+                    heroTitleMain_en: { type: Type.STRING },
+                    heroTitleMain_ar: { type: Type.STRING },
+                    heroTitleHighlight_en: { type: Type.STRING },
+                    heroTitleHighlight_ar: { type: Type.STRING },
+                    heroSubtitle_en: { type: Type.STRING },
+                    heroSubtitle_ar: { type: Type.STRING },
+                    featuresTitle_en: { type: Type.STRING },
+                    featuresTitle_ar: { type: Type.STRING },
+                    features: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                icon: { type: Type.STRING, enum: iconNames },
+                                title_en: { type: Type.STRING },
+                                title_ar: { type: Type.STRING },
+                                description_en: { type: Type.STRING },
+                                description_ar: { type: Type.STRING },
+                                color: { type: Type.STRING, description: "Tailwind CSS gradient classes e.g. 'from-blue-400 to-blue-600'" }
+                            },
+                            required: ['icon', 'title_en', 'title_ar', 'description_en', 'description_ar', 'color']
+                        }
+                    }
+                },
+                required: ['heroTitleMain_en', 'heroTitleMain_ar', 'heroTitleHighlight_en', 'heroTitleHighlight_ar', 'heroSubtitle_en', 'heroSubtitle_ar', 'featuresTitle_en', 'featuresTitle_ar', 'features']
+            };
+
+            const prompt = `Generate a high-converting Landing Page configuration for a legal service website based on this topic: "${landingPagePrompt}".
+
+            Requirements:
+            1. **Bilingual:** Provide professional English and Arabic translations for all text fields.
+            2. **Hero Section:** 
+               - Main Title: Catchy and authoritative.
+               - Highlight Title: A short, powerful phrase (e.g., "Powered by AI").
+               - Subtitle: A compelling 2-sentence value proposition.
+            3. **Features:** Generate exactly 9 distinct features related to the topic.
+               - Icon: Choose the most relevant icon name from: ${iconNames.join(', ')}.
+               - Color: Provide valid Tailwind CSS gradient classes (e.g., 'from-purple-400 to-pink-600', 'from-blue-500 to-cyan-400', 'from-emerald-400 to-teal-600'). Make them varied and bright.
+            4. **Output:** Pure JSON only. No markdown.
+            `;
+
+            const response = await generateServiceConfigWithAI(prompt, schema);
+            
+            let jsonString = response.text.trim();
+            if (jsonString.startsWith('```json')) {
+                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+            } else if (jsonString.startsWith('```')) {
+                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            }
+            const data = JSON.parse(jsonString);
+
+            const newConfig: LandingPageConfig = {
+                heroTitleMain: { en: data.heroTitleMain_en, ar: data.heroTitleMain_ar },
+                heroTitleHighlight: { en: data.heroTitleHighlight_en, ar: data.heroTitleHighlight_ar },
+                heroSubtitle: { en: data.heroSubtitle_en, ar: data.heroSubtitle_ar },
+                featuresTitle: { en: data.featuresTitle_en, ar: data.featuresTitle_ar },
+                features: data.features.map((f: any) => ({
+                    icon: f.icon,
+                    title: { en: f.title_en, ar: f.title_ar },
+                    description: { en: f.description_en, ar: f.description_ar },
+                    color: f.color
+                }))
+            };
+
+            // Update local state and save to Firestore
+            const updatedSettings: SiteSettings = {
+                ...siteSettings,
+                landingPageConfig: newConfig
+            };
+            
+            await setDoc(doc(db, "site_settings", "main"), updatedSettings);
+            setSiteSettings(updatedSettings);
+            alert("Landing Page Generated and Saved Successfully!");
+            setLandingPagePrompt('');
+
+        } catch (error) {
+            console.error("Error generating landing page:", error);
+            alert("Failed to generate landing page. Please try again.");
+        } finally {
+            setIsGeneratingLanding(false);
+        }
+    };
+
+    const handleClearLandingConfig = async () => {
+        if(window.confirm("Are you sure? This will reset the landing page to the default hardcoded content.")){
+             const updatedSettings: SiteSettings = {
+                ...siteSettings,
+                landingPageConfig: undefined
+            };
+            await setDoc(doc(db, "site_settings", "main"), updatedSettings);
+            setSiteSettings(updatedSettings);
+            alert("Landing page reset to default.");
+        }
+    }
     
     const handleUpdateUserStatus = async (userId: string, status: 'active' | 'disabled') => {
         const confirmationMessage = status === 'active' ? t('enableUserConfirm') : t('disableUserConfirm');
@@ -1619,6 +1728,57 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             </div>
         </div>
     );
+
+    const renderLandingPageGenerator = () => (
+        <div className="max-w-4xl mx-auto">
+             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Landing Page Generator</h2>
+             
+             <div className="bg-light-card-bg dark:bg-dark-card-bg p-8 rounded-xl shadow-lg border dark:border-gray-700">
+                <div className="mb-8 text-center">
+                    <div className="inline-block p-4 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mb-4">
+                        <Wand2 size={40} />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Generate a Full Landing Page with AI</h3>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                        Enter a topic (e.g., "Divorce Services" or "Corporate Law Firm"), and the AI will generate titles, subtitles, and 9 distinct features with appropriate icons and colors.
+                    </p>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <input
+                        type="text"
+                        value={landingPagePrompt}
+                        onChange={(e) => setLandingPagePrompt(e.target.value)}
+                        placeholder="Enter topic (e.g., Real Estate Law Services)"
+                        className="flex-grow p-4 text-lg border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500"
+                    />
+                    <button
+                        onClick={handleGenerateLandingPage}
+                        disabled={isGeneratingLanding || !landingPagePrompt.trim()}
+                        className="px-8 py-4 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center gap-2 min-w-[200px]"
+                    >
+                        {isGeneratingLanding ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />}
+                        Generate Page
+                    </button>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <div className="flex justify-between items-center">
+                        <p className="text-sm text-gray-500">Current Status: {siteSettings.landingPageConfig ? <span className="text-green-600 font-bold">Custom Page Active</span> : <span className="text-gray-500 font-bold">Default Page Active</span>}</p>
+                        
+                        {siteSettings.landingPageConfig && (
+                            <button 
+                                onClick={handleClearLandingConfig}
+                                className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
+                            >
+                                <RefreshCw size={14} /> Reset to Default
+                            </button>
+                        )}
+                    </div>
+                </div>
+             </div>
+        </div>
+    );
     
     const renderSiteSettingsContent = () => {
         if (loadingSettings) return <div className="text-center py-8"><Loader2 className="animate-spin inline-block" /></div>;
@@ -1734,6 +1894,9 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         <button onClick={() => setActiveTab('services')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'services' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                             <PlusSquare className="mr-3 h-5 w-5" /> {t('manageServices')}
                         </button>
+                        <button onClick={() => setActiveTab('landing')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'landing' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                            <LayoutTemplate className="mr-3 h-5 w-5" /> Landing Page
+                        </button>
                          <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'settings' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                             <Cog className="mr-3 h-5 w-5" /> {t('siteSettings')}
                         </button>
@@ -1745,6 +1908,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 {activeTab === 'services' && renderServiceManagementContent()}
                 {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
                 {activeTab === 'plans' && renderPlanManagementContent()}
+                {activeTab === 'landing' && renderLandingPageGenerator()}
                 {activeTab === 'settings' && renderSiteSettingsContent()}
             </main>
             {isExecutionModalOpen && (

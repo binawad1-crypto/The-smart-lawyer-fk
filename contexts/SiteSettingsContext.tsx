@@ -13,6 +13,7 @@ const defaultSettings: SiteSettings = {
     logoUrl: '',
     faviconUrl: '',
     isMaintenanceMode: false,
+    landingPageConfig: undefined // Will fall back to hardcoded constants if undefined
 };
 
 interface SiteSettingsProviderProps {

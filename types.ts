@@ -35,6 +35,21 @@ export enum Language {
   AR = 'ar',
 }
 
+export interface LandingPageFeature {
+  icon: string;
+  title: Record<Language, string>;
+  description: Record<Language, string>;
+  color: string;
+}
+
+export interface LandingPageConfig {
+  heroTitleMain: Record<Language, string>;
+  heroTitleHighlight: Record<Language, string>;
+  heroSubtitle: Record<Language, string>;
+  featuresTitle: Record<Language, string>;
+  features: LandingPageFeature[];
+}
+
 export interface SiteSettings {
   siteName: Record<Language, string>;
   metaDescription: Record<Language, string>;
@@ -42,6 +57,7 @@ export interface SiteSettings {
   logoUrl: string;
   faviconUrl: string;
   isMaintenanceMode: boolean;
+  landingPageConfig?: LandingPageConfig;
 }
 
 export interface SiteSettingsContextType {
