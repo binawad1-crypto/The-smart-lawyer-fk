@@ -10,7 +10,6 @@ import { Type } from "@google/genai";
 import { generateServiceConfigWithAI } from '../services/geminiService';
 import { uploadFile } from '../services/storageService';
 import ServiceExecutionModal from '../components/ServiceExecutionModal';
-import { litigationSeedServices, specializedConsultationsSeedServices, investigationsAndCriminalSeedServices, corporateAndComplianceSeedServices, creativeSeedServices } from '../services/seedData';
 
 
 interface UserData {
@@ -434,8 +433,7 @@ const AdminPage = () => {
     // Service execution modal state
     const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
-    // Seeding state
-    const [isSeeding, setIsSeeding] = useState(false);
+
     // Filtering state
     const [filterCategory, setFilterCategory] = useState<ServiceCategory | 'all'>('all');
     // Selection state
@@ -464,13 +462,6 @@ const AdminPage = () => {
     const [landingPagePrompt, setLandingPagePrompt] = useState('');
     const [isGeneratingLanding, setIsGeneratingLanding] = useState(false);
 
-    const seedButtonColorClasses: { [key: string]: string } = {
-        blue: 'bg-blue-600 hover:bg-blue-700',
-        green: 'bg-green-600 hover:bg-green-700',
-        red: 'bg-red-600 hover:bg-red-700',
-        purple: 'bg-purple-600 hover:bg-purple-700',
-        teal: 'bg-teal-600 hover:bg-teal-700',
-    };
 
     const fetchUsers = useCallback(async () => {
         setLoadingUsers(true);
@@ -1067,49 +1058,6 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         setIsExecutionModalOpen(true);
     };
 
-    const [seedingState, setSeedingState] = useState({
-        litigation: false,
-        consultations: false,
-        investigations: false,
-        corporate: false,
-        creative: false,
-    });
-    
-    const createSeedHandler = (
-        key: keyof typeof seedingState,
-        services: Service[],
-        confirmKey: keyof Translations,
-        successKey: keyof Translations,
-    ) => () => {
-        if (window.confirm(t(confirmKey))) {
-            setSeedingState(prev => ({ ...prev, [key]: true }));
-            const batch = writeBatch(db);
-            services.forEach(service => {
-                const docRef = doc(db, 'services', service.id);
-                batch.set(docRef, service);
-            });
-            batch.commit()
-                .then(() => {
-                    alert(t(successKey));
-                    fetchServices();
-                })
-                .catch(error => {
-                    // FIX: Explicitly convert `key` to a string to avoid potential runtime errors with implicit symbol conversion.
-                    console.error(`Error seeding ${String(key)}:`, error);
-                    alert(`Error seeding ${String(key)}.`);
-                })
-                .finally(() => setSeedingState(prev => ({ ...prev, [key]: false })));
-        }
-    };
-    
-    const handleSeedLitigationServices = createSeedHandler('litigation', litigationSeedServices, 'seedLitigationConfirm', 'seedLitigationSuccess');
-    const handleSeedConsultationServices = createSeedHandler('consultations', specializedConsultationsSeedServices, 'seedConsultationsConfirm', 'seedConsultationsSuccess');
-    const handleSeedInvestigationServices = createSeedHandler('investigations', investigationsAndCriminalSeedServices, 'seedInvestigationsConfirm', 'seedInvestigationsSuccess');
-    const handleSeedCorporateServices = createSeedHandler('corporate', corporateAndComplianceSeedServices, 'seedCorporateConfirm', 'seedCorporateSuccess');
-    const handleSeedCreativeServices = createSeedHandler('creative', creativeSeedServices, 'seedCreativeConfirm', 'seedCreativeSuccess');
-    
-    const isAnySeeding = Object.values(seedingState).some(s => s);
-
     const handleRevokeSubscription = async (userId: string, subId: string) => {
         if (window.confirm(t('revokeConfirm'))) {
             try {
@@ -1361,37 +1309,6 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     const renderServiceManagementContent = () => (
         <div>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('manageServices')}</h2>
-
-            <details className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow border dark:border-gray-700 mb-8 overflow-hidden group">
-                <summary className="p-6 cursor-pointer list-none flex justify-between items-center">
-                    <div>
-                        <h3 className="text-xl font-semibold">{t('databaseSeeding')}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('databaseSeedingDescription')}</p>
-                    </div>
-                    <ChevronDown className="transform transition-transform duration-300 group-open:rotate-180 flex-shrink-0" />
-                </summary>
-                <div className="px-6 pb-6">
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t dark:border-gray-600">
-                        {[
-                            { handler: handleSeedLitigationServices, loading: seedingState.litigation, progressKey: 'seedingLitigationInProgress', buttonKey: 'seedLitigationButton', color: 'blue' },
-                            { handler: handleSeedConsultationServices, loading: seedingState.consultations, progressKey: 'seedingConsultationsInProgress', buttonKey: 'seedConsultationsButton', color: 'green' },
-                            { handler: handleSeedInvestigationServices, loading: seedingState.investigations, progressKey: 'seedingInvestigationsInProgress', buttonKey: 'seedInvestigationsButton', color: 'red' },
-                            { handler: handleSeedCorporateServices, loading: seedingState.corporate, progressKey: 'seedingCorporateInProgress', buttonKey: 'seedCorporateButton', color: 'purple' },
-                            { handler: handleSeedCreativeServices, loading: seedingState.creative, progressKey: 'seedingCreativeInProgress', buttonKey: 'seedCreativeButton', color: 'teal' },
-                        ].map(({ handler, loading, progressKey, buttonKey, color }) => (
-                             <button 
-                                key={buttonKey}
-                                onClick={handler} 
-                                disabled={isAnySeeding}
-                                className={`${seedButtonColorClasses[color]} text-white font-bold py-2 px-4 rounded-md disabled:bg-gray-400 flex items-center justify-center`}
-                            >
-                                {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-                                {loading ? t(String(progressKey) as keyof Translations) : t(String(buttonKey) as keyof Translations)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </details>
             
             <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-3 mb-8">
                 <h3 className="text-xl font-semibold flex items-center gap-2">{t('generateWithAI')} <Wand2 className="text-primary-500" /></h3>
