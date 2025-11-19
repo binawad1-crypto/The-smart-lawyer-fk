@@ -105,13 +105,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-24 overflow-hidden">
         {/* Background Gradients */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 opacity-80"></div>
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/2 -left-24 w-72 h-72 bg-purple-400/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-teal-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 opacity-80"></div>
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 -left-24 w-72 h-72 bg-sky-400/20 rounded-full blur-3xl"></div>
         </div>
 
         <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="mx-auto mb-8 inline-flex items-center justify-center p-5 bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-blue-900/10 ring-1 ring-slate-900/5 dark:ring-white/10">
+          <div className="mx-auto mb-8 inline-flex items-center justify-center p-5 bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-teal-900/10 ring-1 ring-slate-900/5 dark:ring-white/10">
             <Gavel size={48} className="text-primary-600 dark:text-primary-400" />
           </div>
           
@@ -119,7 +119,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
             <span className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight mb-2 md:mb-4">
                 {heroTitleMain}
             </span>
-            <span className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-purple-500 to-teal-400 animate-gradient-x">
+            <span className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-cyan-500 to-sky-400 animate-gradient-x">
                 {heroTitleHighlight}
             </span>
           </h1>
@@ -143,17 +143,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
       {/* Location Awareness Section - Premium Style */}
       <div className="relative z-20 px-4 sm:px-6 -mt-8 mb-12">
         <div className="container mx-auto max-w-5xl">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 shadow-2xl shadow-blue-900/30 border border-blue-500/30">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 shadow-2xl shadow-teal-900/30 border border-teal-500/30">
                 
                 {/* Background Pattern/Glow */}
-                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 to-transparent opacity-70"></div>
-                <div className="absolute -left-20 top-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 to-transparent opacity-70"></div>
+                <div className="absolute -left-20 top-0 w-64 h-64 bg-teal-600/20 rounded-full blur-3xl"></div>
 
                 <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 p-8 md:p-10 text-center md:text-start rtl:md:text-right">
                     {/* Animated Icon Container */}
                     <div className="flex-shrink-0 relative group">
-                        <div className="absolute inset-0 bg-blue-500 blur-xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-                        <div className="relative p-5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full text-white shadow-lg border border-white/10">
+                        <div className="absolute inset-0 bg-teal-500 blur-xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                        <div className="relative p-5 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-full text-white shadow-lg border border-white/10">
                             <MapPin size={36} strokeWidth={2} />
                         </div>
                     </div>
@@ -175,7 +175,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{featuresTitle}</h2>
-            <div className="w-24 h-1.5 bg-gradient-to-r from-primary-500 to-purple-600 mx-auto rounded-full"></div>
+            <div className="w-24 h-1.5 bg-gradient-to-r from-primary-500 to-sky-600 mx-auto rounded-full"></div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
@@ -263,12 +263,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
           <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
             {t('finalCtaTitle')}
           </h2>
-          <p className="max-w-2xl mx-auto text-xl text-blue-100 mb-10 font-light">
+          <p className="max-w-2xl mx-auto text-xl text-teal-100 mb-10 font-light">
             {t('finalCtaSubtitle')}
           </p>
           <button
             onClick={handlePrimaryAction}
-            className="px-10 py-5 bg-white text-primary-900 font-bold rounded-full shadow-2xl hover:bg-blue-50 transform hover:scale-105 transition-all duration-300 text-xl flex items-center gap-2 mx-auto"
+            className="px-10 py-5 bg-white text-primary-900 font-bold rounded-full shadow-2xl hover:bg-teal-50 transform hover:scale-105 transition-all duration-300 text-xl flex items-center gap-2 mx-auto"
           >
             {currentUser ? t('goToDashboard') : t('signUpForFree')}
              {currentUser ? <LayoutDashboard size={20} /> : null}

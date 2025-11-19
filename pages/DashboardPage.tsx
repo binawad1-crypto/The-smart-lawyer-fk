@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -302,10 +302,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const handleIncreaseFont = () => setFontSize(prev => Math.min(prev + 2, 32));
     const handleDecreaseFont = () => setFontSize(prev => Math.max(prev - 2, 12));
 
-    const renderOutputLanguageSelector = () => (
+    const renderOutputLanguageSelector = (showLabel = true) => (
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
+                {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>}
                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
                     <button
                         type="button"
@@ -328,15 +328,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const renderServiceSelectionView = () => (
         <>
-            <div className="mb-6 flex-shrink-0 flex flex-col-reverse gap-3 sm:gap-0 sm:flex-row sm:justify-between sm:items-start">
-                 <div className="text-right rtl:text-left w-full sm:w-auto">
-                    <span className="text-xs text-blue-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
-                        <Wand2 size={14} /> {t('poweredByAI')}
-                    </span>
+            <div className="mb-4 flex-shrink-0 flex flex-col gap-2">
+                 <div className="flex flex-col-reverse gap-3 sm:gap-0 sm:flex-row sm:justify-between sm:items-start">
+                     <div className="text-right rtl:text-left w-full sm:w-auto">
+                        <span className="text-xs text-blue-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
+                            <Wand2 size={14} /> {t('poweredByAI')}
+                        </span>
+                    </div>
+                    <div className="text-right w-full sm:w-auto">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('legalAssistant')}</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('howCanIHelp')}</p>
+                    </div>
                 </div>
-                <div className="text-right w-full sm:w-auto">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('legalAssistant')}</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('howCanIHelp')}</p>
+                {/* Language Selector above the prompt box */}
+                <div className="flex justify-end">
+                    {renderOutputLanguageSelector(false)}
                 </div>
             </div>
 
@@ -345,15 +351,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder={t('typeYourRequest')}
-                    className="w-full h-40 p-4 ltr:pl-16 rtl:pr-16 resize-none border-0 rounded-lg bg-slate-100 dark:bg-dark-bg text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-gray-500 text-right"
+                    className="w-full h-40 p-4 ltr:pl-16 rtl:pr-16 resize-none border-0 rounded-lg bg-slate-100 dark:bg-dark-bg text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 text-right"
                 />
                 <button
                     onClick={handleExecutePrompt}
                     disabled={isGenerating || !prompt.trim()}
-                    className="absolute top-4 ltr:left-4 rtl:right-4 w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                    className="absolute top-4 ltr:left-4 rtl:right-4 w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors shadow-md z-10"
                     aria-label="Send"
                 >
-                    <Send size={20} className="ltr:-scale-x-100" />
+                    {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ltr:-scale-x-100" />}
                 </button>
             </div>
 
@@ -395,39 +401,61 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 )}
             </div>
             
-            <div className="pt-4 flex-shrink-0">
-                {!loadingServices && !errorServices && advancedServices.length > 0 && (
-                     <div className="mb-4">
-                        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">{t('advancedServices')}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+             {/* PREMIUM CREATIVE SERVICES SECTION */}
+             {!loadingServices && !errorServices && advancedServices.length > 0 && (
+                <div className="mt-10 mb-6 relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-700 via-primary-600 to-primary-800 p-6 sm:p-8 shadow-2xl border border-white/10">
+                    {/* Artistic Background Elements */}
+                    <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
+
+                    <div className="relative z-10">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <div>
+                                <h3 className="text-xl sm:text-2xl font-black text-white mb-2 flex items-center gap-3">
+                                    <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg shadow-inner">
+                                        <Sparkles className="text-yellow-300 w-6 h-6" fill="currentColor" />
+                                    </div>
+                                    {t('creativeServices')}
+                                </h3>
+                                <p className="text-teal-100 text-sm sm:text-base max-w-xl leading-relaxed opacity-90">
+                                    {t('creativeServicesDesc')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {advancedServices.map(service => {
                                 const Icon = iconMap[service.icon] || Wand2;
                                 return (
                                 <button
                                     key={service.id}
                                     onClick={() => handleServiceClick(service)}
-                                    className="w-full p-3 rounded-lg bg-light-bg dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700/60 text-sm font-medium text-gray-800 dark:text-gray-200 transition-all flex items-center justify-start rtl:justify-start gap-3 group"
+                                    className="group relative w-full p-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg flex items-center gap-4 text-left rtl:text-right overflow-hidden"
                                 >
-                                    <Icon className="w-5 h-5 text-primary-500 dark:text-primary-400 group-hover:scale-110 transition-transform flex-shrink-0" />
-                                    <span className="truncate text-left rtl:text-right">{service.title[language]}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+                                        <Icon className="w-6 h-6 text-white drop-shadow-md" />
+                                    </div>
+                                    
+                                    <div className="flex-grow min-w-0">
+                                        <h4 className="text-white font-bold text-sm sm:text-base truncate mb-1 group-hover:text-yellow-200 transition-colors">
+                                            {service.title[language]}
+                                        </h4>
+                                        <p className="text-teal-200 text-xs truncate opacity-80 group-hover:opacity-100">
+                                            {service.subCategory[language]}
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 rtl:-translate-x-2 group-hover:translate-x-0 rtl:group-hover:translate-x-0">
+                                        {language === 'ar' ? <ArrowLeft className="text-white w-5 h-5"/> : <ArrowRight className="text-white w-5 h-5"/>}
+                                    </div>
                                 </button>
                             )})}
                         </div>
                     </div>
-                )}
-                
-                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 flex flex-col sm:flex-row items-center gap-3">
-                    <button
-                        onClick={handleExecutePrompt}
-                        disabled={isGenerating || !prompt.trim()}
-                        className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-                    >
-                        {isGenerating && <Loader2 className="animate-spin" size={20} />}
-                        {t('execute')}
-                    </button>
-                    {renderOutputLanguageSelector()}
                 </div>
-            </div>
+            )}
         </>
     );
 
@@ -449,11 +477,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {selectedService.formInputs.map(input => (
                             <div key={input.name}>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{input.label[language]}</label>
-                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={5} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-blue-500 focus:outline-none" />}
-                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-blue-500 focus:outline-none" />}
-                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-blue-500 focus:outline-none" />}
+                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={5} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
+                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
+                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
                                 {input.type === 'select' && (
-                                    <select name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <select name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none">
                                         <option value="">{`Select ${input.label[language]}`}</option>
                                         {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                     </select>

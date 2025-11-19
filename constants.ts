@@ -2,7 +2,7 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +16,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 export const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
-  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag,
+  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles,
   // FIX: Alias non-existent 'AspectRatio' icon to 'Ratio' for backward compatibility.
   AspectRatio: Ratio,
   // FIX: Alias non-existent 'Body' icon to 'PersonStanding' to prevent app crash from bad seed data.
@@ -28,7 +28,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
   // General
   appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-  appSubtitle: { en: 'For Law', ar: 'للمحاماه و' },
+  appSubtitle: { en: 'For Law & Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
   startWithUs: { en: 'Start With Us', ar: 'ابدأ معنا' },
   login: { en: 'Login', ar: 'تسجيل الدخول' },
   signup: { en: 'Sign Up', ar: 'تسجيل جديد' },
@@ -93,7 +93,8 @@ export const translations: Translations = {
   specializedConsultations: { en: 'Specialized Legal Consultations', ar: 'الاستشارات القانونية المتخصصة' },
   investigationsAndCriminal: { en: 'Investigations and Criminal Services', ar: 'التحقيقات والخدمات الجنائية' },
   corporateAndCompliance: { en: 'Corporate Services and Legal Compliance', ar: 'خدمات الشركات والامتثال القانوني' },
-  creativeServices: { en: 'Creative & General Services', ar: 'الخدمات الإبداعية والعامة' },
+  creativeServices: { en: 'Creative & Special Services', ar: 'الخدمات الإبداعية والخاصة' },
+  creativeServicesDesc: { en: 'Unlock the power of generative AI for drafting, content creation, and specialized tasks.', ar: 'اكتشف قوة الذكاء الاصطناعي التوليدي للصياغة وإنشاء المحتوى والمهام الخاصة.' },
   executeTask: { en: 'Execute Task', ar: 'تنفيذ المهمة' },
   exportToPdf: { en: 'Export to PDF', ar: 'تصدير إلى PDF' },
   results: { en: 'Results', ar: 'النتائج' },
