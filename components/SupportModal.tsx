@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, MessageSquare, Send, Loader2, Tag, ArrowRight, ArrowLeft, LifeBuoy, ChevronDown } from 'lucide-react';
+import { Plus, MessageSquare, Send, Loader2, ArrowRight, ArrowLeft, LifeBuoy } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -8,19 +8,21 @@ import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp,
 import { db } from '../services/firebase';
 import { Ticket, TicketMessage } from '../types';
 
-const SupportModal: React.FC = () => {
+interface SupportPanelProps {
+    className?: string;
+}
+
+const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
   const { t, language, dir } = useLanguage();
   const { currentUser } = useAuth();
   const { settings } = useSiteSettings();
   
-  const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'list' | 'new' | 'chat'>('list');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  const [hasUnread, setHasUnread] = useState(false);
 
   // New Ticket Form
   const [subject, setSubject] = useState('');
@@ -41,28 +43,9 @@ const SupportModal: React.FC = () => {
     ? settings.ticketTypes 
     : defaultTypes;
 
-  // 1. Listener for Badge (Always active when logged in)
+  // Listener for Tickets Data
   useEffect(() => {
     if (!currentUser) return;
-    
-    const q = query(
-      collection(db, 'support_tickets'),
-      where('userId', '==', currentUser.uid)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ticketsData = snapshot.docs.map(doc => doc.data() as Ticket);
-      const unread = ticketsData.some(t => t.unreadUser === true);
-      setHasUnread(unread);
-    }, (error) => console.error("Error checking unread tickets:", error));
-
-    return () => unsubscribe();
-  }, [currentUser]);
-
-
-  // 2. Listener for Tickets Data (Only when Open)
-  useEffect(() => {
-    if (!currentUser || !isOpen) return;
     
     setLoading(true);
     const safetyTimer = setTimeout(() => setLoading(false), 5000);
@@ -100,11 +83,11 @@ const SupportModal: React.FC = () => {
         clearTimeout(safetyTimer);
         unsubscribe();
     }
-  }, [currentUser, isOpen]);
+  }, [currentUser]);
 
-  // 3. Fetch Messages for Selected Ticket
+  // Fetch Messages for Selected Ticket
   useEffect(() => {
-    if (!selectedTicket || !isOpen) return;
+    if (!selectedTicket) return;
 
     const q = query(
       collection(db, 'support_tickets', selectedTicket.id, 'messages'),
@@ -122,7 +105,7 @@ const SupportModal: React.FC = () => {
     }
 
     return () => unsubscribe();
-  }, [selectedTicket, isOpen]);
+  }, [selectedTicket]);
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,41 +170,31 @@ const SupportModal: React.FC = () => {
     }
   };
 
-  const toggleOpen = () => {
-      setIsOpen(!isOpen);
-  }
-
   if (!currentUser) return null;
 
-  // Positioning: Opposite to the ChatWidget (which is typically bottom-right in LTR, bottom-left in RTL)
-  // So Support Widget will be bottom-left in LTR, bottom-right in RTL
-  const positionClasses = dir === 'rtl' ? 'right-6' : 'left-6';
-  const originClass = dir === 'rtl' ? 'origin-bottom-right' : 'origin-bottom-left';
-
   return (
-    <div className="z-[60]">
-      {/* The Window Panel */}
       <div 
-        className={`fixed bottom-24 ${positionClasses} w-[350px] sm:w-[400px] h-[550px] max-h-[80vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden transition-all duration-300 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-10 pointer-events-none'} ${originClass} z-[60]`}
+        className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-[600px] w-full ${className}`}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <LifeBuoy size={20} className="animate-pulse-slow" />
-            <span className="font-bold text-lg">
-                 {view === 'list' ? t('support') : view === 'new' ? t('openTicket') : selectedTicket?.subject}
-            </span>
+        <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400">
+                <LifeBuoy size={20} />
+             </div>
+             <div>
+                 <h2 className="font-bold text-lg text-gray-900 dark:text-white">
+                    {view === 'list' ? t('support') : view === 'new' ? t('openTicket') : selectedTicket?.subject}
+                 </h2>
+             </div>
           </div>
           <div className="flex items-center gap-2">
              {view !== 'list' && (
-                 <button onClick={() => setView('list')} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                     <ArrowRight size={18} className="rtl:hidden" />
-                     <ArrowLeft size={18} className="ltr:hidden" />
+                 <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500">
+                     <ArrowRight size={20} className="rtl:hidden" />
+                     <ArrowLeft size={20} className="ltr:hidden" />
                  </button>
              )}
-             <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                <ChevronDown size={20} />
-            </button>
           </div>
         </div>
 
@@ -361,24 +334,7 @@ const SupportModal: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Floating Trigger Button */}
-      <button
-        onClick={toggleOpen}
-        className={`fixed bottom-6 ${positionClasses} z-[60] w-14 h-14 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:scale-110 transition-all duration-300 flex items-center justify-center group`}
-        aria-label="Support"
-      >
-        {hasUnread && !isOpen && (
-            <span className="absolute top-0 right-0 block h-3.5 w-3.5 rounded-full ring-2 ring-white dark:ring-gray-900 bg-red-500 transform translate-x-1 -translate-y-1 animate-bounce"></span>
-        )}
-        {isOpen ? (
-             <ChevronDown size={28} className="transition-transform duration-300 group-hover:translate-y-1" />
-        ) : (
-             <LifeBuoy size={28} className="transition-transform duration-300 group-hover:rotate-12" />
-        )}
-      </button>
-    </div>
   );
 };
 
-export default SupportModal;
+export default SupportPanel;

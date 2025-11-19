@@ -13,7 +13,6 @@ import ProfilePage from './pages/ProfilePage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import MobileBottomNav from './components/MobileBottomNav';
 import PixelTracker from './components/PixelTracker';
-import SupportModal from './components/SupportModal';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions';
@@ -143,8 +142,6 @@ const App: React.FC = () => {
             currentView={view} 
             onNavigate={handleNavigate} 
           />
-          {/* Floating Support Widget */}
-          <SupportModal />
         </>
       )}
 

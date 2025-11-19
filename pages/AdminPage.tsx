@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -154,23 +154,23 @@ const GrantSubscriptionModal: React.FC<{
     const usersWithoutAdmin = users.filter(u => u.email !== ADMIN_EMAIL);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-xl w-full max-w-lg">
-                <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-                    <h2 className="text-xl font-bold">{t('grantSubscription')}</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale-100">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('grantSubscription')}</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                         <X size={24} />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
                      <div>
-                        <label className="block text-sm font-medium mb-1">{t('selectUser')}</label>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('selectUser')}</label>
                         <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
                             required
                             disabled={!!initialUserId}
-                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 disabled:bg-gray-200 dark:disabled:bg-gray-800"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 dark:disabled:bg-gray-600"
                         >
                             <option value="" disabled>-- {t('selectUser')} --</option>
                             {usersWithoutAdmin.length > 0 ? usersWithoutAdmin.map(u => (
@@ -180,11 +180,11 @@ const GrantSubscriptionModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">{t('selectPlan')}</label>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('selectPlan')}</label>
                         <select
                             value={selectedPlanId}
                             onChange={(e) => setSelectedPlanId(e.target.value)}
-                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                         >
                             {plans.map(p => (
                                 <option key={p.id} value={p.id}>{p.title[language]}</option>
@@ -193,31 +193,33 @@ const GrantSubscriptionModal: React.FC<{
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">{t('tokenAmount')}</label>
-                        <input
-                            type="number"
-                            value={tokenAmount}
-                            onChange={(e) => setTokenAmount(Number(e.target.value))}
-                            required
-                            readOnly={selectedPlanId !== 'custom'}
-                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 read-only:bg-gray-200 dark:read-only:bg-gray-800"
-                        />
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium mb-1">{t('durationDays')}</label>
-                        <input
-                            type="number"
-                            value={durationDays}
-                            onChange={(e) => setDurationDays(Number(e.target.value))}
-                            required
-                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('tokenAmount')}</label>
+                            <input
+                                type="number"
+                                value={tokenAmount}
+                                onChange={(e) => setTokenAmount(Number(e.target.value))}
+                                required
+                                readOnly={selectedPlanId !== 'custom'}
+                                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none read-only:bg-gray-100 dark:read-only:bg-gray-600"
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('durationDays')}</label>
+                            <input
+                                type="number"
+                                value={durationDays}
+                                onChange={(e) => setDurationDays(Number(e.target.value))}
+                                required
+                                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-4 pt-4">
-                        <button type="button" onClick={onClose} className="bg-gray-200 dark:bg-gray-600 font-bold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">{t('cancel')}</button>
-                        <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center min-w-[100px]">
+                        <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+                        <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center min-w-[120px] shadow-lg shadow-primary-600/20 transition-all">
                             {isSubmitting && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('grant')}
                         </button>
@@ -264,30 +266,33 @@ const AddTokenModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-xl w-full max-w-sm">
-                <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-                    <h3 className="text-lg font-bold">{t('addTokens')}</h3>
-                    <button onClick={onClose}><X size={20} /></button>
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('addTokens')}</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"><X size={20} /></button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Adding tokens for: <b>{userEmail}</b>
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                        Adding tokens for: <br/><b>{userEmail}</b>
                     </p>
                     <div>
-                        <label className="block text-sm font-medium mb-1">{t('tokenAmount')}</label>
-                        <input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(Number(e.target.value))}
-                            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                            min="1"
-                            required
-                        />
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('tokenAmount')}</label>
+                        <div className="relative">
+                            <Coins className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                            <input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(Number(e.target.value))}
+                                className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                min="1"
+                                required
+                            />
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3">
-                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-600">{t('cancel')}</button>
-                         <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary-600 text-white flex items-center gap-2">
+                    <div className="flex justify-end gap-3 pt-2">
+                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+                         <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 flex items-center gap-2 shadow-md shadow-primary-600/20 transition-all">
                              {isSubmitting && <Loader2 className="animate-spin" size={16} />}
                              {t('add')}
                          </button>
@@ -347,65 +352,90 @@ const PlanForm: React.FC<{
     };
 
     return (
-        <form onSubmit={handleFormSubmit} className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-4 mb-8">
-            <h3 className="text-xl font-semibold border-b dark:border-gray-600 pb-2">{isEditing ? t('editPlan') : t('addNewPlan')}</h3>
+        <form onSubmit={handleFormSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 mb-8">
+            <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditing ? t('editPlan') : t('addNewPlan')}</h3>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder={t('planId')} value={formData.id} onChange={e => handleInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 read-only:bg-gray-200 dark:read-only:bg-gray-800" required readOnly={isEditing} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('planId')}</label>
+                    <input type="text" value={formData.id} onChange={e => handleInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 read-only:bg-gray-100 dark:read-only:bg-gray-600" required readOnly={isEditing} />
+                </div>
                 
-                {/* Direct Price ID Input - No dropdown logic */}
-                <div>
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('priceId')}</label>
                     <input 
                         type="text" 
-                        placeholder={t('priceId')} 
                         value={formData.priceId} 
                         onChange={e => handleInputChange('priceId', e.target.value.trim())} 
-                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" 
+                        className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" 
                         required 
                     />
-                    <p className="text-xs text-gray-500 mt-1">Must match a Price ID in Stripe Dashboard (e.g., price_123...)</p>
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder={t('planTitleEn')} value={formData.title.en} onChange={e => handleNestedChange('title', 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                <input type="text" placeholder={t('planTitleAr')} value={formData.title.ar} onChange={e => handleNestedChange('title', 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('planTitleEn')}</label>
+                    <input type="text" value={formData.title.en} onChange={e => handleNestedChange('title', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('planTitleAr')}</label>
+                    <input type="text" value={formData.title.ar} onChange={e => handleNestedChange('title', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder={t('planPriceEn')} value={formData.price.en} onChange={e => handleNestedChange('price', 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                <input type="text" placeholder={t('planPriceAr')} value={formData.price.ar} onChange={e => handleNestedChange('price', 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1">
+                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planPriceEn')}</label>
+                     <input type="text" value={formData.price.en} onChange={e => handleNestedChange('price', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('planPriceAr')}</label>
+                    <input type="text" value={formData.price.ar} onChange={e => handleNestedChange('price', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="number" placeholder={t('planTokens')} value={formData.tokens} onChange={e => handleInputChange('tokens', Number(e.target.value))} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" required />
-                 <select value={formData.status} onChange={e => handleInputChange('status', e.target.value as 'active' | 'inactive')} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                    <option value="active">{t('active')}</option>
-                    <option value="inactive">{t('inactive')}</option>
-                </select>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('planTokens')}</label>
+                    <input type="number" value={formData.tokens} onChange={e => handleInputChange('tokens', Number(e.target.value))} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('status')}</label>
+                    <select value={formData.status} onChange={e => handleInputChange('status', e.target.value as 'active' | 'inactive')} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="active">{t('active')}</option>
+                        <option value="inactive">{t('inactive')}</option>
+                    </select>
+                </div>
             </div>
              <div className="pt-2">
-                <label className="flex items-center space-x-2">
-                    <input type="checkbox" checked={formData.isPopular} onChange={e => handleInputChange('isPopular', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                    <span>{t('isPopular')}</span>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.isPopular} onChange={e => handleInputChange('isPopular', e.target.checked)} className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('isPopular')}</span>
                 </label>
             </div>
 
-            <div className="border-t dark:border-gray-600 pt-4">
-                <h4 className="font-semibold">{t('planFeatures')}</h4>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                <h4 className="font-bold text-gray-800 dark:text-white mb-3">{t('planFeatures')}</h4>
                 {formData.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2 my-2">
-                        <input type="text" placeholder={t('featureEn')} value={feature.en} onChange={e => handleFeatureChange(index, 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                        <input type="text" placeholder={t('featureAr')} value={feature.ar} onChange={e => handleFeatureChange(index, 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                        <button type="button" onClick={() => removeFeature(index)} className="text-red-500 hover:text-red-700 p-2"><Trash2 size={16}/></button>
+                    <div key={index} className="flex items-center gap-3 my-3">
+                        <span className="text-sm font-bold text-gray-400 w-6 text-center">{index + 1}</span>
+                        <input type="text" placeholder={t('featureEn')} value={feature.en} onChange={e => handleFeatureChange(index, 'en', e.target.value)} className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm" />
+                        <input type="text" placeholder={t('featureAr')} value={feature.ar} onChange={e => handleFeatureChange(index, 'ar', e.target.value)} className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm text-right" />
+                        <button type="button" onClick={() => removeFeature(index)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 size={18}/></button>
                     </div>
                 ))}
-                <button type="button" onClick={addFeature} className="mt-2 text-sm text-primary-600 hover:underline">{t('addFeature')}</button>
+                <button type="button" onClick={addFeature} className="mt-2 flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 px-2 py-1 rounded-md hover:bg-primary-50 transition-colors">
+                    <Plus size={16}/> {t('addFeature')}
+                </button>
             </div>
 
-            <div className="flex items-center gap-4 pt-4">
-                 <button type="submit" disabled={isSaving} className="flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+            <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                 <button type="submit" disabled={isSaving} className="px-8 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center shadow-lg shadow-primary-600/20 transition-all">
                     {isSaving && <Loader2 className="animate-spin mr-2" size={20} />}
                     {t('savePlan')}
                 </button>
-                <button type="button" onClick={onCancel} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">{t('cancel')}</button>
+                <button type="button" onClick={onCancel} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
             </div>
         </form>
     );
@@ -1288,115 +1318,125 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         // Crude approximation of active subscribers (stripeId present)
         const activeSubscribers = users.filter(u => u.stripeId).length;
 
-        const StatCard = ({ title, value, icon: Icon, color }: any) => (
-             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex items-center space-x-4 rtl:space-x-reverse border border-gray-200 dark:border-gray-700">
-                <div className={`p-3 rounded-full ${color}`}>
-                    <Icon size={24} className="text-white" />
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        const StatCard = ({ title, value, icon: Icon, gradient }: any) => (
+             <div className={`relative overflow-hidden rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform hover:-translate-y-1 duration-300`}>
+                <div className={`absolute right-0 top-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${gradient} opacity-10 blur-2xl`}></div>
+                <div className="relative flex items-center space-x-4 rtl:space-x-reverse">
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
+                        <Icon size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+                        <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight mt-1">{value}</p>
+                    </div>
                 </div>
              </div>
         );
 
         return (
-            <div>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('userManagement')}</h2>
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                    <Users className="text-primary-500" /> {t('userManagement')}
+                </h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                      <StatCard 
                         title="Total Users" 
                         value={totalUsers} 
                         icon={Users} 
-                        color="bg-blue-500" 
+                        gradient="from-blue-500 to-indigo-600" 
                     />
                     <StatCard 
                         title="Active Subscribers" 
                         value={activeSubscribers} 
                         icon={CreditCard} 
-                        color="bg-green-500" 
+                        gradient="from-emerald-400 to-teal-600" 
                     />
                     <StatCard 
-                        title="Total Token Balance" 
+                        title="Token Balance" 
                         value={totalTokenBalance.toLocaleString()} 
                         icon={Coins} 
-                        color="bg-yellow-500" 
+                        gradient="from-amber-400 to-orange-500" 
                     />
                      <StatCard 
-                        title="Total Tokens Used" 
+                        title="Tokens Used" 
                         value={totalTokensUsed.toLocaleString()} 
                         icon={Activity} 
-                        color="bg-purple-500" 
+                        gradient="from-rose-400 to-pink-600" 
                     />
                 </div>
 
-                <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
-                     <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                            <table className="min-w-full divide-y dark:divide-gray-700">
-                                <thead><tr>
-                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('email')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('role')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('status')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('tokenBalance')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-purple-600 dark:text-purple-400">Tokens Used</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('dateJoined')}</th>
-                                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
-                                </tr></thead>
-                                <tbody className="divide-y dark:divide-gray-800">
-                                    {loadingUsers ? (
-                                        <tr><td colSpan={7} className="text-center py-8">{t('loading')}</td></tr>
-                                    ) : userError ? (
-                                        <tr><td colSpan={7} className="text-center py-8 text-red-500">{userError}</td></tr>
-                                    ) : users.length === 0 ? (
-                                        <tr><td colSpan={7} className="text-center py-8">{t('noUsersFound')}</td></tr>
-                                    ) : users.map((user) => {
-                                        const isSelf = user.email === ADMIN_EMAIL;
-                                        return (
-                                            <tr key={user.id} className="dark:even:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors">
-                                                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-0">{user.email}</td>
-                                                <td className="whitespace-nowrap px-3 py-4 text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>{user.role}</span></td>
-                                                <td className="whitespace-nowrap px-3 py-4 text-sm">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+                                <tr>
+                                    <th className="px-6 py-4">{t('email')}</th>
+                                    <th className="px-6 py-4">{t('role')}</th>
+                                    <th className="px-6 py-4">{t('status')}</th>
+                                    <th className="px-6 py-4">{t('tokenBalance')}</th>
+                                    <th className="px-6 py-4 text-purple-600 dark:text-purple-400">Used</th>
+                                    <th className="px-6 py-4">{t('dateJoined')}</th>
+                                    <th className="px-6 py-4 text-right">{t('actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {loadingUsers ? (
+                                    <tr><td colSpan={7} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
+                                ) : userError ? (
+                                    <tr><td colSpan={7} className="text-center py-10 text-red-500">{userError}</td></tr>
+                                ) : users.length === 0 ? (
+                                    <tr><td colSpan={7} className="text-center py-10 text-gray-500">{t('noUsersFound')}</td></tr>
+                                ) : users.map((user) => {
+                                    const isSelf = user.email === ADMIN_EMAIL;
+                                    return (
+                                        <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                                            <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{user.email}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full flex w-fit items-center gap-1 ${user.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
+                                                    {user.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>}
                                                     {user.status ? t(user.status) : t('active')}
-                                                    </span>
-                                                </td>
-                                                <td className="whitespace-nowrap px-3 py-4 text-sm font-mono">{user.tokenBalance?.toLocaleString() ?? 0}</td>
-                                                <td className="whitespace-nowrap px-3 py-4 text-sm font-mono font-bold text-purple-600 dark:text-purple-400">{user.tokensUsed?.toLocaleString() ?? 0}</td>
-                                                <td className="whitespace-nowrap px-3 py-4 text-sm">{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
-                                                <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                                    <div className="flex items-center justify-end gap-x-3">
-                                                        {!isSelf && (
-                                                            <>
-                                                                <button onClick={() => handleOpenGrantModalForUser(user)} className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors" title={t('grantSubscription')}>
-                                                                    <Gift size={18} />
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-mono text-gray-600 dark:text-gray-300">{user.tokenBalance?.toLocaleString() ?? 0}</td>
+                                            <td className="px-6 py-4 font-mono font-bold text-purple-600 dark:text-purple-400">{user.tokensUsed?.toLocaleString() ?? 0}</td>
+                                            <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {!isSelf && (
+                                                        <>
+                                                            <button onClick={() => handleOpenGrantModalForUser(user)} className="text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 p-1.5 rounded-lg transition-colors" title={t('grantSubscription')}>
+                                                                <Gift size={18} />
+                                                            </button>
+                                                            <button onClick={() => handleOpenTokenModal(user)} className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 p-1.5 rounded-lg transition-colors" title={t('addTokens')}>
+                                                                <Coins size={18} />
+                                                            </button>
+                                                            {user.status === 'disabled' ? (
+                                                                <button onClick={() => handleUpdateUserStatus(user.id, 'active')} className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1.5 rounded-lg transition-colors" title={t('enable')}>
+                                                                    <CheckCircle size={18}/>
                                                                 </button>
-                                                                <button onClick={() => handleOpenTokenModal(user)} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('addTokens')}>
-                                                                    <Coins size={18} />
+                                                            ) : (
+                                                                <button onClick={() => handleUpdateUserStatus(user.id, 'disabled')} className="text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 p-1.5 rounded-lg transition-colors" title={t('disable')}>
+                                                                    <Ban size={18} />
                                                                 </button>
-                                                                {user.status === 'disabled' ? (
-                                                                    <button onClick={() => handleUpdateUserStatus(user.id, 'active')} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('enable')}>
-                                                                        <CheckCircle size={18}/>
-                                                                    </button>
-                                                                ) : (
-                                                                    <button onClick={() => handleUpdateUserStatus(user.id, 'disabled')} className="text-yellow-600 hover:text-yellow-800 p-1 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors" title={t('disable')}>
-                                                                        <Ban size={18} />
-                                                                    </button>
-                                                                )}
-                                                                <button onClick={() => handleDeleteUser(user.id)} className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors" title={t('delete')}>
-                                                                    <Trash2 size={18} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                            )}
+                                                            <button onClick={() => handleDeleteUser(user.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-lg transition-colors" title={t('delete')}>
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1405,121 +1445,168 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     
     // ... (Keep existing render functions: renderServiceManagementContent, renderSubscriptionManagementContent, renderPlanManagementContent, renderLandingPageGenerator, renderMarketingContent, renderSiteSettingsContent) ...
     const renderServiceManagementContent = () => (
-        <div>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('manageServices')}</h2>
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                 <PlusSquare className="text-primary-500" /> {t('manageServices')}
+            </h2>
             
-            <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-3 mb-8">
-                <h3 className="text-xl font-semibold flex items-center gap-2">{t('generateWithAI')} <Wand2 className="text-primary-500" /></h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('aiGeneratorDescription')}</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <input 
-                        type="text" 
-                        placeholder={t('serviceNamePlaceholder')} 
-                        value={aiServiceName}
-                        onChange={e => setAiServiceName(e.target.value)}
-                        className="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                    />
-                    <button 
-                        type="button" 
-                        onClick={handleGenerateService} 
-                        disabled={isGenerating}
-                        className="bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center"
-                    >
-                        {isGenerating ? <Loader2 className="animate-spin mr-2" /> : null}
-                        {isGenerating ? t('generating') : t('generate')}
-                    </button>
+            {/* AI Generator Card */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
+                <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+                    <Wand2 size={150} />
+                </div>
+                <div className="relative z-10">
+                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
+                        <Wand2 className="text-yellow-300" /> {t('generateWithAI')}
+                    </h3>
+                    <p className="text-indigo-100 mb-6 max-w-xl leading-relaxed text-sm opacity-90">{t('aiGeneratorDescription')}</p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                        <input 
+                            type="text" 
+                            placeholder={t('serviceNamePlaceholder')} 
+                            value={aiServiceName}
+                            onChange={e => setAiServiceName(e.target.value)}
+                            className="flex-grow px-4 py-3 rounded-xl border-0 bg-white/20 backdrop-blur-md text-white placeholder-indigo-200 focus:ring-2 focus:ring-white/50 outline-none"
+                        />
+                        <button 
+                            type="button" 
+                            onClick={handleGenerateService} 
+                            disabled={isGenerating}
+                            className="bg-white text-indigo-700 font-bold py-3 px-6 rounded-xl hover:bg-indigo-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                            {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
+                            {t('generate')}
+                        </button>
+                    </div>
                 </div>
             </div>
 
             { showServiceForm && (
-                <form onSubmit={handleSaveService} className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-4 mb-8">
-                    <h3 className="text-xl font-semibold border-b dark:border-gray-600 pb-2">{isEditingService ? t('editService') : t('serviceDetails')}</h3>
+                <form onSubmit={handleSaveService} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 animate-fade-in-down">
+                    <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4 mb-2">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditingService ? t('editService') : t('serviceDetails')}</h3>
+                        <button type="button" onClick={handleCancelEditService} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
+                    </div>
                     
-                    <input type="text" placeholder={t('serviceIdPlaceholder')} value={newService.id} onChange={e => handleServiceInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 read-only:bg-gray-200 dark:read-only:bg-gray-800" required readOnly={isEditingService} />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" placeholder={t('titleEnPlaceholder')} value={newService.title.en} onChange={e => handleNestedServiceInputChange('title', 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                        <input type="text" placeholder={t('titleArPlaceholder')} value={newService.title.ar} onChange={e => handleNestedServiceInputChange('title', 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Service ID</label>
+                        <input type="text" placeholder={t('serviceIdPlaceholder')} value={newService.id} onChange={e => handleServiceInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 read-only:bg-gray-100 dark:read-only:bg-gray-600" required readOnly={isEditingService} />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <textarea placeholder={t('descriptionEnPlaceholder')} value={newService.description.en} onChange={e => handleNestedServiceInputChange('description', 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" rows={3}/>
-                        <textarea placeholder={t('descriptionArPlaceholder')} value={newService.description.ar} onChange={e => handleNestedServiceInputChange('description', 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" rows={3}/>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" placeholder={t('subCategoryEnPlaceholder')} value={newService.subCategory.en} onChange={e => handleNestedServiceInputChange('subCategory', 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                        <input type="text" placeholder={t('subCategoryArPlaceholder')} value={newService.subCategory.ar} onChange={e => handleNestedServiceInputChange('subCategory', 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select value={newService.category} onChange={e => handleServiceInputChange('category', e.target.value as ServiceCategory)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                            {Object.values(ServiceCategory).map(categoryValue => (
-                                <option key={categoryValue} value={categoryValue}>{t(categoryValue as keyof Translations)}</option>
-                            ))}
-                        </select>
-                        <input type="text" placeholder={t('geminiModel')} value={newService.geminiModel} onChange={e => handleServiceInputChange('geminiModel', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                    </div>
-                    <select value={newService.icon} onChange={e => handleServiceInputChange('icon', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                        {iconNames.map(name => <option key={name} value={name}>{name}</option>)}
-                    </select>
 
-                    <div className="border-t dark:border-gray-600 pt-4">
-                        <h4 className="font-semibold">{t('formInputs')}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-500 uppercase">{t('titleEnPlaceholder')}</label>
+                             <input type="text" value={newService.title.en} onChange={e => handleNestedServiceInputChange('title', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-500 uppercase">{t('titleArPlaceholder')}</label>
+                             <input type="text" value={newService.title.ar} onChange={e => handleNestedServiceInputChange('title', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                         <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('descriptionEnPlaceholder')}</label>
+                            <textarea value={newService.description.en} onChange={e => handleNestedServiceInputChange('description', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" rows={3}/>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('descriptionArPlaceholder')}</label>
+                            <textarea value={newService.description.ar} onChange={e => handleNestedServiceInputChange('description', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" rows={3}/>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                         <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('subCategoryEnPlaceholder')}</label>
+                            <input type="text" value={newService.subCategory.en} onChange={e => handleNestedServiceInputChange('subCategory', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('subCategoryArPlaceholder')}</label>
+                            <input type="text" value={newService.subCategory.ar} onChange={e => handleNestedServiceInputChange('subCategory', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-500 uppercase">{t('category')}</label>
+                             <select value={newService.category} onChange={e => handleServiceInputChange('category', e.target.value as ServiceCategory)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500">
+                                {Object.values(ServiceCategory).map(categoryValue => (
+                                    <option key={categoryValue} value={categoryValue}>{t(categoryValue as keyof Translations)}</option>
+                                ))}
+                            </select>
+                        </div>
+                         <div className="space-y-1">
+                             <label className="text-xs font-bold text-gray-500 uppercase">{t('geminiModel')}</label>
+                             <input type="text" value={newService.geminiModel} onChange={e => handleServiceInputChange('geminiModel', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                    </div>
+                     <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('icon')}</label>
+                        <select value={newService.icon} onChange={e => handleServiceInputChange('icon', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500">
+                            {iconNames.map(name => <option key={name} value={name}>{name}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
+                        <h4 className="font-bold text-gray-800 dark:text-white mb-4">{t('formInputs')}</h4>
                         {newService.formInputs.map((input, index) => (
-                            <div key={index} className="p-3 my-2 border dark:border-gray-600 rounded-md space-y-2 bg-gray-50 dark:bg-gray-800/50">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-medium">{t('input')} {index + 1}</p>
-                                    <button type="button" onClick={() => handleRemoveFormInput(index)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                            <div key={index} className="p-4 mb-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-3 relative">
+                                <button type="button" onClick={() => handleRemoveFormInput(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 transition-colors"><Trash2 size={18}/></button>
+                                <p className="text-xs font-bold text-gray-400 uppercase mb-2">{t('input')} {index + 1}</p>
+                                
+                                <input type="text" placeholder={t('inputNamePlaceholder')} value={input.name} onChange={e => handleFormInputChange(index, 'name', e.target.value.toLowerCase().replace(/\s+/g, '_'))} className="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm" />
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <input type="text" placeholder={t('labelEnPlaceholder')} value={input.label.en} onChange={e => handleFormInputLabelChange(index, 'en', e.target.value)} className="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm" />
+                                    <input type="text" placeholder={t('labelArPlaceholder')} value={input.label.ar} onChange={e => handleFormInputLabelChange(index, 'ar', e.target.value)} className="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm text-right" />
                                 </div>
-                                <input type="text" placeholder={t('inputNamePlaceholder')} value={input.name} onChange={e => handleFormInputChange(index, 'name', e.target.value.toLowerCase().replace(/\s+/g, '_'))} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input type="text" placeholder={t('labelEnPlaceholder')} value={input.label.en} onChange={e => handleFormInputLabelChange(index, 'en', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                                    <input type="text" placeholder={t('labelArPlaceholder')} value={input.label.ar} onChange={e => handleFormInputLabelChange(index, 'ar', e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                                </div>
-                                <select value={input.type} onChange={e => handleFormInputChange(index, 'type', e.target.value as FormInputType)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
+                                
+                                <select value={input.type} onChange={e => handleFormInputChange(index, 'type', e.target.value as FormInputType)} className="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm">
                                     <option value="text">Text</option>
                                     <option value="textarea">Textarea</option>
                                     <option value="date">Date</option>
                                     <option value="file">File</option>
                                     <option value="select">Select</option>
                                 </select>
+
                                 {input.type === 'select' && (
-                                    <div className="pl-4 mt-2 border-l-2 dark:border-gray-600 space-y-2">
-                                        <h5 className="font-medium text-sm">{t('options')}</h5>
+                                    <div className="pl-4 mt-2 border-l-2 border-primary-200 dark:border-gray-600 space-y-2">
+                                        <h5 className="font-medium text-sm text-primary-600">{t('options')}</h5>
                                         {input.options?.map((option, optionIndex) => (
-                                            <div key={optionIndex} className="p-2 border dark:border-gray-700 rounded-md space-y-1 bg-white dark:bg-gray-700">
-                                                <div className="flex justify-end">
-                                                    <button type="button" onClick={() => handleRemoveOption(index, optionIndex)} className="text-red-500 hover:text-red-700"><Trash2 size={14}/></button>
-                                                </div>
-                                                <input type="text" placeholder={t('optionValuePlaceholder')} value={option.value} onChange={e => handleOptionChange(index, optionIndex, 'value', e.target.value)} className="w-full p-1 border rounded-md text-sm dark:bg-gray-800 dark:border-gray-600" />
+                                            <div key={optionIndex} className="p-2 border dark:border-gray-700 rounded-md space-y-2 bg-white dark:bg-gray-700 relative">
+                                                <button type="button" onClick={() => handleRemoveOption(index, optionIndex)} className="absolute top-2 right-2 text-red-400 hover:text-red-600"><Trash2 size={14}/></button>
+                                                <input type="text" placeholder={t('optionValuePlaceholder')} value={option.value} onChange={e => handleOptionChange(index, optionIndex, 'value', e.target.value)} className="w-full p-1.5 border rounded-md text-xs dark:bg-gray-800 dark:border-gray-600" />
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    <input type="text" placeholder={t('labelEnPlaceholder')} value={option.label.en} onChange={e => handleOptionLabelChange(index, optionIndex, 'en', e.target.value)} className="w-full p-1 border rounded-md text-sm dark:bg-gray-800 dark:border-gray-600" />
-                                                    <input type="text" placeholder={t('labelArPlaceholder')} value={option.label.ar} onChange={e => handleOptionLabelChange(index, optionIndex, 'ar', e.target.value)} className="w-full p-1 border rounded-md text-sm dark:bg-gray-800 dark:border-gray-600" />
+                                                    <input type="text" placeholder={t('labelEnPlaceholder')} value={option.label.en} onChange={e => handleOptionLabelChange(index, optionIndex, 'en', e.target.value)} className="w-full p-1.5 border rounded-md text-xs dark:bg-gray-800 dark:border-gray-600" />
+                                                    <input type="text" placeholder={t('labelArPlaceholder')} value={option.label.ar} onChange={e => handleOptionLabelChange(index, optionIndex, 'ar', e.target.value)} className="w-full p-1.5 border rounded-md text-xs dark:bg-gray-800 dark:border-gray-600 text-right" />
                                                 </div>
                                             </div>
                                         ))}
-                                        <button type="button" onClick={() => handleAddOption(index)} className="text-xs text-primary-600 hover:underline">{t('addOption')}</button>
+                                        <button type="button" onClick={() => handleAddOption(index)} className="text-xs text-primary-600 hover:underline font-semibold flex items-center gap-1"><Plus size={12}/> {t('addOption')}</button>
                                     </div>
                                 )}
                             </div>
                         ))}
-                        <button type="button" onClick={handleAddFormInput} className="mt-2 text-sm text-primary-600 hover:underline">{t('addFormInput')}</button>
+                        <button type="button" onClick={handleAddFormInput} className="mt-2 w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary-500 hover:text-primary-500 transition-colors flex items-center justify-center gap-2 text-sm font-semibold">
+                            <Plus size={16}/> {t('addFormInput')}
+                        </button>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                         <button type="submit" className="flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700">{t('saveService')}</button>
+                    <div className="flex items-center gap-4 pt-4">
+                         <button type="submit" className="flex-grow bg-primary-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all">{t('saveService')}</button>
                          {(isEditingService || showServiceForm) && (
-                            <button type="button" onClick={handleCancelEditService} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">{t('cancel')}</button>
+                            <button type="button" onClick={handleCancelEditService} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
                          )}
                     </div>
                 </form>
             )}
 
 
-             <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b dark:border-gray-600 pb-2 mb-4">
-                    <h3 className="text-xl font-semibold">{t('existingServices')}</h3>
+             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('existingServices')}</h3>
                     {selectedServices.length > 0 && (
                         <button 
                             onClick={handleDeleteSelectedServices}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors duration-200 mt-2 sm:mt-0"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors shadow-md"
                         >
                             <Trash2 size={16} />
                             {t('deleteSelected')} ({selectedServices.length})
@@ -1527,7 +1614,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                     )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-6">
                     {(['all', ...Object.values(ServiceCategory)] as const).map((category) => {
                         const isActive = filterCategory === category;
                         const translationKey = category === 'all' ? 'allCategories' : category;
@@ -1535,10 +1622,10 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                             <button
                                 key={category}
                                 onClick={() => setFilterCategory(category)}
-                                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200
+                                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 border
                                     ${isActive
-                                        ? 'bg-primary-600 text-white shadow'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                        ? 'bg-primary-600 text-white border-primary-600 shadow-md'
+                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`
                                 }
                             >
@@ -1548,63 +1635,59 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                     })}
                 </div>
 
-                 {loadingServices ? <p>{t('loading')}</p> : serviceError ? <p className="text-red-500">{serviceError}</p> : (
-                    <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                            <table className="min-w-full divide-y dark:divide-gray-700">
-                                <thead>
-                                    <tr>
-                                        <th scope="col" className="px-4 py-3.5 sm:pl-0 w-12 text-center">
+                 {loadingServices ? <div className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></div> : serviceError ? <p className="text-red-500">{serviceError}</p> : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+                                <tr>
+                                    <th className="px-6 py-4 w-12 text-center">
+                                        <input
+                                            type="checkbox"
+                                            ref={selectAllCheckboxRef}
+                                            onChange={handleSelectAllToggle}
+                                            className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                                        />
+                                    </th>
+                                    <th className="px-6 py-4">{t('serviceName')}</th>
+                                    <th className="px-6 py-4">{t('category')}</th>
+                                    <th className="px-6 py-4">{t('subCategory')}</th>
+                                    <th className="px-6 py-4 text-center">{t('usage')}</th>
+                                    <th className="px-6 py-4 text-right">{t('actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {filteredServices.map(service => (
+                                    <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                                        <td className="px-6 py-4 text-center">
                                             <input
                                                 type="checkbox"
-                                                ref={selectAllCheckboxRef}
-                                                onChange={handleSelectAllToggle}
-                                                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-gray-100 dark:bg-gray-800"
-                                                aria-label={t('selectAll')}
+                                                value={service.id}
+                                                checked={selectedServices.includes(service.id)}
+                                                onChange={(e) => {
+                                                    setSelectedServices(
+                                                        e.target.checked
+                                                            ? [...selectedServices, service.id]
+                                                            : selectedServices.filter(id => id !== service.id)
+                                                    );
+                                                }}
+                                                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
                                             />
-                                        </th>
-                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('serviceName')}</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('category')}</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('subCategory')}</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('usage')}</th>
-                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{service.title[language]}</td>
+                                        <td className="px-6 py-4 capitalize text-gray-600 dark:text-gray-300">{t(service.category as keyof Translations)}</td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{service.subCategory[language]}</td>
+                                        <td className="px-6 py-4 text-center font-mono text-primary-600 font-bold">{service.usageCount || 0}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleRunClick(service)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1.5 rounded-lg transition-colors" title={t('run')}><Play size={16} /></button>
+                                                <button onClick={() => handleEditServiceClick(service)} className="text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 p-1.5 rounded-lg transition-colors" title={t('edit')}><Edit size={16} /></button>
+                                                <button onClick={() => handleDeleteService(service.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-lg transition-colors" title={t('delete')}><Trash2 size={16} /></button>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y dark:divide-gray-800">
-                                    {filteredServices.map(service => (
-                                        <tr key={service.id} className="dark:even:bg-gray-800/50">
-                                            <td className="px-4 py-4 sm:pl-0 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    value={service.id}
-                                                    checked={selectedServices.includes(service.id)}
-                                                    onChange={(e) => {
-                                                        setSelectedServices(
-                                                            e.target.checked
-                                                                ? [...selectedServices, service.id]
-                                                                : selectedServices.filter(id => id !== service.id)
-                                                        );
-                                                    }}
-                                                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-gray-100 dark:bg-gray-800"
-                                                    aria-labelledby={`service-name-${service.id}`}
-                                                />
-                                            </td>
-                                            <td id={`service-name-${service.id}`} className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-0">{service.title[language]}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm capitalize">{t(service.category as keyof Translations)}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm">{service.subCategory[language]}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm font-mono text-center">{service.usageCount || 0}</td>
-                                            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                                <div className="flex items-center justify-end gap-x-4">
-                                                    <button onClick={() => handleRunClick(service)} className="text-blue-500 hover:text-blue-700" title={t('run')}><Play size={16} /></button>
-                                                    <button onClick={() => handleEditServiceClick(service)} className="text-yellow-500 hover:text-yellow-700" title={t('edit')}><Edit size={16} /></button>
-                                                    <button onClick={() => handleDeleteService(service.id)} className="text-red-500 hover:text-red-700" title={t('delete')}><Trash2 size={16} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                  )}
              </div>
@@ -1618,69 +1701,71 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         };
 
         return (
-            <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{t('subscriptionManagement')}</h2>
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                        <CreditCard className="text-primary-500" /> {t('subscriptionManagement')}
+                    </h2>
                      <button
                         onClick={() => {
                             setSelectedUserForAction(null);
                             setIsGrantModalOpen(true);
                         }}
-                        className="bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 flex items-center gap-2"
+                        className="bg-green-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-green-700 shadow-lg shadow-green-600/20 flex items-center gap-2 transition-all"
                     >
                         <Plus size={18}/> {t('grantSubscription')}
                     </button>
                 </div>
-                <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
-                     <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                            <table className="min-w-full divide-y dark:divide-gray-700">
-                                <thead><tr>
-                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('email')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('currentPlan')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('status')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('tokenBalance')}</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('endsOn')}</th>
-                                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
-                                </tr></thead>
-                                <tbody className="divide-y dark:divide-gray-800">
-                                    {loadingSubs ? (
-                                        <tr><td colSpan={6} className="text-center py-8">{t('loading')}</td></tr>
-                                    ) : subError ? (
-                                        <tr><td colSpan={6} className="text-center py-8 text-red-500">{subError}</td></tr>
-                                    ) : usersWithSub.map(user => (
-                                        <tr key={user.id} className="dark:even:bg-gray-800">
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-0">{user.email}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                                                {user.subscription ? (
-                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.subscription.isManual ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>
-                                                        {getPlanName(user.subscription.planId)}
-                                                    </span>
-                                                ) : <span className="text-gray-500">{t('noSubscription')}</span>}
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                                                 {user.subscription ? (
-                                                    <span className="capitalize px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">{user.subscription.status}</span>
-                                                 ) : 'N/A'}
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm font-mono">{user.tokenBalance?.toLocaleString() ?? 0}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                                                {user.subscription ? new Date(user.subscription.current_period_end * 1000).toLocaleDateString() : 'N/A'}
-                                            </td>
-                                            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                                 <div className="flex items-center justify-end gap-x-2">
-                                                    {user.subscription?.isManual ? (
-                                                        <button onClick={() => handleRevokeSubscription(user.id, user.subscription!.id)} className="text-red-500 hover:text-red-700">{t('revoke')}</button>
-                                                    ) : user.subscription && user.stripeId ? (
-                                                        <a href={`https://dashboard.stripe.com/customers/${user.stripeId}`} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">{t('manageInStripe')}</a>
-                                                    ) : null}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+                                <tr>
+                                    <th className="px-6 py-4">{t('email')}</th>
+                                    <th className="px-6 py-4">{t('currentPlan')}</th>
+                                    <th className="px-6 py-4">{t('status')}</th>
+                                    <th className="px-6 py-4">{t('tokenBalance')}</th>
+                                    <th className="px-6 py-4">{t('endsOn')}</th>
+                                    <th className="px-6 py-4 text-right">{t('actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {loadingSubs ? (
+                                    <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
+                                ) : subError ? (
+                                    <tr><td colSpan={6} className="text-center py-10 text-red-500">{subError}</td></tr>
+                                ) : usersWithSub.map(user => (
+                                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{user.email}</td>
+                                        <td className="px-6 py-4">
+                                            {user.subscription ? (
+                                                 <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${user.subscription.isManual ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                                                    {getPlanName(user.subscription.planId)}
+                                                </span>
+                                            ) : <span className="text-gray-400 italic text-xs">{t('noSubscription')}</span>}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                             {user.subscription ? (
+                                                <span className="capitalize px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">{user.subscription.status}</span>
+                                             ) : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 font-mono text-gray-600 dark:text-gray-300">{user.tokenBalance?.toLocaleString() ?? 0}</td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                                            {user.subscription ? new Date(user.subscription.current_period_end * 1000).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                             <div className="flex items-center justify-end gap-2">
+                                                {user.subscription?.isManual ? (
+                                                    <button onClick={() => handleRevokeSubscription(user.id, user.subscription!.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1 rounded-md text-xs font-bold transition-colors">{t('revoke')}</button>
+                                                ) : user.subscription && user.stripeId ? (
+                                                    <a href={`https://dashboard.stripe.com/customers/${user.stripeId}`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/20 px-3 py-1 rounded-md text-xs font-bold transition-colors">{t('manageInStripe')}</a>
+                                                ) : null}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1688,125 +1773,135 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     };
 
     const renderPlanManagementContent = () => (
-        <div>
-             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{t('planManagement')}</h2>
+        <div className="space-y-6">
+             <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                    <Star className="text-primary-500" /> {t('planManagement')}
+                </h2>
                 <button
                     onClick={handleAddPlanClick}
-                    className="bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 flex items-center gap-2"
+                    className="bg-primary-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-600/20 flex items-center gap-2 transition-all"
                 >
                     <Plus size={18}/> {t('addNewPlan')}
                 </button>
             </div>
             
             {showPlanForm && editingPlan && (
-                <PlanForm 
-                    plan={editingPlan}
-                    onSave={handleSavePlan}
-                    onCancel={handleCancelPlanEdit}
-                    isEditing={!!plans.find(p => p.id === editingPlan.id)}
-                />
+                <div className="animate-fade-in-down">
+                    <PlanForm 
+                        plan={editingPlan}
+                        onSave={handleSavePlan}
+                        onCancel={handleCancelPlanEdit}
+                        isEditing={!!plans.find(p => p.id === editingPlan.id)}
+                    />
+                </div>
             )}
 
-            <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
-                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                         <table className="min-w-full divide-y dark:divide-gray-700">
-                            <thead><tr>
-                                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('plan')}</th>
-                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('planPriceEn')}</th>
-                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('tokens')}</th>
-                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('status')}</th>
-                                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
-                            </tr></thead>
-                            <tbody className="divide-y dark:divide-gray-800">
-                                {loadingPlans ? (
-                                    <tr><td colSpan={5} className="text-center py-8">{t('loading')}</td></tr>
-                                ) : planError ? (
-                                    <tr><td colSpan={5} className="text-center py-8 text-red-500">{planError}</td></tr>
-                                ) : plans.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center py-8">{t('noPlansFound')}</td></tr>
-                                ) : plans.map(plan => (
-                                    <tr key={plan.id} className="dark:even:bg-gray-800">
-                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-0">
-                                            <div className='flex items-center gap-2'>
-                                            {plan.isPopular && <Star size={14} className="text-yellow-400" fill="currentColor"/>}
-                                            <span className='text-gray-900 dark:text-white'>{plan.title[language]}</span>
-                                            </div>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{plan.id}</span>
-                                        </td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm">{plan.price[language]}</td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm font-mono">{plan.tokens.toLocaleString()}</td>
-                                        <td className="whitespace-nowrap px-3 py-4 text-sm">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${plan.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-300'}`}>
-                                                {t(plan.status)}
-                                            </span>
-                                        </td>
-                                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                            <div className="flex items-center justify-end gap-x-4">
-                                                 <button onClick={() => handleTogglePlanStatus(plan)} className={plan.status === 'active' ? "text-yellow-500 hover:text-yellow-700" : "text-green-500 hover:text-green-700"} title={plan.status === 'active' ? t('deactivate') : t('activate')}>
-                                                    {plan.status === 'active' ? t('deactivate') : t('activate')}
-                                                </button>
-                                                <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:text-blue-700" title={t('edit')}><Edit size={16} /></button>
-                                                <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:text-red-700" title={t('delete')}><Trash2 size={16} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                         </table>
-                    </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                     <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+                            <tr>
+                                <th className="px-6 py-4">{t('plan')}</th>
+                                <th className="px-6 py-4">{t('planPriceEn')}</th>
+                                <th className="px-6 py-4">{t('tokens')}</th>
+                                <th className="px-6 py-4">{t('status')}</th>
+                                <th className="px-6 py-4 text-right">{t('actions')}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {loadingPlans ? (
+                                <tr><td colSpan={5} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
+                            ) : planError ? (
+                                <tr><td colSpan={5} className="text-center py-10 text-red-500">{planError}</td></tr>
+                            ) : plans.length === 0 ? (
+                                <tr><td colSpan={5} className="text-center py-10 text-gray-500">{t('noPlansFound')}</td></tr>
+                            ) : plans.map(plan => (
+                                <tr key={plan.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className='flex items-center gap-2'>
+                                        {plan.isPopular && <Star size={16} className="text-yellow-400 fill-current" />}
+                                        <span className='font-bold text-gray-900 dark:text-white'>{plan.title[language]}</span>
+                                        </div>
+                                        <span className="text-xs text-gray-400 font-mono mt-1 block">{plan.id}</span>
+                                    </td>
+                                    <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300">{plan.price[language]}</td>
+                                    <td className="px-6 py-4 font-mono text-primary-600 font-bold">{plan.tokens.toLocaleString()}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full flex w-fit items-center gap-1 capitalize ${plan.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                                            {plan.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>}
+                                            {t(plan.status)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                             <button onClick={() => handleTogglePlanStatus(plan)} className={`p-1.5 rounded-lg transition-colors ${plan.status === 'active' ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30" : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"}`} title={plan.status === 'active' ? t('deactivate') : t('activate')}>
+                                                {plan.status === 'active' ? <Ban size={18} /> : <CheckCircle size={18} />}
+                                            </button>
+                                            <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1.5 rounded-lg transition-colors" title={t('edit')}><Edit size={18} /></button>
+                                            <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-lg transition-colors" title={t('delete')}><Trash2 size={18} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                     </table>
                 </div>
             </div>
         </div>
     );
 
     const renderLandingPageGenerator = () => (
-        <div className="max-w-4xl mx-auto">
-             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Landing Page Generator</h2>
+        <div className="max-w-5xl mx-auto space-y-6">
+             <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                <LayoutTemplate className="text-primary-500" /> Landing Page Generator
+             </h2>
              
-             <div className="bg-light-card-bg dark:bg-dark-card-bg p-8 rounded-xl shadow-lg border dark:border-gray-700">
-                <div className="mb-8 text-center">
-                    <div className="inline-block p-4 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 mb-4">
-                        <Wand2 size={40} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Generate a Full Landing Page with AI</h3>
-                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                        Enter a topic (e.g., "Divorce Services" or "Corporate Law Firm"), and the AI will generate titles, subtitles, and 9 distinct features with appropriate icons and colors.
-                    </p>
+             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 text-center">
+                <div className="inline-block p-6 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-700 dark:to-gray-600 text-primary-600 dark:text-primary-400 mb-6 shadow-inner">
+                    <Wand2 size={64} />
                 </div>
+                <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Generate a Full Landing Page with AI</h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed">
+                    Enter a topic (e.g., "Divorce Services" or "Corporate Law Firm"), and the AI will generate titles, subtitles, and 9 distinct features with appropriate icons and colors.
+                </p>
 
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
                     <input
                         type="text"
                         value={landingPagePrompt}
                         onChange={(e) => setLandingPagePrompt(e.target.value)}
                         placeholder="Enter topic (e.g., Real Estate Law Services)"
-                        className="flex-grow p-4 text-lg border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500"
+                        className="flex-grow px-5 py-4 text-lg border border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 outline-none shadow-sm"
                     />
                     <button
                         onClick={handleGenerateLandingPage}
                         disabled={isGeneratingLanding || !landingPagePrompt.trim()}
-                        className="px-8 py-4 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center gap-2 min-w-[200px]"
+                        className="px-8 py-4 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/30 transition-all min-w-[160px]"
                     >
                         {isGeneratingLanding ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />}
-                        Generate Page
+                        Generate
                     </button>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div className="flex justify-between items-center">
-                        <p className="text-sm text-gray-500">Current Status: {siteSettings.landingPageConfig ? <span className="text-green-600 font-bold">Custom Page Active</span> : <span className="text-gray-500 font-bold">Default Page Active</span>}</p>
-                        
-                        {siteSettings.landingPageConfig && (
-                            <button 
-                                onClick={handleClearLandingConfig}
-                                className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
-                            >
-                                <RefreshCw size={14} /> Reset to Default
-                            </button>
+                <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Current Status:</span>
+                        {siteSettings.landingPageConfig ? (
+                            <span className="text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-100">Custom Page Active</span>
+                        ) : (
+                            <span className="text-gray-500 font-bold bg-gray-100 px-3 py-1 rounded-full">Default Page Active</span>
                         )}
                     </div>
+                    
+                    {siteSettings.landingPageConfig && (
+                        <button 
+                            onClick={handleClearLandingConfig}
+                            className="text-red-500 hover:text-red-700 font-medium flex items-center gap-1.5 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            <RefreshCw size={16} /> Reset to Default
+                        </button>
+                    )}
                 </div>
              </div>
         </div>
@@ -1814,171 +1909,171 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
     const renderMarketingContent = () => {
         return (
-            <div>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
-                     <BarChart size={24} className="text-primary-500"/>
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                     <BarChart className="text-primary-500"/>
                      {t('marketing')}
                 </h2>
-                <form onSubmit={handleSaveSettings} className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-6">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{t('adPixelsDesc')}</p>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/30">{t('adPixelsDesc')}</p>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
-                            <div className="relative">
+                    <form onSubmit={handleSaveSettings} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
                                 <input 
                                     type="text" 
                                     placeholder="G-XXXXXXXXXX" 
                                     value={siteSettings.adPixels?.googleTagId || ''} 
                                     onChange={e => handleAdPixelChange('googleTagId', e.target.value)} 
-                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm" 
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none text-left ltr" 
                                     dir="ltr"
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
-                            <div className="relative">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
                                 <input 
                                     type="text" 
                                     placeholder="123456789012345" 
                                     value={siteSettings.adPixels?.facebookPixelId || ''} 
                                     onChange={e => handleAdPixelChange('facebookPixelId', e.target.value)} 
-                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none text-left ltr"
                                     dir="ltr"
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
-                            <div className="relative">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
                                 <input 
                                     type="text" 
                                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
                                     value={siteSettings.adPixels?.snapchatPixelId || ''} 
                                     onChange={e => handleAdPixelChange('snapchatPixelId', e.target.value)} 
-                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none text-left ltr"
                                     dir="ltr"
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
-                            <div className="relative">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
                                 <input 
                                     type="text" 
                                     placeholder="Cxxxxxxxxxxxxx" 
                                     value={siteSettings.adPixels?.tiktokPixelId || ''} 
                                     onChange={e => handleAdPixelChange('tiktokPixelId', e.target.value)} 
-                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none text-left ltr"
                                     dir="ltr"
                                 />
                             </div>
                         </div>
-                    </div>
 
-                     <div className="flex justify-end pt-4 border-t dark:border-gray-700 mt-4">
-                         <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center gap-2">
-                            {savingSettings && <Loader2 className="animate-spin" size={20} />}
-                            {t('saveSettings')}
-                        </button>
-                    </div>
-                </form>
+                         <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
+                             <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white font-bold py-2.5 px-8 rounded-xl hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20 transition-all">
+                                {savingSettings && <Loader2 className="animate-spin" size={20} />}
+                                {t('saveSettings')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         )
     }
     
     const renderSiteSettingsContent = () => {
-        if (loadingSettings) return <div className="text-center py-8"><Loader2 className="animate-spin inline-block" /></div>;
+        if (loadingSettings) return <div className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></div>;
 
         return (
-            <div>
-                 <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('siteSettings')}</h2>
-                 <form onSubmit={handleSaveSettings} className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-6">
+            <div className="space-y-6">
+                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                    <Cog className="text-primary-500" /> {t('siteSettings')}
+                 </h2>
+                 <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
                     {/* Site Name */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">{t('siteNameEn')}</label>
-                            <input type="text" value={siteSettings.siteName.en} onChange={e => handleNestedSiteSettingsChange('siteName', Language.EN, e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteNameEn')}</label>
+                            <input type="text" value={siteSettings.siteName.en} onChange={e => handleNestedSiteSettingsChange('siteName', Language.EN, e.target.value)} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">{t('siteNameAr')}</label>
-                            <input type="text" value={siteSettings.siteName.ar} onChange={e => handleNestedSiteSettingsChange('siteName', Language.AR, e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                        <div className="space-y-1">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteNameAr')}</label>
+                            <input type="text" value={siteSettings.siteName.ar} onChange={e => handleNestedSiteSettingsChange('siteName', Language.AR, e.target.value)} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
                         </div>
                     </div>
 
                     {/* Logo & Favicon */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">{t('logo')}</label>
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
-                                    {siteSettings.logoUrl ? <img src={siteSettings.logoUrl} alt="Current Logo" className="object-contain h-full w-full" /> : <span className="text-xs text-gray-500">{t('current')}</span>}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('logo')}</label>
+                            <div className="flex items-center gap-4 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                                <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                                    {siteSettings.logoUrl ? <img src={siteSettings.logoUrl} alt="Logo" className="object-contain h-full w-full" /> : <span className="text-xs text-gray-500">None</span>}
                                 </div>
-                                <label className="cursor-pointer text-sm text-primary-600 hover:underline">
-                                    {t('change')}
-                                    <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={e => setLogoFile(e.target.files ? e.target.files[0] : null)} />
-                                </label>
-                                {logoFile && <span className="text-xs text-gray-500">{logoFile.name}</span>}
+                                <div className="flex-grow">
+                                    <label className="cursor-pointer px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors inline-block">
+                                        {t('change')}
+                                        <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={e => setLogoFile(e.target.files ? e.target.files[0] : null)} />
+                                    </label>
+                                    {logoFile && <span className="text-xs text-gray-500 block mt-1 truncate max-w-[200px]">{logoFile.name}</span>}
+                                </div>
                             </div>
                         </div>
-                         <div>
-                            <label className="block text-sm font-medium mb-2">{t('favicon')}</label>
-                            <div className="flex items-center gap-4">
-                                 <div className="w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
-                                     {siteSettings.faviconUrl ? <img src={siteSettings.faviconUrl} alt="Current Favicon" className="object-contain h-full w-full" /> : <span className="text-xs text-gray-500">{t('current')}</span>}
+                         <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('favicon')}</label>
+                            <div className="flex items-center gap-4 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                                 <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                                     {siteSettings.faviconUrl ? <img src={siteSettings.faviconUrl} alt="Favicon" className="object-contain h-8 w-8" /> : <span className="text-xs text-gray-500">None</span>}
                                  </div>
-                                <label className="cursor-pointer text-sm text-primary-600 hover:underline">
-                                    {t('change')}
-                                    <input type="file" accept="image/x-icon, image/png, image/svg+xml" className="hidden" onChange={e => setFaviconFile(e.target.files ? e.target.files[0] : null)} />
-                                </label>
-                                {faviconFile && <span className="text-xs text-gray-500">{faviconFile.name}</span>}
+                                <div className="flex-grow">
+                                    <label className="cursor-pointer px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors inline-block">
+                                        {t('change')}
+                                        <input type="file" accept="image/x-icon, image/png, image/svg+xml" className="hidden" onChange={e => setFaviconFile(e.target.files ? e.target.files[0] : null)} />
+                                    </label>
+                                    {faviconFile && <span className="text-xs text-gray-500 block mt-1 truncate max-w-[200px]">{faviconFile.name}</span>}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* SEO */}
                     <div>
-                        <h3 className="text-lg font-medium border-t dark:border-gray-700 pt-4 mt-4">SEO</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                             <div>
-                                <label className="block text-sm font-medium mb-1">{t('metaDescriptionEn')}</label>
-                                <textarea value={siteSettings.metaDescription.en} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.EN, e.target.value)} rows={3} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                        <h3 className="text-lg font-bold border-b border-gray-100 dark:border-gray-700 pb-2 mb-4 text-gray-800 dark:text-white">SEO</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="space-y-1">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionEn')}</label>
+                                <textarea value={siteSettings.metaDescription.en} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.EN, e.target.value)} rows={3} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">{t('metaDescriptionAr')}</label>
-                                <textarea value={siteSettings.metaDescription.ar} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.AR, e.target.value)} rows={3} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                            <div className="space-y-1">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionAr')}</label>
+                                <textarea value={siteSettings.metaDescription.ar} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.AR, e.target.value)} rows={3} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">{t('seoKeywordsEn')}</label>
-                                <input type="text" placeholder="e.g., law, legal, ai" value={siteSettings.seoKeywords.en} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.EN, e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                            <div className="space-y-1">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('seoKeywordsEn')}</label>
+                                <input type="text" placeholder="e.g., law, legal, ai" value={siteSettings.seoKeywords.en} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.EN, e.target.value)} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">{t('seoKeywordsAr')}</label>
-                                <input type="text" placeholder="مثال: قانون, محاماة, ذكاء اصطناعي" value={siteSettings.seoKeywords.ar} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.AR, e.target.value)} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                            <div className="space-y-1">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('seoKeywordsAr')}</label>
+                                <input type="text" placeholder="مثال: قانون, محاماة, ذكاء اصطناعي" value={siteSettings.seoKeywords.ar} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.AR, e.target.value)} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
                             </div>
                         </div>
                     </div>
 
                     {/* Maintenance Mode */}
                     <div>
-                         <h3 className="text-lg font-medium border-t dark:border-gray-700 pt-4 mt-4">{t('maintenanceMode')}</h3>
-                         <label className="mt-2 flex items-center p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50">
+                         <h3 className="text-lg font-bold border-b border-gray-100 dark:border-gray-700 pb-2 mb-4 text-gray-800 dark:text-white">{t('maintenanceMode')}</h3>
+                         <label className="flex items-center p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 cursor-pointer">
                             <div className="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => handleSiteSettingsChange('isMaintenanceMode', e.target.checked)} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-yellow-500"></div>
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-500"></div>
                             </div>
-                            <span className="ml-3 rtl:mr-3 text-sm font-medium text-yellow-800 dark:text-yellow-200">{t('enableMaintenance')}</span>
+                            <span className="ml-3 rtl:mr-3 font-medium text-amber-900 dark:text-amber-200">{t('enableMaintenance')}</span>
                         </label>
                     </div>
 
                     {/* Save Button */}
-                     <div className="flex justify-end pt-4 border-t dark:border-gray-700">
-                         <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
-                            {savingSettings && <Loader2 className="animate-spin mr-2" size={20} />}
+                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
+                         <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white font-bold py-2.5 px-8 rounded-xl hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20 transition-all">
+                            {savingSettings && <Loader2 className="animate-spin" size={20} />}
                             {t('saveSettings')}
                         </button>
                     </div>
@@ -1989,22 +2084,22 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
     // Render Support Content
     const renderSupportContent = () => (
-        <div className="flex h-[calc(100vh-120px)] bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow border dark:border-gray-700 overflow-hidden">
+        <div className="h-[calc(100vh-120px)] bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex">
             
             {/* Sidebar / List */}
-            <div className={`${selectedTicket && supportView === 'chat' ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-1/3 border-r dark:border-gray-700`}>
-                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-                    <h3 className="font-bold">{t('support')}</h3>
-                    <button onClick={() => setSupportView('settings')} className="text-gray-500 hover:text-primary-500">
+            <div className={`${selectedTicket && supportView === 'chat' ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 lg:w-96 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800`}>
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                    <h3 className="font-bold text-gray-800 dark:text-white">{t('support')}</h3>
+                    <button onClick={() => setSupportView('settings')} className="text-gray-500 hover:text-primary-600 transition-colors">
                         <Cog size={20} />
                     </button>
                 </div>
                 
                 {supportView === 'settings' ? (
-                    <div className="p-4 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h4 className="font-semibold">{t('manageTicketTypes')}</h4>
-                            <button onClick={() => setSupportView('list')}><X size={20}/></button>
+                    <div className="p-4 space-y-4 flex-col flex h-full">
+                        <div className="flex justify-between items-center mb-2">
+                            <h4 className="font-semibold text-sm">{t('manageTicketTypes')}</h4>
+                            <button onClick={() => setSupportView('list')} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
                         </div>
                         <div className="flex gap-2">
                             <input 
@@ -2012,41 +2107,43 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                 value={newTicketType} 
                                 onChange={e => setNewTicketType(e.target.value)} 
                                 placeholder={t('typePlaceholder')}
-                                className="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                                className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm"
                             />
-                            <button onClick={handleAddTicketType} className="bg-primary-600 text-white p-2 rounded"><Plus size={20}/></button>
+                            <button onClick={handleAddTicketType} className="bg-primary-600 text-white p-2 rounded-lg shadow-sm hover:bg-primary-700"><Plus size={20}/></button>
                         </div>
-                        <ul className="space-y-2">
+                        <div className="flex-grow overflow-y-auto custom-scrollbar space-y-2 mt-2">
                             {(siteSettings.ticketTypes || []).map((type, idx) => (
-                                <li key={idx} className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                                    <span>{type}</span>
-                                    <button onClick={() => handleRemoveTicketType(idx)} className="text-red-500"><Trash2 size={16}/></button>
-                                </li>
+                                <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <span className="text-sm font-medium">{type}</span>
+                                    <button onClick={() => handleRemoveTicketType(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </div>
                 ) : (
                     <div className="flex-grow overflow-y-auto custom-scrollbar">
                         {loadingTickets ? (
-                            <div className="p-4 text-center"><Loader2 className="animate-spin inline-block" /></div>
+                            <div className="p-10 text-center"><Loader2 className="animate-spin inline-block text-primary-500" /></div>
                         ) : (
                             tickets.map(ticket => (
                                 <div 
                                     key={ticket.id} 
                                     onClick={() => { setSelectedTicket(ticket); setSupportView('chat'); }}
-                                    className={`p-4 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                                    className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-primary-50 dark:bg-primary-900/10 border-l-4 border-l-primary-500' : 'border-l-4 border-l-transparent'}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="font-semibold truncate">{ticket.subject}</span>
-                                        {ticket.unreadAdmin && <span className="w-2 h-2 bg-red-500 rounded-full"></span>}
+                                        <span className={`font-semibold text-sm truncate ${ticket.unreadAdmin ? 'text-black dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{ticket.subject}</span>
+                                        {ticket.unreadAdmin && <span className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm"></span>}
                                     </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-                                        <span>{ticket.userEmail}</span>
-                                        <span>{new Date(ticket.lastUpdate?.seconds * 1000).toLocaleDateString()}</span>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-col gap-1">
+                                        <span className="font-medium text-primary-600 dark:text-primary-400">{ticket.userEmail}</span>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ticket.status === 'open' ? 'bg-green-100 text-green-700' : ticket.status === 'answered' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                {t(ticket.status)}
+                                            </span>
+                                            <span>{new Date(ticket.lastUpdate?.seconds * 1000).toLocaleDateString()}</span>
+                                        </div>
                                     </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full mt-2 inline-block ${ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                                        {t(ticket.status)}
-                                    </span>
                                 </div>
                             ))
                         )}
@@ -2055,15 +2152,22 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             </div>
 
             {/* Chat Area */}
-            <div className={`${!selectedTicket || supportView !== 'chat' ? 'hidden md:flex' : 'flex'} flex-col flex-grow w-full md:w-2/3 bg-white dark:bg-gray-900`}>
+            <div className={`${!selectedTicket || supportView !== 'chat' ? 'hidden md:flex' : 'flex'} flex-col flex-grow bg-gray-50 dark:bg-gray-900 relative`}>
                 {selectedTicket ? (
                     <>
-                        <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => {setSelectedTicket(null); setSupportView('list');}} className="md:hidden text-gray-500"><ChevronDown className="rotate-90"/></button>
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 shadow-sm z-10">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => {setSelectedTicket(null); setSupportView('list');}} className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                                    <ChevronRight size={20} className="rtl:hidden"/>
+                                    <ChevronLeft size={20} className="ltr:hidden"/>
+                                </button>
                                 <div>
-                                    <h3 className="font-bold">{selectedTicket.subject}</h3>
-                                    <p className="text-xs text-gray-500">{selectedTicket.userEmail} | {selectedTicket.type}</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                        <span>{selectedTicket.userEmail}</span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                        <span>{selectedTicket.type}</span>
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -2071,19 +2175,19 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                     onClick={() => {
                                         if(window.confirm("Close ticket?")) updateDoc(doc(db, 'support_tickets', selectedTicket.id), { status: 'closed' });
                                     }}
-                                    className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
+                                    className="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors font-medium"
                                 >
                                     {t('close')}
                                 </button>
                             </div>
                         </div>
                         
-                        <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+                        <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-gray-50 dark:bg-gray-900">
                             {messages.map(msg => (
                                 <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[75%] p-3 rounded-lg text-sm ${msg.senderRole === 'admin' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border dark:border-gray-600'}`}>
+                                    <div className={`max-w-[75%] p-4 rounded-2xl text-sm shadow-sm leading-relaxed ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
                                         <p>{msg.content}</p>
-                                        <p className="text-[10px] opacity-70 text-right mt-1">
+                                        <p className={`text-[10px] mt-2 opacity-70 text-right font-medium`}>
                                             {new Date(msg.createdAt?.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                                         </p>
                                     </div>
@@ -2092,21 +2196,25 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <form onSubmit={handleAdminReply} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                        <form onSubmit={handleAdminReply} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-3">
                             <input 
                                 type="text" 
                                 value={replyMessage} 
                                 onChange={e => setReplyMessage(e.target.value)} 
                                 placeholder={t('typeReply')}
-                                className="flex-grow p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="flex-grow px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                             />
-                            <button type="submit" disabled={!replyMessage.trim()} className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"><Send size={20}/></button>
+                            <button type="submit" disabled={!replyMessage.trim()} className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all disabled:opacity-50 disabled:shadow-none">
+                                <Send size={20} className="ltr:rotate-0 rtl:rotate-180"/>
+                            </button>
                         </form>
                     </>
                 ) : (
-                    <div className="flex-grow flex items-center justify-center text-gray-400 flex-col gap-2">
-                        <MessageSquare size={48} />
-                        <p>{t('selectUser')}</p>
+                    <div className="flex-grow flex items-center justify-center flex-col gap-4 text-gray-400">
+                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                             <MessageSquare size={40} />
+                        </div>
+                        <p className="font-medium">{t('selectUser')}</p>
                     </div>
                 )}
             </div>
@@ -2114,49 +2222,72 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     );
     
     return (
-        <div className="container mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row">
-            <aside className="w-full md:w-64 md:flex-shrink-0 md:mr-8 mb-8 md:mb-0">
-                <div className="md:sticky top-24">
-                    <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{t('adminPanel')}</h1>
-                    <nav className="space-y-2">
-                        <button onClick={() => setActiveTab('users')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'users' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <Users className="mr-3 h-5 w-5" /> {t('userManagement')}
-                        </button>
-                         <button onClick={() => setActiveTab('subscriptions')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'subscriptions' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <CreditCard className="mr-3 h-5 w-5" /> {t('subscriptionManagement')}
-                        </button>
-                         {/* New Support Tab */}
-                         <button onClick={() => setActiveTab('support')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'support' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <LifeBuoy className="mr-3 h-5 w-5" /> {t('support')}
-                        </button>
-                        <button onClick={() => setActiveTab('plans')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'plans' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <Star className="mr-3 h-5 w-5" /> {t('planManagement')}
-                        </button>
-                        <button onClick={() => setActiveTab('services')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'services' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <PlusSquare className="mr-3 h-5 w-5" /> {t('manageServices')}
-                        </button>
-                        <button onClick={() => setActiveTab('landing')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'landing' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <LayoutTemplate className="mr-3 h-5 w-5" /> Landing Page
-                        </button>
-                         <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'settings' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <Cog className="mr-3 h-5 w-5" /> {t('siteSettings')}
-                        </button>
-                        <button onClick={() => setActiveTab('marketing')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'marketing' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                            <BarChart className="mr-3 h-5 w-5" /> {t('marketing')}
-                        </button>
-                    </nav>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 font-sans">
+             <div className="max-w-7xl mx-auto">
+                 {/* Admin Header */}
+                 <div className="mb-8">
+                     <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('adminPanel')}</h1>
+                     <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back, Admin. Manage your platform efficiently.</p>
+                 </div>
+
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar */}
+                    <aside className="w-full lg:w-64 flex-shrink-0">
+                        <nav className="sticky top-24 space-y-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                             <p className="px-3 text-xs font-bold text-gray-400 uppercase mb-2 mt-1">Main Menu</p>
+                            {[
+                                { id: 'users', label: t('userManagement'), icon: Users },
+                                { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
+                                { id: 'support', label: t('support'), icon: LifeBuoy },
+                                { id: 'plans', label: t('planManagement'), icon: Star },
+                            ].map((item) => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)} 
+                                    className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 ${activeTab === item.id ? 'bg-gradient-to-r from-primary-600 to-teal-500 text-white shadow-md shadow-primary-500/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                                >
+                                    <item.icon className="mr-3 h-5 w-5 rtl:ml-3 rtl:mr-0" strokeWidth={activeTab === item.id ? 2.5 : 2} /> 
+                                    {item.label}
+                                </button>
+                            ))}
+                            
+                            <div className="my-2 border-t border-gray-100 dark:border-gray-700"></div>
+                            <p className="px-3 text-xs font-bold text-gray-400 uppercase mb-2 mt-2">Configuration</p>
+
+                            {[
+                                { id: 'services', label: t('manageServices'), icon: PlusSquare },
+                                { id: 'landing', label: 'Landing Page', icon: LayoutTemplate },
+                                { id: 'settings', label: t('siteSettings'), icon: Cog },
+                                { id: 'marketing', label: t('marketing'), icon: BarChart },
+                            ].map((item) => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)} 
+                                    className={`w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200 ${activeTab === item.id ? 'bg-gradient-to-r from-primary-600 to-teal-500 text-white shadow-md shadow-primary-500/20' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                                >
+                                    <item.icon className="mr-3 h-5 w-5 rtl:ml-3 rtl:mr-0" strokeWidth={activeTab === item.id ? 2.5 : 2} /> 
+                                    {item.label}
+                                </button>
+                            ))}
+                        </nav>
+                    </aside>
+                    
+                    {/* Main Content */}
+                    <main className="flex-1 min-w-0">
+                        <div className="animate-fade-in-up">
+                            {activeTab === 'users' && renderUserManagementContent()}
+                            {activeTab === 'services' && renderServiceManagementContent()}
+                            {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
+                            {activeTab === 'plans' && renderPlanManagementContent()}
+                            {activeTab === 'landing' && renderLandingPageGenerator()}
+                            {activeTab === 'settings' && renderSiteSettingsContent()}
+                            {activeTab === 'marketing' && renderMarketingContent()}
+                            {activeTab === 'support' && renderSupportContent()}
+                        </div>
+                    </main>
                 </div>
-            </aside>
-            <main className="flex-1 min-w-0">
-                {activeTab === 'users' && renderUserManagementContent()}
-                {activeTab === 'services' && renderServiceManagementContent()}
-                {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
-                {activeTab === 'plans' && renderPlanManagementContent()}
-                {activeTab === 'landing' && renderLandingPageGenerator()}
-                {activeTab === 'settings' && renderSiteSettingsContent()}
-                {activeTab === 'marketing' && renderMarketingContent()}
-                {activeTab === 'support' && renderSupportContent()}
-            </main>
+            </div>
+
             {isExecutionModalOpen && (
                 <ServiceExecutionModal 
                     isOpen={isExecutionModalOpen} 

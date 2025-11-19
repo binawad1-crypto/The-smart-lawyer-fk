@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -31,6 +31,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [fontSize, setFontSize] = useState(16);
     
+    // Voice Settings
+    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+    const [speechRate, setSpeechRate] = useState(1);
+    const [speechPitch, setSpeechPitch] = useState(1);
+    const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+    const settingsRef = useRef<HTMLDivElement>(null);
+
     // Search and Filter States
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +62,37 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 console.error("Failed to parse favorites", e);
             }
         }
+    }, []);
+
+    // Load Voices
+    useEffect(() => {
+        const loadVoices = () => {
+            const availableVoices = window.speechSynthesis.getVoices();
+            setVoices(availableVoices);
+        };
+
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }, []);
+
+    useEffect(() => {
+        // Reset selected voice when language changes if it doesn't match
+        if (selectedVoice && !selectedVoice.lang.startsWith(outputLanguage === Language.AR ? 'ar' : 'en')) {
+            setSelectedVoice(null);
+        }
+    }, [outputLanguage]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+                setShowVoiceSettings(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -323,7 +362,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setIsSpeaking(false);
         } else {
             const utterance = new SpeechSynthesisUtterance(result);
-            utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
+            
+            // Set Language based on Output Language logic
+            utterance.lang = outputLanguage === Language.AR ? 'ar-SA' : 'en-US';
+            
+            // Apply selected voice if any
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            // Apply speed and pitch
+            utterance.rate = speechRate;
+            utterance.pitch = speechPitch;
+
             utterance.onend = () => setIsSpeaking(false);
             speechSynthesis.speak(utterance);
             setIsSpeaking(true);
@@ -564,6 +615,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             );
         }
         if (result) {
+            const currentLangPrefix = outputLanguage === Language.AR ? 'ar' : 'en';
+            const filteredVoices = voices.filter(v => v.lang.startsWith(currentLangPrefix));
+
             return (
                 <div className="flex flex-col w-full h-full">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
@@ -575,10 +629,89 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                  <ZoomOut size={18} />
                              </button>
                              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                             <button onClick={handleListen} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
-                                <Volume2 size={16} />
-                                <span className="hidden sm:inline">{isSpeaking ? t('stop') : t('listen')}</span>
-                            </button>
+                             
+                             {/* Voice Controls */}
+                             <div className="relative" ref={settingsRef}>
+                                <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1">
+                                    <button onClick={handleListen} className="flex items-center gap-1.5 px-3 py-1 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all">
+                                        <Volume2 size={16} className={isSpeaking ? "text-green-500 animate-pulse" : ""} />
+                                        <span className="hidden sm:inline">{isSpeaking ? t('stop') : t('listen')}</span>
+                                    </button>
+                                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                                    <button onClick={() => setShowVoiceSettings(!showVoiceSettings)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all text-gray-500 hover:text-primary-600" title={t('voiceSettings')}>
+                                        <Settings2 size={16} />
+                                    </button>
+                                </div>
+
+                                {/* Voice Settings Popover */}
+                                {showVoiceSettings && (
+                                    <div className="absolute top-full mt-2 left-0 rtl:right-0 rtl:left-auto w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 z-20 animate-fade-in-down">
+                                        <h4 className="font-bold text-sm mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                                            <Sliders size={14} /> {t('voiceSettings')}
+                                        </h4>
+                                        
+                                        {/* Voice Select */}
+                                        <div className="mb-3">
+                                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('selectVoice')}</label>
+                                            <select 
+                                                value={selectedVoice?.name || ''} 
+                                                onChange={(e) => {
+                                                    const voice = voices.find(v => v.name === e.target.value);
+                                                    setSelectedVoice(voice || null);
+                                                }}
+                                                className="w-full p-2 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                            >
+                                                <option value="">Default</option>
+                                                {filteredVoices.map(v => (
+                                                    <option key={v.name} value={v.name}>{v.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Speed Slider */}
+                                        <div className="mb-3">
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-gray-500 dark:text-gray-400">{t('speed')}</span>
+                                                <span className="font-mono">{speechRate}x</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min="0.5" 
+                                                max="2" 
+                                                step="0.1" 
+                                                value={speechRate} 
+                                                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary-600"
+                                            />
+                                        </div>
+
+                                        {/* Pitch Slider */}
+                                        <div className="mb-3">
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-gray-500 dark:text-gray-400">{t('pitch')}</span>
+                                                <span className="font-mono">{speechPitch}</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min="0.5" 
+                                                max="2" 
+                                                step="0.1" 
+                                                value={speechPitch} 
+                                                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary-600"
+                                            />
+                                        </div>
+
+                                        <button 
+                                            onClick={() => { setSpeechRate(1); setSpeechPitch(1); setSelectedVoice(null); }}
+                                            className="w-full py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-colors"
+                                        >
+                                            {t('reset')}
+                                        </button>
+                                    </div>
+                                )}
+                             </div>
+
                              <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                                 <span className="hidden sm:inline">{isCopied ? t('copied') : t('copy')}</span>

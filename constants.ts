@@ -2,7 +2,7 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2 } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +16,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 export const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
-  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles,
+  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2,
   // FIX: Alias non-existent 'AspectRatio' icon to 'Ratio' for backward compatibility.
   AspectRatio: Ratio,
   // FIX: Alias non-existent 'Body' icon to 'PersonStanding' to prevent app crash from bad seed data.
@@ -137,6 +137,13 @@ export const translations: Translations = {
   searchServicePlaceholder: { en: 'Search for a service...', ar: 'ابحث عن خدمة...' },
   fullWidth: { en: 'Full Width', ar: 'عرض كامل' },
   standardWidth: { en: 'Standard Width', ar: 'عرض قياسي' },
+  
+  // Voice Settings
+  voiceSettings: { en: 'Voice Settings', ar: 'إعدادات الصوت' },
+  selectVoice: { en: 'Select Voice', ar: 'اختر الصوت' },
+  speed: { en: 'Speed', ar: 'السرعة' },
+  pitch: { en: 'Pitch', ar: 'النبرة' },
+  reset: { en: 'Reset', ar: 'إعادة تعيين' },
 
   // Admin
   adminPanel: { en: 'Admin Panel', ar: 'لوحة الإدارة' },
