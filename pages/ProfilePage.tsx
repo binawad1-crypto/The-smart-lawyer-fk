@@ -395,6 +395,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                                 {t('upgradeNow')} <ChevronRight size={16} className="rtl:rotate-180"/>
                             </button>
                         )}
+
+                         {/* Technical Support Section */}
+                         <div className={`mt-6 pt-4 border-t ${isPlanActive ? 'border-white/20' : 'border-gray-100 dark:border-gray-700'}`}>
+                            <p className={`text-xs mb-2 ${isPlanActive ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                {t('supportMessage')}
+                            </p>
+                            <a href="mailto:info@ai-guid.com" className={`text-sm font-bold hover:underline flex items-center gap-2 ${isPlanActive ? 'text-white' : 'text-primary-600 dark:text-primary-400'}`}>
+                               <Mail size={16} />
+                               info@ai-guid.com
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

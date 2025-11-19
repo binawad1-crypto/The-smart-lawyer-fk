@@ -346,4 +346,6 @@ export const translations: Translations = {
   disclaimerTitle: { en: 'Disclaimer', ar: 'تنبيه' },
   disclaimerText: { en: 'The site does not bear any responsibility for the accuracy, correctness, or reliability of the data displayed within it, and the use of the displayed content is the sole responsibility of the user.', ar: 'لا يتحمّل الموقع أي مسؤولية عن دقة أو صحة أو موثوقية البيانات المعروضة داخله، ويُعد استخدام المحتوى المعروض على مسؤولية المستخدم وحده.' },
   copyrightText: { en: 'All rights reserved | ai-guid.com', ar: 'كافة الحقوق محفوظة | ai-guid.com' },
+  technicalSupport: { en: 'Technical Support', ar: 'الدعم الفني' },
+  supportMessage: { en: 'For any technical assistance or inquiry about our services, we are happy to contact you via email:', ar: 'لأي مساعدة تقنية أو استفسار عن خدماتنا، يسعدنا تواصلك عبر البريد:' },
 };

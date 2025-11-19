@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -10,9 +11,16 @@ const Footer: React.FC = () => {
         <p className="text-xs text-gray-500 dark:text-gray-400 max-w-4xl mx-auto">
           <span className="font-bold">{t('disclaimerTitle')}:</span> {t('disclaimerText')}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          {t('copyrightText')}
-        </p>
+        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2">
+          <span>{t('copyrightText')}</span>
+          <span className="hidden md:inline">|</span>
+          <div className="flex items-center gap-1">
+            <span>{t('technicalSupport')}:</span>
+            <a href="mailto:info@ai-guid.com" className="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+                info@ai-guid.com
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );

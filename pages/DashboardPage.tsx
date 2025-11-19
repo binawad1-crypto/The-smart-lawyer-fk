@@ -369,7 +369,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </button>
                             ))}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                             {(servicesByCategory[selectedCategory] || []).map(service => (
                                 <button
                                     key={service.id}
@@ -388,7 +388,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 {!loadingServices && !errorServices && advancedServices.length > 0 && (
                      <div className="mb-4">
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">{t('advancedServices')}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {advancedServices.map(service => {
                                 const Icon = iconMap[service.icon] || Wand2;
                                 return (

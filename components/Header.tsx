@@ -91,10 +91,10 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              ) : (
                 <div className="flex flex-col items-start leading-none">
                   <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                    المساعد الذكي
+                    {t('appName')}
                   </h1>
                   <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1">
-                    للمحاماه
+                    {t('appSubtitle')}
                   </p>
                 </div>
              )}
