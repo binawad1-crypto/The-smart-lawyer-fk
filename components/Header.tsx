@@ -94,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
                 <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto" />
              ) : (
                 <div className="flex flex-col items-start leading-none">
-                  <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                  <h1 className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                     {t('appName')}
                   </h1>
                   <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1">
@@ -105,17 +105,19 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
           </button>
           <div className="flex items-center space-x-1 md:space-x-2">
             {currentUser && (
-                view === 'landing' && onServicesClick ? (
-                    <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
-                        <LayoutDashboard size={20} />
-                        <span className="hidden sm:inline text-sm font-semibold">{t('services')}</span>
-                    </button>
-                ) : (
-                    <button onClick={onHomeClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('home')}>
-                        <Home size={20} />
-                        <span className="hidden sm:inline text-sm font-semibold">{t('home')}</span>
-                    </button>
-                )
+                <div className="hidden md:block">
+                    {view === 'landing' && onServicesClick ? (
+                        <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
+                            <LayoutDashboard size={20} />
+                            <span className="text-sm font-semibold">{t('services')}</span>
+                        </button>
+                    ) : (
+                        <button onClick={onHomeClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('home')}>
+                            <Home size={20} />
+                            <span className="text-sm font-semibold">{t('home')}</span>
+                        </button>
+                    )}
+                </div>
             )}
             {currentUser && !currentUser.isAdmin && (
                 <>
@@ -130,15 +132,17 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              </button>
              <button onClick={() => setLanguage(language === Language.EN ? Language.AR : Language.EN)} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                 <Globe size={20} />
-                <span className="ml-2 font-semibold">{language === Language.EN ? 'AR' : 'EN'}</span>
+                <span className="ml-2 font-semibold hidden sm:inline">{language === Language.EN ? 'AR' : 'EN'}</span>
              </button>
             {currentUser?.isAdmin && (
-                <button onClick={onAdminClick} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button onClick={onAdminClick} className="hidden md:block p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     <Shield size={20} />
                 </button>
             )}
              {currentUser ? (
-                 <UserMenu onProfileClick={onProfileClick} onLogout={handleLogout} />
+                 <div className="hidden md:block">
+                    <UserMenu onProfileClick={onProfileClick} onLogout={handleLogout} />
+                 </div>
              ) : (
                 <button onClick={onLoginClick} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     {t('login')}

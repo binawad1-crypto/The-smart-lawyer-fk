@@ -11,6 +11,7 @@ import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
 import ProfilePage from './pages/ProfilePage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import MobileBottomNav from './components/MobileBottomNav';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions';
@@ -129,15 +130,25 @@ const App: React.FC = () => {
         onServicesClick={() => setView('dashboard')}
         view={view}
       />
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col pb-16 md:pb-0">
         {renderContent()}
       </main>
+      
+      {currentUser && (
+        <MobileBottomNav 
+          currentView={view} 
+          onNavigate={handleNavigate} 
+        />
+      )}
+
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         initialView={initialAuthView}
       />
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };
