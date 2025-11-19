@@ -47,6 +47,10 @@ export const translations: Translations = {
   location: { en: 'Jurisdiction / Country', ar: 'النطاق الجغرافي / الدولة' },
   detectingLocation: { en: 'Detecting location...', ar: 'جاري تحديد الموقع...' },
   locationPlaceholder: { en: 'e.g., Saudi Arabia, UAE', ar: 'مثال: السعودية، الإمارات' },
+  locationAwarenessMessage: { 
+      en: 'From the moment you enter, the system automatically identifies your jurisdiction and tailors legal information and services compliant with local regulations.', 
+      ar: 'من لحظة دخولك… النظام يحدد بلدك تلقائيًا ويصيغ لك معلومات وخدمات قانونية متوافقة مع الأنظمة المحلية.' 
+  },
 
   // Landing Page
   landingTitle: { en: 'AI-Powered Legal Services', ar: 'خدمات قانونية مدعومة بالذكاء الاصطناعي' },

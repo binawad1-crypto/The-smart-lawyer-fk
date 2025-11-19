@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { useAuth } from '../hooks/useAuth';
-import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard } from 'lucide-react';
+import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Plan, Translations, LandingPageConfig } from '../types';
@@ -102,7 +102,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-gray-800 dark:text-gray-200 font-sans">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-20 md:pt-48 md:pb-24 overflow-hidden">
         {/* Background Gradients */}
         <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 opacity-80"></div>
@@ -139,6 +139,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
           </div>
         </div>
       </section>
+
+      {/* Location Awareness Section - Premium Style */}
+      <div className="relative z-20 px-4 sm:px-6 -mt-8 mb-12">
+        <div className="container mx-auto max-w-5xl">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 shadow-2xl shadow-blue-900/30 border border-blue-500/30">
+                
+                {/* Background Pattern/Glow */}
+                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 to-transparent opacity-70"></div>
+                <div className="absolute -left-20 top-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+
+                <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 p-8 md:p-10 text-center md:text-start rtl:md:text-right">
+                    {/* Animated Icon Container */}
+                    <div className="flex-shrink-0 relative group">
+                        <div className="absolute inset-0 bg-blue-500 blur-xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                        <div className="relative p-5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full text-white shadow-lg border border-white/10">
+                            <MapPin size={36} strokeWidth={2} />
+                        </div>
+                    </div>
+
+                    {/* Text Content */}
+                    <div className="max-w-3xl">
+                         <p className="text-lg md:text-xl font-bold text-white leading-loose tracking-wide drop-shadow-md">
+                            {t('locationAwarenessMessage')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
 
       {/* Features Section */}
       <section id="features" className="py-24 relative">
