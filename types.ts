@@ -50,6 +50,13 @@ export interface LandingPageConfig {
   features: LandingPageFeature[];
 }
 
+export interface AdPixels {
+  googleTagId?: string; // G-XXXXXXXXXX or AW-XXXXXXXXXX
+  facebookPixelId?: string;
+  snapchatPixelId?: string;
+  tiktokPixelId?: string;
+}
+
 export interface SiteSettings {
   siteName: Record<Language, string>;
   metaDescription: Record<Language, string>;
@@ -58,6 +65,7 @@ export interface SiteSettings {
   faviconUrl: string;
   isMaintenanceMode: boolean;
   landingPageConfig?: LandingPageConfig;
+  adPixels?: AdPixels;
 }
 
 export interface SiteSettingsContextType {

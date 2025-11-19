@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig } from '../types';
+import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig, AdPixels } from '../types';
 import { iconNames, ADMIN_EMAIL } from '../constants';
 import { Type } from "@google/genai";
 import { generateServiceConfigWithAI } from '../services/geminiService';
@@ -61,6 +61,7 @@ const initialSiteSettings: SiteSettings = {
     logoUrl: '',
     faviconUrl: '',
     isMaintenanceMode: false,
+    adPixels: {},
 };
 
 
@@ -592,6 +593,7 @@ const AdminPage = () => {
                     siteName: { ...initialSiteSettings.siteName, ...(data.siteName || {}) },
                     metaDescription: { ...initialSiteSettings.metaDescription, ...(data.metaDescription || {}) },
                     seoKeywords: { ...initialSiteSettings.seoKeywords, ...(data.seoKeywords || {}) },
+                    adPixels: { ...initialSiteSettings.adPixels, ...(data.adPixels || {}) }
                 });
             } else {
                 setSiteSettings(initialSiteSettings);
@@ -614,7 +616,7 @@ const AdminPage = () => {
             fetchPlans();
         } else if (activeTab === 'plans') {
             fetchPlans();
-        } else if (activeTab === 'settings' || activeTab === 'landing') {
+        } else if (activeTab === 'settings' || activeTab === 'landing' || activeTab === 'marketing') {
             fetchSiteSettings();
         }
     }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings]);
@@ -1185,6 +1187,13 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     // Site Settings Handlers
     const handleSiteSettingsChange = (field: keyof SiteSettings, value: any) => {
         setSiteSettings(prev => ({ ...prev, [field]: value }));
+    };
+    
+    const handleAdPixelChange = (field: keyof AdPixels, value: string) => {
+        setSiteSettings(prev => ({
+            ...prev,
+            adPixels: { ...prev.adPixels, [field]: value }
+        }));
     };
 
     const handleNestedSiteSettingsChange = (field: 'siteName' | 'metaDescription' | 'seoKeywords', lang: Language, value: string) => {
@@ -1787,6 +1796,85 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
              </div>
         </div>
     );
+
+    const renderMarketingContent = () => {
+        return (
+            <div>
+                <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
+                     <BarChart size={24} className="text-primary-500"/>
+                     {t('marketing')}
+                </h2>
+                <form onSubmit={handleSaveSettings} className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700 space-y-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{t('adPixelsDesc')}</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="G-XXXXXXXXXX" 
+                                    value={siteSettings.adPixels?.googleTagId || ''} 
+                                    onChange={e => handleAdPixelChange('googleTagId', e.target.value)} 
+                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm" 
+                                    dir="ltr"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="123456789012345" 
+                                    value={siteSettings.adPixels?.facebookPixelId || ''} 
+                                    onChange={e => handleAdPixelChange('facebookPixelId', e.target.value)} 
+                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    dir="ltr"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
+                                    value={siteSettings.adPixels?.snapchatPixelId || ''} 
+                                    onChange={e => handleAdPixelChange('snapchatPixelId', e.target.value)} 
+                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    dir="ltr"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Cxxxxxxxxxxxxx" 
+                                    value={siteSettings.adPixels?.tiktokPixelId || ''} 
+                                    onChange={e => handleAdPixelChange('tiktokPixelId', e.target.value)} 
+                                    className="w-full pl-3 pr-10 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 text-left ltr font-mono text-sm"
+                                    dir="ltr"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                     <div className="flex justify-end pt-4 border-t dark:border-gray-700 mt-4">
+                         <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white font-bold py-2 px-6 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center gap-2">
+                            {savingSettings && <Loader2 className="animate-spin" size={20} />}
+                            {t('saveSettings')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        )
+    }
     
     const renderSiteSettingsContent = () => {
         if (loadingSettings) return <div className="text-center py-8"><Loader2 className="animate-spin inline-block" /></div>;
@@ -1908,6 +1996,9 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                          <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'settings' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                             <Cog className="mr-3 h-5 w-5" /> {t('siteSettings')}
                         </button>
+                        <button onClick={() => setActiveTab('marketing')} className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md text-left ${activeTab === 'marketing' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                            <BarChart className="mr-3 h-5 w-5" /> {t('marketing')}
+                        </button>
                     </nav>
                 </div>
             </aside>
@@ -1918,6 +2009,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 {activeTab === 'plans' && renderPlanManagementContent()}
                 {activeTab === 'landing' && renderLandingPageGenerator()}
                 {activeTab === 'settings' && renderSiteSettingsContent()}
+                {activeTab === 'marketing' && renderMarketingContent()}
             </main>
             {isExecutionModalOpen && (
                 <ServiceExecutionModal 

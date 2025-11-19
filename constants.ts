@@ -2,7 +2,7 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +16,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 export const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
-  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard,
+  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart,
   // FIX: Alias non-existent 'AspectRatio' icon to 'Ratio' for backward compatibility.
   AspectRatio: Ratio,
   // FIX: Alias non-existent 'Body' icon to 'PersonStanding' to prevent app crash from bad seed data.
@@ -134,6 +134,7 @@ export const translations: Translations = {
   subscriptionManagement: { en: 'Subscription Management', ar: 'إدارة الاشتراكات' },
   planManagement: { en: 'Plan Management', ar: 'إدارة الباقات' },
   siteSettings: { en: 'Site Settings', ar: 'إعدادات الموقع' },
+  marketing: { en: 'Marketing & Tracking', ar: 'التسويق والربط' },
   grantSubscription: { en: 'Grant Subscription', ar: 'منح اشتراك' },
   grant: { en: 'Grant', ar: 'منح' },
   selectUser: { en: 'Select User', ar: 'اختر مستخدم' },
@@ -340,7 +341,13 @@ export const translations: Translations = {
   settingsSavedSuccess: { en: 'Site settings saved successfully!', ar: 'تم حفظ إعدادات الموقع بنجاح!' },
   settingsSavedError: { en: 'Failed to save site settings.', ar: 'فشل حفظ إعدادات الموقع.' },
   uploadError: { en: 'File upload failed.', ar: 'فشل رفع الملف.' },
-  
+  adPixels: { en: 'Advertising Tracking Pixels', ar: 'أكواد التتبع الإعلانية' },
+  adPixelsDesc: { en: 'Enter the ID for each platform to enable tracking automatically.', ar: 'أدخل المعرف (ID) لكل منصة لتفعيل التتبع تلقائياً.' },
+  googleTagId: { en: 'Google Tag ID (G-xxx / AW-xxx)', ar: 'معرف Google Tag (G-xxx / AW-xxx)' },
+  facebookPixelId: { en: 'Facebook Pixel ID', ar: 'معرف Facebook Pixel' },
+  snapchatPixelId: { en: 'Snapchat Pixel ID', ar: 'معرف Snapchat Pixel' },
+  tiktokPixelId: { en: 'TikTok Pixel ID', ar: 'معرف TikTok Pixel' },
+
   // Chat Widget
   aiAssistant: { en: 'AI Assistant', ar: 'المساعد الذكي' },
   chatWithAI: { en: 'Chat with AI', ar: 'تحدث مع المساعد' },

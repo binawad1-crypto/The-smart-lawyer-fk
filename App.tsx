@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import ProfilePage from './pages/ProfilePage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import MobileBottomNav from './components/MobileBottomNav';
+import PixelTracker from './components/PixelTracker';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions';
@@ -118,6 +119,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg font-sans flex flex-col">
+      <PixelTracker />
       <Header 
         onLoginClick={() => {
             setInitialAuthView('login');

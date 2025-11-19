@@ -89,21 +89,21 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
     <header className="bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button onClick={onLogoClick} className="flex-shrink-0 flex items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1">
+          <button onClick={onLogoClick} className="flex-shrink flex items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1 min-w-0 max-w-[60%] sm:max-w-none">
              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto" />
+                <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto object-contain max-w-full" />
              ) : (
-                <div className="flex flex-col items-start leading-none">
-                  <h1 className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                <div className="flex flex-col items-start leading-none min-w-0 overflow-hidden">
+                  <h1 className="text-lg sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight truncate w-full">
                     {t('appName')}
                   </h1>
-                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1">
+                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1 truncate w-full">
                     {t('appSubtitle')}
                   </p>
                 </div>
              )}
           </button>
-          <div className="flex items-center space-x-1 md:space-x-2">
+          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
             {currentUser && (
                 <div className="hidden md:block">
                     {view === 'landing' && onServicesClick ? (
