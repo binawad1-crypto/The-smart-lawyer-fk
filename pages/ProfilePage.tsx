@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut } from 'lucide-react';
+import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '../services/firebase';
 import { collection, getDocs, query, doc, updateDoc } from 'firebase/firestore';
@@ -86,6 +86,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   
   // States for forms
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
+  const [location, setLocation] = useState(currentUser?.location || '');
   const [newEmail, setNewEmail] = useState('');
   const [passwords, setPasswords] = useState({ newPassword: '', confirmNewPassword: '' });
   
@@ -109,6 +110,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (currentUser) {
         setDisplayName(currentUser.displayName || '');
+        setLocation(currentUser.location || '');
     }
   }, [currentUser]);
   
@@ -142,7 +144,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     try {
         await updateProfile(currentUser, { displayName });
         const userDocRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userDocRef, { displayName });
+        await updateDoc(userDocRef, { 
+            displayName,
+            location: location 
+        });
         showFeedback('success', t('profileUpdatedSuccess'));
     } catch (error) {
         showFeedback('error', (error as any).message || t('profileUpdatedError'));
@@ -451,11 +456,25 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                                         />
                                     </div>
                                 </div>
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label htmlFor="location" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('location')}</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input
+                                            type="text"
+                                            id="location"
+                                            value={location}
+                                            onChange={(e) => setLocation(e.target.value)}
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                                            placeholder={t('locationPlaceholder')}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex justify-end pt-2">
                                 <button 
                                     type="submit" 
-                                    disabled={isUpdatingProfile || displayName === currentUser.displayName} 
+                                    disabled={isUpdatingProfile} 
                                     className="px-6 py-2.5 bg-gray-900 dark:bg-primary-600 text-white font-medium rounded-xl hover:bg-black dark:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                                 >
                                     {isUpdatingProfile ? <Loader2 className="animate-spin" size={18}/> : <Edit2 size={18} />}

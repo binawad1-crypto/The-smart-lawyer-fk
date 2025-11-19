@@ -34,10 +34,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>(ServiceCategory.LitigationAndPleadings);
     const [outputLanguage, setOutputLanguage] = useState<Language>(language);
     
-    // User Location State
-    const [userLocation, setUserLocation] = useState('');
-    const [isLocating, setIsLocating] = useState(true);
-
     useEffect(() => {
         setOutputLanguage(language);
     }, [language]);
@@ -66,44 +62,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             }
         };
         fetchServices();
-
-        // Fetch User Location based on IP with fallback
-        const fetchLocation = async () => {
-            setIsLocating(true);
-            const defaultLoc = language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia';
-            try {
-                // Try Primary API
-                const response = await fetch('https://ipapi.co/json/');
-                if (response.ok) {
-                    const data = await response.json();
-                    setUserLocation(data.country_name || defaultLoc);
-                } else {
-                    throw new Error("Primary API failed");
-                }
-            } catch (error) {
-                // Try Secondary API
-                try {
-                    const fallbackResponse = await fetch('https://ipwho.is/');
-                    if (fallbackResponse.ok) {
-                        const data = await fallbackResponse.json();
-                        if (data.success) {
-                             setUserLocation(data.country || defaultLoc);
-                        } else {
-                             throw new Error("Secondary API returned error");
-                        }
-                    } else {
-                        throw new Error("Secondary API failed");
-                    }
-                } catch (fallbackError) {
-                    console.warn("Location detection failed, using default.", fallbackError);
-                    setUserLocation(defaultLoc);
-                }
-            } finally {
-                setIsLocating(false);
-            }
-        };
-        fetchLocation();
-
     }, [t, language]);
 
     useEffect(() => {
@@ -158,7 +116,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         try {
             const languageInstruction = `\n\nIMPORTANT: Provide the response strictly in ${outputLanguage === 'ar' ? 'Arabic' : 'English'} language.`;
-            // Inject Location Context
+            // Inject Location Context from Profile
+            const userLocation = currentUser?.location;
             const locationContext = userLocation ? `\n\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.` : '';
             
             const finalPrompt = prompt + locationContext + languageInstruction;
@@ -232,7 +191,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const inputConfig = selectedService.formInputs.find(i => i.name === key);
                 prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
             }
-            // Inject Location Context
+            // Inject Location Context from Profile
+            const userLocation = currentUser?.location;
             if (userLocation) {
                 prompt += `\nCONTEXT: The user is located in ${userLocation}. Apply the laws and regulations of ${userLocation}.`;
             }
@@ -344,23 +304,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const renderOutputLanguageSelector = () => (
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
-             {/* Location Indicator */}
-             <div className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md px-3 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                <MapPin size={14} className="text-primary-500" />
-                {isLocating ? (
-                    <span>{t('detectingLocation')}</span>
-                ) : (
-                    <input 
-                        type="text" 
-                        value={userLocation} 
-                        onChange={(e) => setUserLocation(e.target.value)}
-                        className="bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 w-24 sm:w-32 placeholder-gray-400"
-                        placeholder={t('locationPlaceholder')}
-                        title={t('location')}
-                    />
-                )}
-            </div>
-
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">

@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(true);
         // State pieces to build the final user object
         // FIX: Replaced `Omit` with `Pick` for a more stable type definition. This resolves an issue where the compiler could not find the 'status' property.
-        let userData: Pick<AppUser, 'isAdmin' | 'status' | 'tokenBalance'> | null = null;
+        let userData: Pick<AppUser, 'isAdmin' | 'status' | 'tokenBalance' | 'location'> | null = null;
         let customerData: { stripeId?: string } | null = null;
         let subscriptionData: SubscriptionInfo | undefined = undefined;
         const userAuthData: User = user;
@@ -81,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 isAdmin: user.email === ADMIN_EMAIL,
                 status: data.status,
                 tokenBalance: data.tokenBalance ?? 0,
+                location: data.location || '',
               };
             } else {
               // User doc doesn't exist, log them out.

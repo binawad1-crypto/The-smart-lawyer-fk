@@ -23,6 +23,7 @@ export interface AppUser extends FirebaseUser {
   tokenBalance?: number;
   stripeId?: string;
   subscription?: SubscriptionInfo;
+  location?: string;
 }
 
 export enum Theme {

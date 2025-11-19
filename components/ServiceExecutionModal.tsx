@@ -1,8 +1,9 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut, MapPin } from 'lucide-react';
+import { X, File, Loader2, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
+import { useAuth } from '../hooks/useAuth';
 import { runGemini } from '../services/geminiService';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -15,6 +16,7 @@ interface ServiceExecutionModalProps {
 
 const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, onClose, service }) => {
   const { language, t } = useLanguage();
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [result, setResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +26,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [fontSize, setFontSize] = useState(16);
   
-  // User Location State
-  const [userLocation, setUserLocation] = useState('');
-  const [isLocating, setIsLocating] = useState(true);
-
   useEffect(() => {
       setOutputLanguage(language);
   }, [language]);
@@ -41,45 +39,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     };
   }, []);
   
-  useEffect(() => {
-      if (isOpen) {
-        // Fetch User Location based on IP when modal opens with fallback
-        const fetchLocation = async () => {
-            setIsLocating(true);
-            const defaultLoc = language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia';
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                if (response.ok) {
-                    const data = await response.json();
-                    setUserLocation(data.country_name || defaultLoc);
-                } else {
-                    throw new Error("Primary API failed");
-                }
-            } catch (error) {
-                try {
-                    const fallbackResponse = await fetch('https://ipwho.is/');
-                    if (fallbackResponse.ok) {
-                        const data = await fallbackResponse.json();
-                        if (data.success) {
-                             setUserLocation(data.country || defaultLoc);
-                        } else {
-                             throw new Error("Secondary API returned error");
-                        }
-                    } else {
-                        throw new Error("Secondary API failed");
-                    }
-                } catch (fallbackError) {
-                    console.warn("Error fetching location, using default:", fallbackError);
-                    setUserLocation(defaultLoc);
-                }
-            } finally {
-                setIsLocating(false);
-            }
-        };
-        fetchLocation();
-      }
-  }, [isOpen, language]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (type === 'file') {
@@ -99,14 +58,15 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
     }
     
-    // Inject Location Context
+    // Inject Location Context from Profile
+    const userLocation = currentUser?.location;
     if (userLocation) {
         prompt += `\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.`;
     }
 
     prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
     return prompt;
-  }, [formData, service, outputLanguage, userLocation]);
+  }, [formData, service, outputLanguage, currentUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,23 +240,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         </button>
                         
                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                             {/* Location Indicator */}
-                             <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md px-3 py-1 text-xs text-gray-600 dark:text-gray-300">
-                                <MapPin size={12} className="text-primary-500" />
-                                {isLocating ? (
-                                    <span>{t('detectingLocation')}</span>
-                                ) : (
-                                    <input 
-                                        type="text" 
-                                        value={userLocation} 
-                                        onChange={(e) => setUserLocation(e.target.value)}
-                                        className="bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 w-20 placeholder-gray-400"
-                                        placeholder={t('locationPlaceholder')}
-                                        title={t('location')}
-                                    />
-                                )}
-                            </div>
-                            
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
                                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
