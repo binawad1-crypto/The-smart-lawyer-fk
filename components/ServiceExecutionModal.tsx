@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Download, Printer, Volume2, Copy, Check } from 'lucide-react';
+import { X, File, Loader2, Download, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { runGemini } from '../services/geminiService';
@@ -23,6 +23,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [isCopied, setIsCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
+  const [fontSize, setFontSize] = useState(16);
 
   useEffect(() => {
       setOutputLanguage(language);
@@ -173,6 +174,16 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     }
   };
 
+  const handleIncreaseFont = () => setFontSize(prev => Math.min(prev + 2, 32));
+  const handleDecreaseFont = () => setFontSize(prev => Math.max(prev - 2, 12));
+
+  const handleDownload = async () => {
+    if (!result) return;
+    const title = service?.title[language] || t('results');
+    await exportTextToPdf(title, result, `result-${Date.now()}`, language);
+  };
+
+
   if (!isOpen || !service) return null;
 
   return (
@@ -261,28 +272,43 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
               ) : result ? (
                  <div className="flex flex-col w-full h-full">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                        <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600 dark:text-gray-300">
+                             <button onClick={handleIncreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom In">
+                                 <ZoomIn size={18} />
+                             </button>
+                             <button onClick={handleDecreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom Out">
+                                 <ZoomOut size={18} />
+                             </button>
+                             <button onClick={handleDownload} className="hover:text-primary-500 transition-colors p-1" title="Download PDF">
+                                 <Download size={18} />
+                             </button>
+                             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                              <button onClick={handleListen} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 <Volume2 size={16} />
-                                <span>{isSpeaking ? t('stop') : t('listen')}</span>
+                                <span className="hidden sm:inline">{isSpeaking ? t('stop') : t('listen')}</span>
                             </button>
                              <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                                <span>{isCopied ? t('copied') : t('copy')}</span>
+                                <span className="hidden sm:inline">{isCopied ? t('copied') : t('copy')}</span>
                             </button>
                             <button onClick={handlePrint} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 <Printer size={16} />
-                                <span>{t('print')}</span>
+                                <span className="hidden sm:inline">{t('print')}</span>
                             </button>
                             <button onClick={handleClear} className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('results')}</h3>
+                        <h3 className="font-bold text-lg text-gray-800 dark:text-white hidden md:block">{t('results')}</h3>
                     </div>
                      <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
                          {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
-                         <pre className="whitespace-pre-wrap font-naskh text-base sm:text-lg leading-loose text-left rtl:text-right bg-transparent p-0 m-0">{result}</pre>
+                         <pre 
+                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200"
+                            style={{ fontSize: `${fontSize}px` }}
+                        >
+                            {result}
+                        </pre>
                     </div>
                 </div>
               ) : (
