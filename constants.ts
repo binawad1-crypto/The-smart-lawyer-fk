@@ -41,6 +41,11 @@ export const translations: Translations = {
   loading: { en: 'Loading...', ar: 'جاري التحميل...' },
   close: { en: 'Close', ar: 'إغلاق' },
   
+  // Location & Context
+  location: { en: 'Jurisdiction / Country', ar: 'النطاق الجغرافي / الدولة' },
+  detectingLocation: { en: 'Detecting location...', ar: 'جاري تحديد الموقع...' },
+  locationPlaceholder: { en: 'e.g., Saudi Arabia, UAE', ar: 'مثال: السعودية، الإمارات' },
+
   // Landing Page
   landingTitle: { en: 'AI-Powered Legal Services', ar: 'خدمات قانونية مدعومة بالذكاء الاصطناعي' },
   landingDescription: { en: 'We specialize in providing advanced AI solutions for law firms and legal consultants to enhance efficiency and accuracy.', ar: 'نحن متخصصون في تقديم حلول الذكاء الاصطناعي المتقدمة لمكاتب المحاماة والمستشارين القانونيين لتعزيز الكفاءة والدقة.' },

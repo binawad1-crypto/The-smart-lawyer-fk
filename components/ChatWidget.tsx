@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -14,19 +15,43 @@ const ChatWidget: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chat, setChat] = useState<Chat | null>(null);
+  const [userLocation, setUserLocation] = useState('');
   const { t, dir, language } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Fetch location on mount
+  useEffect(() => {
+    const fetchLocation = async () => {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            if (response.ok) {
+                const data = await response.json();
+                setUserLocation(data.country_name);
+            }
+        } catch (error) {
+            console.error("Error fetching location for chat:", error);
+        }
+    };
+    fetchLocation();
+  }, []);
+
+  // Initialize Chat with location context
   useEffect(() => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    let locationContext = '';
+    if (userLocation) {
+        locationContext = ` The user is currently located in ${userLocation}. Provide answers relevant to ${userLocation}'s laws and regulations where applicable.`;
+    }
+
     const newChat = ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {
-        systemInstruction: `You are a friendly and helpful legal assistant named "The Smart Assistant". Your purpose is to provide general information and support on legal topics. You MUST end every single response with the following disclaimer, translated to the user's language (${language}): "Disclaimer: This is an AI assistant. Please consult with a qualified professional for legal advice."`,
+        systemInstruction: `You are a friendly and helpful legal assistant named "The Smart Assistant". Your purpose is to provide general information and support on legal topics.${locationContext} You MUST end every single response with the following disclaimer, translated to the user's language (${language}): "Disclaimer: This is an AI assistant. Please consult with a qualified professional for legal advice."`,
       },
     });
     setChat(newChat);
-  }, [language]);
+  }, [language, userLocation]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

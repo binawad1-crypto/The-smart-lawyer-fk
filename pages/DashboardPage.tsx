@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -33,6 +33,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>(ServiceCategory.LitigationAndPleadings);
     const [outputLanguage, setOutputLanguage] = useState<Language>(language);
+    
+    // User Location State
+    const [userLocation, setUserLocation] = useState('');
+    const [isLocating, setIsLocating] = useState(true);
 
     useEffect(() => {
         setOutputLanguage(language);
@@ -62,7 +66,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             }
         };
         fetchServices();
-    }, [t]);
+
+        // Fetch User Location based on IP
+        const fetchLocation = async () => {
+            setIsLocating(true);
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (response.ok) {
+                    const data = await response.json();
+                    // Default to 'Saudi Arabia' if data is missing, or use country_name
+                    setUserLocation(data.country_name || (language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia'));
+                } else {
+                    throw new Error("Failed to fetch location");
+                }
+            } catch (error) {
+                console.error("Error fetching location:", error);
+                setUserLocation(language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia');
+            } finally {
+                setIsLocating(false);
+            }
+        };
+        fetchLocation();
+
+    }, [t, language]);
 
     useEffect(() => {
         // Cleanup speech synthesis on component unmount
@@ -116,7 +142,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         try {
             const languageInstruction = `\n\nIMPORTANT: Provide the response strictly in ${outputLanguage === 'ar' ? 'Arabic' : 'English'} language.`;
-            const finalPrompt = prompt + languageInstruction;
+            // Inject Location Context
+            const locationContext = userLocation ? `\n\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.` : '';
+            
+            const finalPrompt = prompt + locationContext + languageInstruction;
             
             const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry);
             setResult(response.text);
@@ -186,6 +215,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 if (key.includes('file')) continue;
                 const inputConfig = selectedService.formInputs.find(i => i.name === key);
                 prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
+            }
+            // Inject Location Context
+            if (userLocation) {
+                prompt += `\nCONTEXT: The user is located in ${userLocation}. Apply the laws and regulations of ${userLocation}.`;
             }
             prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
             return prompt;
@@ -294,23 +327,42 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const handleDecreaseFont = () => setFontSize(prev => Math.max(prev - 2, 12));
 
     const renderOutputLanguageSelector = () => (
-        <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('outputLanguage')}</span>
-            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
-                <button
-                    type="button"
-                    onClick={() => setOutputLanguage(Language.AR)}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                >
-                    {t('arabic')}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setOutputLanguage(Language.EN)}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                >
-                    {t('english')}
-                </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
+             {/* Location Indicator */}
+             <div className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md px-3 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                <MapPin size={14} className="text-primary-500" />
+                {isLocating ? (
+                    <span>{t('detectingLocation')}</span>
+                ) : (
+                    <input 
+                        type="text" 
+                        value={userLocation} 
+                        onChange={(e) => setUserLocation(e.target.value)}
+                        className="bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 w-24 sm:w-32 placeholder-gray-400"
+                        placeholder={t('locationPlaceholder')}
+                        title={t('location')}
+                    />
+                )}
+            </div>
+
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
+                <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                    <button
+                        type="button"
+                        onClick={() => setOutputLanguage(Language.AR)}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    >
+                        {t('arabic')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setOutputLanguage(Language.EN)}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    >
+                        {t('english')}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -405,11 +457,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </div>
                 )}
                 
-                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 flex flex-row items-center gap-3">
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 flex flex-col sm:flex-row items-center gap-3">
                     <button
                         onClick={handleExecutePrompt}
                         disabled={isGenerating || !prompt.trim()}
-                        className="flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                        className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                     >
                         {isGenerating && <Loader2 className="animate-spin" size={20} />}
                         {t('execute')}
@@ -464,8 +516,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             </div>
                         ))}
                     </div>
-                    <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700 flex flex-row items-center gap-3">
-                        <button type="submit" disabled={isGenerating} className="flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+                    <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-3">
+                        <button type="submit" disabled={isGenerating} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
                             {isGenerating && <Loader2 className="animate-spin" size={20} />}
                             {t('executeTask')}
                         </button>

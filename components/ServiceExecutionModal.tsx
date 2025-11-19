@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, File, Loader2, Printer, Volume2, Copy, Check, ZoomIn, ZoomOut, MapPin } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { runGemini } from '../services/geminiService';
@@ -23,6 +23,10 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [fontSize, setFontSize] = useState(16);
+  
+  // User Location State
+  const [userLocation, setUserLocation] = useState('');
+  const [isLocating, setIsLocating] = useState(true);
 
   useEffect(() => {
       setOutputLanguage(language);
@@ -36,6 +40,30 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
         }
     };
   }, []);
+  
+  useEffect(() => {
+      if (isOpen) {
+        // Fetch User Location based on IP when modal opens
+        const fetchLocation = async () => {
+            setIsLocating(true);
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserLocation(data.country_name || (language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia'));
+                } else {
+                    throw new Error("Failed to fetch location");
+                }
+            } catch (error) {
+                console.error("Error fetching location:", error);
+                setUserLocation(language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia');
+            } finally {
+                setIsLocating(false);
+            }
+        };
+        fetchLocation();
+      }
+  }, [isOpen, language]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -55,9 +83,15 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       const inputConfig = service.formInputs.find(i => i.name === key);
       prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
     }
+    
+    // Inject Location Context
+    if (userLocation) {
+        prompt += `\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.`;
+    }
+
     prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
     return prompt;
-  }, [formData, service, outputLanguage]);
+  }, [formData, service, outputLanguage, userLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,29 +258,48 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         ))}
                     </div>
                     
-                    <div className="flex flex-row items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-                        <button type="submit" disabled={isLoading} className="flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+                        <button type="submit" disabled={isLoading} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
                             {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('executeTask')}
                         </button>
                         
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
-                            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setOutputLanguage(Language.AR)}
-                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                                >
-                                    {t('arabic')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setOutputLanguage(Language.EN)}
-                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                                >
-                                    {t('english')}
-                                </button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                             {/* Location Indicator */}
+                             <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md px-3 py-1 text-xs text-gray-600 dark:text-gray-300">
+                                <MapPin size={12} className="text-primary-500" />
+                                {isLocating ? (
+                                    <span>{t('detectingLocation')}</span>
+                                ) : (
+                                    <input 
+                                        type="text" 
+                                        value={userLocation} 
+                                        onChange={(e) => setUserLocation(e.target.value)}
+                                        className="bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 w-20 placeholder-gray-400"
+                                        placeholder={t('locationPlaceholder')}
+                                        title={t('location')}
+                                    />
+                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
+                                <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOutputLanguage(Language.AR)}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    >
+                                        {t('arabic')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOutputLanguage(Language.EN)}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    >
+                                        {t('english')}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
