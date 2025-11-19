@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2 } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -31,12 +31,30 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [fontSize, setFontSize] = useState(16);
     
-    const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>(ServiceCategory.LitigationAndPleadings);
+    // Search and Filter States
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [outputLanguage, setOutputLanguage] = useState<Language>(language);
+    const [favorites, setFavorites] = useState<string[]>([]);
     
+    // Layout State
+    const [isFullWidth, setIsFullWidth] = useState(false);
+
     useEffect(() => {
         setOutputLanguage(language);
     }, [language]);
+
+    // Load favorites from local storage
+    useEffect(() => {
+        const storedFavs = localStorage.getItem('favoriteServices');
+        if (storedFavs) {
+            try {
+                setFavorites(JSON.parse(storedFavs));
+            } catch (e) {
+                console.error("Failed to parse favorites", e);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -48,9 +66,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const servicesList = servicesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Service));
                 
                 servicesList.sort((a, b) => {
-                    const categoryComparison = a.category.localeCompare(b.category);
-                    if (categoryComparison !== 0) return categoryComparison;
-                    return a.title.en.localeCompare(b.title.en);
+                    // Sort by Title EN to keep it consistent within categories
+                    return (a.title.en || '').localeCompare(b.title.en || '');
                 });
 
                 setServices(servicesList);
@@ -73,25 +90,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
     }, []);
 
-    const { basicServiceCategories, servicesByCategory, advancedServices } = useMemo(() => {
-        const basic: ServiceCategory[] = [
-            ServiceCategory.LitigationAndPleadings,
-            ServiceCategory.SpecializedConsultations,
-            ServiceCategory.InvestigationsAndCriminal,
-            ServiceCategory.CorporateAndCompliance
-        ];
-        const advanced: ServiceCategory[] = [ServiceCategory.CreativeServices];
+    const filteredServices = useMemo(() => {
+        let filtered = services;
 
-        const byCategory: Record<ServiceCategory, Service[]> = services.reduce((acc, service) => {
-            if (!acc[service.category]) acc[service.category] = [];
-            acc[service.category].push(service);
-            return acc;
-        }, {} as Record<ServiceCategory, Service[]>);
+        // 1. Filter by Category
+        if (selectedCategory === 'favorites') {
+            filtered = filtered.filter(s => favorites.includes(s.id));
+        } else if (selectedCategory !== 'all') {
+            filtered = filtered.filter(s => s.category === selectedCategory);
+        }
 
-        const advancedList = advanced.flatMap(cat => byCategory[cat] || []);
+        // 2. Filter by Search Query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(s => 
+                (s.title.en && s.title.en.toLowerCase().includes(query)) || 
+                (s.title.ar && s.title.ar.toLowerCase().includes(query)) ||
+                (s.description.en && s.description.en.toLowerCase().includes(query)) ||
+                (s.description.ar && s.description.ar.toLowerCase().includes(query))
+            );
+        }
 
-        return { basicServiceCategories: basic, servicesByCategory: byCategory, advancedServices: advancedList };
-    }, [services]);
+        return filtered;
+    }, [services, selectedCategory, searchQuery, favorites]);
+
+    const categories = [
+        { id: 'all', label: t('allCategories'), icon: LayoutGrid },
+        { id: 'favorites', label: t('favorites'), icon: Star }, // Added Favorites Category
+        { id: ServiceCategory.LitigationAndPleadings, label: t('litigationAndPleadings') },
+        { id: ServiceCategory.SpecializedConsultations, label: t('specializedConsultations') },
+        { id: ServiceCategory.InvestigationsAndCriminal, label: t('investigationsAndCriminal') },
+        { id: ServiceCategory.CorporateAndCompliance, label: t('corporateAndCompliance') },
+        { id: ServiceCategory.CreativeServices, label: t('creativeServices') }
+    ];
+
+    const toggleFavorite = (e: React.MouseEvent, serviceId: string) => {
+        e.stopPropagation(); // Prevent opening the service when clicking star
+        const newFavs = favorites.includes(serviceId)
+            ? favorites.filter(id => id !== serviceId)
+            : [...favorites, serviceId];
+        
+        setFavorites(newFavs);
+        localStorage.setItem('favoriteServices', JSON.stringify(newFavs));
+    };
 
     const handleExecutePrompt = async () => {
         if (!prompt.trim()) return;
@@ -216,7 +257,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             const isSuccess = !!response.text;
     
             if (isSuccess && selectedService?.id) {
-                // Increment service usage count - wrap in try/catch to prevent UI error on permission fail
                 try {
                     const serviceRef = doc(db, 'services', selectedService.id);
                     await updateDoc(serviceRef, {
@@ -226,7 +266,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     console.error("Failed to update service usage count:", err);
                 }
 
-                // Decrement user token balance (if not admin)
                 if (currentUser && !currentUser.isAdmin) {
                     const tokensConsumed = response.usageMetadata?.totalTokens || 0;
                      if (tokensConsumed > 0) {
@@ -331,7 +370,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="mb-4 flex-shrink-0 flex flex-col gap-2">
                  <div className="flex flex-col-reverse gap-3 sm:gap-0 sm:flex-row sm:justify-between sm:items-start">
                      <div className="text-right rtl:text-left w-full sm:w-auto">
-                        <span className="text-xs text-blue-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
+                        <span className="text-xs text-primary-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
                             <Wand2 size={14} /> {t('poweredByAI')}
                         </span>
                     </div>
@@ -340,122 +379,122 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('howCanIHelp')}</p>
                     </div>
                 </div>
-                {/* Language Selector above the prompt box */}
-                <div className="flex justify-end">
+                {/* Language Selector & Layout Toggle above the prompt box */}
+                <div className="flex justify-end items-center gap-3">
+                     <button
+                        onClick={() => setIsFullWidth(!isFullWidth)}
+                        className="p-1.5 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                        title={isFullWidth ? t('standardWidth') : t('fullWidth')}
+                    >
+                        {isFullWidth ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                    </button>
                     {renderOutputLanguageSelector(false)}
                 </div>
             </div>
 
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 mb-6">
                 <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder={t('typeYourRequest')}
-                    className="w-full h-40 p-4 ltr:pl-16 rtl:pr-16 resize-none border-0 rounded-lg bg-slate-100 dark:bg-dark-bg text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 text-right"
+                    className="w-full h-32 p-4 ltr:pl-16 rtl:pr-16 resize-none border-0 rounded-2xl bg-slate-100 dark:bg-dark-bg text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:outline-none placeholder-gray-500 text-right shadow-inner"
                 />
                 <button
                     onClick={handleExecutePrompt}
                     disabled={isGenerating || !prompt.trim()}
-                    className="absolute top-4 ltr:left-4 rtl:right-4 w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors shadow-md z-10"
+                    className="absolute top-4 ltr:left-4 rtl:right-4 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-all shadow-lg z-10 hover:scale-105"
                     aria-label="Send"
                 >
-                    {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ltr:-scale-x-100" />}
+                    {isGenerating ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} className="ltr:-scale-x-100" />}
                 </button>
             </div>
 
-            <div className="mt-6 custom-scrollbar pr-2 -mr-2">
-                {loadingServices ? (
-                    <div className="text-center p-4"><Loader2 className="animate-spin inline-block" /></div>
-                ) : errorServices ? (
-                    <p className="text-center text-red-500 p-4">{errorServices}</p>
-                ) : (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">{t('basicServices')}</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                            {basicServiceCategories.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={`px-3 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all duration-200 text-center ${
-                                        selectedCategory === cat
-                                            ? 'bg-primary-600 text-white shadow-md'
-                                            : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-slate-600'
-                                    }`}
-                                >
-                                    {t(cat as keyof Translations)}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {(servicesByCategory[selectedCategory] || []).map(service => (
-                                <button
-                                    key={service.id}
-                                    onClick={() => handleServiceClick(service)}
-                                    className="w-full text-center p-3 rounded-lg bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-600/70 text-sm font-medium text-gray-800 dark:text-gray-200 transition-colors"
-                                >
-                                    {service.title[language]}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-            
-             {/* PREMIUM CREATIVE SERVICES SECTION */}
-             {!loadingServices && !errorServices && advancedServices.length > 0 && (
-                <div className="mt-10 mb-6 relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-700 via-primary-600 to-primary-800 p-6 sm:p-8 shadow-2xl border border-white/10">
-                    {/* Artistic Background Elements */}
-                    <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
-
-                    <div className="relative z-10">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <div>
-                                <h3 className="text-xl sm:text-2xl font-black text-white mb-2 flex items-center gap-3">
-                                    <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg shadow-inner">
-                                        <Sparkles className="text-yellow-300 w-6 h-6" fill="currentColor" />
-                                    </div>
-                                    {t('creativeServices')}
-                                </h3>
-                                <p className="text-teal-100 text-sm sm:text-base max-w-xl leading-relaxed opacity-90">
-                                    {t('creativeServicesDesc')}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {advancedServices.map(service => {
-                                const Icon = iconMap[service.icon] || Wand2;
-                                return (
-                                <button
-                                    key={service.id}
-                                    onClick={() => handleServiceClick(service)}
-                                    className="group relative w-full p-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg flex items-center gap-4 text-left rtl:text-right overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                                        <Icon className="w-6 h-6 text-white drop-shadow-md" />
-                                    </div>
-                                    
-                                    <div className="flex-grow min-w-0">
-                                        <h4 className="text-white font-bold text-sm sm:text-base truncate mb-1 group-hover:text-yellow-200 transition-colors">
-                                            {service.title[language]}
-                                        </h4>
-                                        <p className="text-teal-200 text-xs truncate opacity-80 group-hover:opacity-100">
-                                            {service.subCategory[language]}
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 rtl:-translate-x-2 group-hover:translate-x-0 rtl:group-hover:translate-x-0">
-                                        {language === 'ar' ? <ArrowLeft className="text-white w-5 h-5"/> : <ArrowRight className="text-white w-5 h-5"/>}
-                                    </div>
-                                </button>
-                            )})}
-                        </div>
-                    </div>
+            <div className="flex flex-col h-full">
+                {/* Search Bar */}
+                <div className="mb-4 relative w-full max-w-md mx-auto sm:mx-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-3 rtl:left-auto" size={18} />
+                    <input
+                        type="text"
+                        placeholder={t('searchServicePlaceholder')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full py-2.5 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm transition-all shadow-sm"
+                    />
                 </div>
-            )}
+
+                {/* Category Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start">
+                    {categories.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                                selectedCategory === cat.id
+                                    ? 'bg-primary-600 text-white shadow-md scale-105'
+                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            {cat.id === 'favorites' && <Star size={14} fill={selectedCategory === 'favorites' ? 'white' : 'none'} />}
+                            {cat.id === 'all' && <LayoutGrid size={14}/>}
+                            {cat.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Services Grid */}
+                <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 -mr-2 pb-4">
+                    {loadingServices ? (
+                        <div className="text-center p-8"><Loader2 className="animate-spin inline-block text-primary-500" size={32} /></div>
+                    ) : errorServices ? (
+                        <p className="text-center text-red-500 p-8">{errorServices}</p>
+                    ) : filteredServices.length === 0 ? (
+                        <p className="text-center text-gray-500 p-8">{t('noServicesFound')}</p>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredServices.map(service => {
+                                const Icon = iconMap[service.icon] || FileText;
+                                const isFav = favorites.includes(service.id);
+                                return (
+                                    <button
+                                        key={service.id}
+                                        onClick={() => handleServiceClick(service)}
+                                        className="group flex flex-col text-right rtl:text-right ltr:text-left p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent dark:from-primary-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        
+                                        <div className="flex items-start justify-between w-full mb-3 relative z-10">
+                                            <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-slate-700 text-primary-600 dark:text-primary-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                                <Icon size={24} strokeWidth={2} />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {/* Star Button */}
+                                                <div 
+                                                    role="button"
+                                                    onClick={(e) => toggleFavorite(e, service.id)}
+                                                    className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                                >
+                                                    <Star size={20} fill={isFav ? "currentColor" : "none"} />
+                                                </div>
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 rtl:-translate-x-2 group-hover:translate-x-0 rtl:group-hover:translate-x-0 text-primary-500">
+                                                    {language === 'ar' ? <ArrowLeft size={20}/> : <ArrowRight size={20}/>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 leading-snug relative z-10 w-full">
+                                            {service.title[language] || service.title['en']}
+                                        </h3>
+                                        
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 relative z-10 w-full opacity-80">
+                                            {service.description[language] || service.description['en']}
+                                        </p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
         </>
     );
 
@@ -467,8 +506,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
                     </button>
                     <div className="mx-3 text-right rtl:text-left">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">{selectedService.title[language]}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{selectedService.description[language]}</p>
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">{selectedService.title[language] || selectedService.title['en']}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{selectedService.description[language] || selectedService.description['en']}</p>
                     </div>
                 </div>
                  <div className="border-t border-gray-200 dark:border-slate-700 mb-4"></div>
@@ -477,21 +516,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {selectedService.formInputs.map(input => (
                             <div key={input.name}>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{input.label[language]}</label>
-                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={5} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
-                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
-                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none" />}
+                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={5} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
+                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
+                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
                                 {input.type === 'select' && (
-                                    <select name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                                    <select name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none">
                                         <option value="">{`Select ${input.label[language]}`}</option>
                                         {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                     </select>
                                 )}
                                 {input.type === 'file' && (
-                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
+                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                                         <div className="space-y-1 text-center">
                                             <File className="mx-auto h-12 w-12 text-gray-400"/>
                                             <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                                                <label htmlFor={input.name} className="relative cursor-pointer bg-light-card-bg dark:bg-dark-card-bg rounded-md font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+                                                <label htmlFor={input.name} className="relative cursor-pointer bg-transparent rounded-md font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
                                                     <span>{t('uploadFile')}</span>
                                                     <input id={input.name} name={input.name} type="file" className="sr-only" onChange={handleInputChange} />
                                                 </label>
@@ -504,7 +543,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         ))}
                     </div>
                     <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-3">
-                        <button type="submit" disabled={isGenerating} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+                        <button type="submit" disabled={isGenerating} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg transform active:scale-95">
                             {isGenerating && <Loader2 className="animate-spin" size={20} />}
                             {t('executeTask')}
                         </button>
@@ -572,7 +611,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         return (
             <div className='text-center p-4 flex flex-col justify-center items-center h-full'>
-                <div className="inline-block p-4 mb-4 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300">
+                <div className="inline-block p-4 mb-4 rounded-full bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-inner">
                     <Wand2 size={40} />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('smartLegalAssistant')}</h2>
@@ -592,16 +631,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     };
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex items-start justify-center py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-[85vw] max-w-[1600px] bg-light-card-bg dark:bg-dark-card-bg rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8">
+        <div className={`${isFullWidth ? 'w-full px-2' : 'container mx-auto px-4 sm:px-6 lg:px-8'} flex-grow flex items-start justify-center py-8 transition-all duration-300`}>
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 bg-light-card-bg dark:bg-dark-card-bg shadow-2xl p-4 sm:p-6 lg:p-8 overflow-hidden transition-all duration-300 ${
+                isFullWidth 
+                ? 'w-full max-w-none h-[calc(100vh-80px)] rounded-xl' 
+                : 'w-[95vw] max-w-[1800px] h-[calc(100vh-120px)] rounded-3xl'
+            }`}>
 
                 {/* Left Panel (Input) */}
-                <div className="flex flex-col">
+                <div className="flex flex-col h-full overflow-hidden">
                     {currentView === 'services' ? renderServiceSelectionView() : renderServiceFormView()}
                 </div>
 
                 {/* Right Panel (Output) */}
-                <div className="flex flex-col rounded-lg bg-gray-50 dark:bg-slate-900/50">
+                <div className="flex flex-col rounded-2xl bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-700 h-full overflow-hidden">
                     {renderOutputPanelContent()}
                 </div>
 

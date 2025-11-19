@@ -133,6 +133,10 @@ export const translations: Translations = {
   outputLanguage: { en: 'Output Language', ar: 'لغة المخرجات' },
   arabic: { en: 'Arabic', ar: 'العربية' },
   english: { en: 'English', ar: 'الإنجليزية' },
+  favorites: { en: 'Favorites', ar: 'المفضلة' },
+  searchServicePlaceholder: { en: 'Search for a service...', ar: 'ابحث عن خدمة...' },
+  fullWidth: { en: 'Full Width', ar: 'عرض كامل' },
+  standardWidth: { en: 'Standard Width', ar: 'عرض قياسي' },
 
   // Admin
   adminPanel: { en: 'Admin Panel', ar: 'لوحة الإدارة' },
