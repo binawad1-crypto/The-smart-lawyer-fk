@@ -2,20 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle } from 'lucide-react';
+import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
-import { functions, db, auth } from '../services/firebase';
+import { functions, db } from '../services/firebase';
 import { collection, getDocs, query, doc, updateDoc } from 'firebase/firestore';
 import { View } from '../App';
 import { Plan } from '../types';
-import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword } from 'firebase/auth';
-
+import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword, signOut } from 'firebase/auth';
+import { auth } from '../services/firebase';
 
 interface ProfilePageProps {
   onNavigate: (view: View) => void;
 }
-
-type ProfileTab = 'overview' | 'edit' | 'security';
 
 const ReauthModal: React.FC<{
   isOpen: boolean;
@@ -37,27 +35,42 @@ const ReauthModal: React.FC<{
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-xl w-full max-w-sm p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">{t('reAuthRequired')}</h2>
-                    <button onClick={onClose}><X size={24} /></button>
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Shield className="text-primary-600" size={24} />
+                        {t('reAuthRequired')}
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"><X size={24} /></button>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('reAuthMessage')}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                    {t('reAuthMessage')}
+                </p>
                 <form onSubmit={handleSubmit}>
-                    {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={t('currentPassword')}
-                        className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        required
-                    />
-                    <div className="flex justify-end gap-3 mt-6">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-600 font-semibold">{t('cancel')}</button>
-                        <button type="submit" disabled={isAuthenticating} className="px-4 py-2 rounded-md bg-primary-600 text-white font-semibold flex items-center justify-center disabled:bg-primary-400">
-                             {isAuthenticating && <Loader2 className="animate-spin mr-2" size={18} />}
+                    {error && (
+                        <div className="flex items-center gap-2 text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4 text-sm">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+                    <div className="relative">
+                        <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder={t('currentPassword')}
+                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-3 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                            required
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 mt-8">
+                        <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            {t('cancel')}
+                        </button>
+                        <button type="submit" disabled={isAuthenticating} className="px-5 py-2.5 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:bg-primary-400 shadow-lg shadow-primary-600/20 flex items-center gap-2 transition-all">
+                             {isAuthenticating && <Loader2 className="animate-spin" size={18} />}
                             {t('authenticate')}
                         </button>
                     </div>
@@ -70,7 +83,6 @@ const ReauthModal: React.FC<{
 const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const { currentUser, loading } = useAuth();
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   
   // States for forms
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
@@ -79,14 +91,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   
   // State for UI feedback
   const [isPortalLoading, setIsPortalLoading] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateError, setUpdateError] = useState<string | null>(null);
-  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // Re-authentication state
   const [reauth, setReauth] = useState({
     isOpen: false,
-    onConfirm: async () => {},
     action: null as 'email' | 'password' | null,
     error: null as string | null
   });
@@ -118,25 +129,25 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       fetchPlans();
   }, []);
 
-  const showSuccessMessage = (message: string) => {
-    setUpdateSuccess(message);
-    setTimeout(() => setUpdateSuccess(null), 3000);
+  const showFeedback = (type: 'success' | 'error', message: string) => {
+    setFeedback({ type, message });
+    setTimeout(() => setFeedback(null), 4000);
   };
   
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
-    setIsUpdating(true);
-    setUpdateError(null);
+    setIsUpdatingProfile(true);
+    setFeedback(null);
     try {
         await updateProfile(currentUser, { displayName });
         const userDocRef = doc(db, 'users', currentUser.uid);
         await updateDoc(userDocRef, { displayName });
-        showSuccessMessage(t('profileUpdatedSuccess'));
+        showFeedback('success', t('profileUpdatedSuccess'));
     } catch (error) {
-        setUpdateError((error as any).message || t('profileUpdatedError'));
+        showFeedback('error', (error as any).message || t('profileUpdatedError'));
     } finally {
-        setIsUpdating(false);
+        setIsUpdatingProfile(false);
     }
   };
 
@@ -152,7 +163,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         } else if (reauth.action === 'password') {
             await performPasswordUpdate();
         }
-        setReauth({ isOpen: false, onConfirm: async () => {}, action: null, error: null });
+        setReauth({ isOpen: false, action: null, error: null });
     } catch (error) {
         setReauth(prev => ({...prev, error: t('authenticationError')}));
     }
@@ -162,45 +173,50 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       setReauth({
           isOpen: true,
           action: action,
-          onConfirm: async () => {}, // this is handled by handleReauthentication now
           error: null
       });
   };
 
   const performEmailUpdate = async () => {
     if (!currentUser || !newEmail) return;
-    setIsUpdating(true);
-    setUpdateError(null);
+    setIsUpdatingSecurity(true);
     try {
         await verifyBeforeUpdateEmail(currentUser, newEmail);
-        showSuccessMessage(t('emailUpdateSuccess'));
+        showFeedback('success', t('emailUpdateSuccess'));
         setNewEmail('');
     } catch (error) {
-        setUpdateError((error as any).message || t('emailUpdateError'));
+        showFeedback('error', (error as any).message || t('emailUpdateError'));
     } finally {
-        setIsUpdating(false);
+        setIsUpdatingSecurity(false);
     }
   };
 
   const performPasswordUpdate = async () => {
     if (!currentUser || passwords.newPassword !== passwords.confirmNewPassword) {
-        setUpdateError(t('passwordsDontMatch'));
+        showFeedback('error', t('passwordsDontMatch'));
         return;
     }
-    setIsUpdating(true);
-    setUpdateError(null);
+    setIsUpdatingSecurity(true);
     try {
         await updatePassword(currentUser, passwords.newPassword);
-        showSuccessMessage(t('passwordUpdateSuccess'));
+        showFeedback('success', t('passwordUpdateSuccess'));
         setPasswords({ newPassword: '', confirmNewPassword: '' });
     } catch (error) {
-        setUpdateError((error as any).message || t('passwordUpdateError'));
+        showFeedback('error', (error as any).message || t('passwordUpdateError'));
     } finally {
-        setIsUpdating(false);
+        setIsUpdatingSecurity(false);
     }
   };
   
   const redirectToCustomerPortal = async () => {
+    // Prevent redirect for manually granted subscriptions
+    if (currentUser?.subscription?.isManual) {
+        showFeedback('error', language === 'ar' 
+            ? 'لا يمكن إدارة الاشتراكات الممنوحة يدوياً من هنا. يرجى التواصل مع الدعم.' 
+            : 'Cannot manage manually granted subscriptions here. Please contact support.');
+        return;
+    }
+
     setIsPortalLoading(true);
     try {
       const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
@@ -208,199 +224,317 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       window.location.assign((data as any).url);
     } catch (error) {
       console.error("Error redirecting to customer portal:", error);
-      alert(t('portalError'));
+      const errorMessage = (error as any).message || 'Unknown error';
+      showFeedback('error', `${t('portalError')} (${errorMessage})`);
     } finally {
       setIsPortalLoading(false);
     }
   };
 
+  const handleLogout = async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Error signing out: ", error);
+      }
+  };
+
   if (loading || loadingPlans) {
     return (
-      <div className="flex justify-center items-center flex-grow">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+      <div className="flex justify-center items-center flex-grow h-[80vh]">
+        <div className="relative">
+            <div className="absolute inset-0 bg-primary-200 rounded-full opacity-20 animate-ping"></div>
+            <Loader2 className="animate-spin text-primary-600 relative z-10" size={48} />
+        </div>
       </div>
     );
   }
 
-  if (!currentUser) {
-    return null; // Should be redirected by AuthProvider
-  }
+  if (!currentUser) return null;
 
   const { subscription } = currentUser;
   const planDetails = subscription ? plans.find(p => p.id === subscription.planId) : null;
+  const isPlanActive = subscription?.status === 'active' || subscription?.status === 'trialing';
 
-  const renderTabContent = () => {
-      switch (activeTab) {
-        case 'edit':
-            return (
-                <div>
-                    <h2 className="text-2xl font-bold mb-6">{t('editProfile')}</h2>
-                    <form onSubmit={handleUpdateProfile} className="space-y-6">
-                        <div>
-                            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('fullName')}</label>
-                            <input
-                                type="text"
-                                id="displayName"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                            />
+  return (
+    <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('myProfile')}</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">{t('overview')}</p>
+            </div>
+            <div className="flex gap-3">
+                <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                >
+                    <LogOut size={18} />
+                    {t('logout')}
+                </button>
+            </div>
+        </div>
+
+        {/* Feedback Toast */}
+        {feedback && (
+            <div className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${feedback.type === 'success' ? 'bg-white dark:bg-gray-800 border-green-500 text-green-700 dark:text-green-400' : 'bg-white dark:bg-gray-800 border-red-500 text-red-700 dark:text-red-400'} animate-fade-in-down`}>
+                {feedback.type === 'success' ? <CheckCircle size={24} className="text-green-500"/> : <AlertCircle size={24} className="text-red-500"/>}
+                <span className="font-medium">{feedback.message}</span>
+            </div>
+        )}
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Left Column: Stats & Subscription */}
+            <div className="space-y-6 lg:col-span-1">
+                
+                {/* User Identity Card */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center text-primary-600 dark:text-primary-300 text-2xl font-bold shadow-inner">
+                        {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : <User size={32} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                            {currentUser.displayName || t('profile')}
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{currentUser.email}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${currentUser.isAdmin ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                {currentUser.isAdmin ? <Shield size={10}/> : <User size={10}/>}
+                                {currentUser.isAdmin ? 'Admin' : 'User'}
+                            </span>
                         </div>
-                        <div>
-                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('email')}</label>
-                             <input type="email" id="email" value={currentUser.email || ''} readOnly className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 cursor-not-allowed"/>
-                        </div>
-                        <div className="flex justify-end">
-                            <button type="submit" disabled={isUpdating} className="px-6 py-2 bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 disabled:bg-primary-400 flex items-center">
-                                {isUpdating && <Loader2 className="animate-spin mr-2" size={18}/>}
-                                {t('saveChanges')}
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            );
-        case 'security':
-            return (
-                <div>
-                    <h2 className="text-2xl font-bold mb-6">{t('security')}</h2>
-                    <div className="space-y-8">
+
+                {/* Token Balance Card */}
+                <div className="bg-gradient-to-br from-primary-600 to-blue-700 rounded-2xl shadow-lg shadow-blue-900/20 p-6 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-2 -translate-y-2">
+                        <Gem size={120} />
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-blue-100 font-medium flex items-center gap-2 mb-2">
+                            <Gem size={18} />
+                            {t('tokenBalance')}
+                        </p>
+                        <h3 className="text-4xl font-black tracking-tight">
+                            {currentUser.tokenBalance?.toLocaleString() || 0}
+                        </h3>
+                        <p className="text-blue-200 text-sm mt-2">Tokens Available</p>
+                        
+                        <button 
+                            onClick={() => onNavigate('subscriptions')}
+                            className="mt-6 w-full py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-sm font-semibold transition-colors border border-white/20"
+                        >
+                            {t('addTokens')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Subscription Card */}
+                <div className={`rounded-2xl p-6 relative overflow-hidden border transition-all ${isPlanActive ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-transparent shadow-lg shadow-teal-900/20' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className={`text-sm font-medium flex items-center gap-2 ${isPlanActive ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    <CreditCard size={18} />
+                                    {t('subscription')}
+                                </p>
+                                <h3 className={`text-2xl font-bold mt-1 ${isPlanActive ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                    {planDetails ? planDetails.title[language] : t('noSubscription')}
+                                </h3>
+                            </div>
+                            {isPlanActive ? (
+                                <span className="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                    <CheckCircle size={12} fill="currentColor" className="text-white"/>
+                                    Active
+                                </span>
+                            ) : (
+                                <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-3 py-1 rounded-full">
+                                    Inactive
+                                </span>
+                            )}
+                        </div>
+
+                        {subscription && (
+                            <div className={`text-sm mb-6 flex items-center gap-2 ${isPlanActive ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <Calendar size={14} />
+                                {subscription.status === 'canceled' ? t('canceledOn') : t('renewsOn')}: 
+                                <span className="font-mono font-semibold ml-1">
+                                    {new Date(subscription.current_period_end * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                                </span>
+                            </div>
+                        )}
+
+                        {isPlanActive ? (
+                            <button 
+                                onClick={redirectToCustomerPortal} 
+                                disabled={isPortalLoading}
+                                className="w-full py-2.5 bg-white text-teal-800 font-bold rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                            >
+                                {isPortalLoading ? <Loader2 className="animate-spin" size={18} /> : null}
+                                {t('manageSubscription')}
+                            </button>
+                        ) : (
+                             <button 
+                                onClick={() => onNavigate('subscriptions')}
+                                className="w-full py-2.5 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                            >
+                                {t('upgradeNow')} <ChevronRight size={16} className="rtl:rotate-180"/>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Column: Settings Forms */}
+            <div className="lg:col-span-2 space-y-8">
+                
+                {/* Personal Information */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <User className="text-primary-500" size={20}/>
+                            {t('editProfile')}
+                        </h2>
+                    </div>
+                    <div className="p-6">
+                        <form onSubmit={handleUpdateProfile} className="space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-1.5">
+                                    <label htmlFor="displayName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('fullName')}</label>
+                                    <div className="relative">
+                                        <User className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input
+                                            type="text"
+                                            id="displayName"
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                                            placeholder="John Doe"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('email')}</label>
+                                     <div className="relative">
+                                        <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input 
+                                            type="email" 
+                                            value={currentUser.email || ''} 
+                                            readOnly 
+                                            disabled
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end pt-2">
+                                <button 
+                                    type="submit" 
+                                    disabled={isUpdatingProfile || displayName === currentUser.displayName} 
+                                    className="px-6 py-2.5 bg-gray-900 dark:bg-primary-600 text-white font-medium rounded-xl hover:bg-black dark:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                >
+                                    {isUpdatingProfile ? <Loader2 className="animate-spin" size={18}/> : <Edit2 size={18} />}
+                                    {t('saveChanges')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Security Settings */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Shield className="text-primary-500" size={20}/>
+                            {t('security')}
+                        </h2>
+                    </div>
+                    <div className="p-6 space-y-8">
+                        
                         {/* Change Email */}
                         <form onSubmit={(e) => { e.preventDefault(); triggerReauth('email'); }} className="space-y-4">
-                            <h3 className="text-lg font-semibold border-b dark:border-gray-600 pb-2">{t('changeEmail')}</h3>
-                            <div>
-                                <label htmlFor="currentEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('email')}</label>
-                                <input type="email" id="currentEmail" value={currentUser.email || ''} readOnly className="mt-1 block w-full px-3 py-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:border-gray-600 cursor-not-allowed" />
-                            </div>
-                             <div>
-                                <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newEmail')}</label>
-                                <input type="email" id="newEmail" value={newEmail} onChange={e => setNewEmail(e.target.value)} required className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                            </div>
-                            <div className="flex justify-end">
-                                <button type="submit" disabled={isUpdating || !newEmail} className="px-6 py-2 bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 disabled:bg-primary-400 flex items-center">
-                                    {isUpdating && reauth.action === 'email' && <Loader2 className="animate-spin mr-2" size={18}/>}
+                            <div className="flex flex-col md:flex-row md:items-end gap-4">
+                                <div className="flex-grow space-y-1.5">
+                                    <label htmlFor="newEmail" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('changeEmail')}</label>
+                                    <div className="relative">
+                                        <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input 
+                                            type="email" 
+                                            id="newEmail" 
+                                            value={newEmail} 
+                                            onChange={e => setNewEmail(e.target.value)} 
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                            placeholder={t('newEmail')}
+                                        />
+                                    </div>
+                                </div>
+                                <button 
+                                    type="submit" 
+                                    disabled={isUpdatingSecurity || !newEmail} 
+                                    className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                >
                                     {t('updateEmail')}
                                 </button>
                             </div>
                         </form>
+
+                        <div className="border-t border-gray-100 dark:border-gray-700"></div>
+
                         {/* Change Password */}
                         <form onSubmit={(e) => { e.preventDefault(); triggerReauth('password'); }} className="space-y-4">
-                             <h3 className="text-lg font-semibold border-t dark:border-gray-700 pt-8">{t('changePassword')}</h3>
                              <div>
-                                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newPassword')}</label>
-                                <input type="password" id="newPassword" value={passwords.newPassword} onChange={e => setPasswords(p => ({...p, newPassword: e.target.value}))} required className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
-                            </div>
-                            <div>
-                                <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('confirmNewPassword')}</label>
-                                <input type="password" id="confirmNewPassword" value={passwords.confirmNewPassword} onChange={e => setPasswords(p => ({...p, confirmNewPassword: e.target.value}))} required className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t('changePassword')}</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="relative">
+                                        <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input 
+                                            type="password" 
+                                            id="newPassword" 
+                                            value={passwords.newPassword} 
+                                            onChange={e => setPasswords(p => ({...p, newPassword: e.target.value}))} 
+                                            placeholder={t('newPassword')}
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                        <input 
+                                            type="password" 
+                                            id="confirmNewPassword" 
+                                            value={passwords.confirmNewPassword} 
+                                            onChange={e => setPasswords(p => ({...p, confirmNewPassword: e.target.value}))} 
+                                            placeholder={t('confirmNewPassword')}
+                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex justify-end">
-                                <button type="submit" disabled={isUpdating || !passwords.newPassword || passwords.newPassword !== passwords.confirmNewPassword} className="px-6 py-2 bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 disabled:bg-primary-400 flex items-center">
-                                    {isUpdating && reauth.action === 'password' && <Loader2 className="animate-spin mr-2" size={18}/>}
+                                <button 
+                                    type="submit" 
+                                    disabled={isUpdatingSecurity || !passwords.newPassword || passwords.newPassword !== passwords.confirmNewPassword} 
+                                    className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                                >
                                     {t('updatePassword')}
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-            );
-        case 'overview':
-        default:
-          return (
-            <div>
-              <h2 className="text-2xl font-bold mb-6">{t('overview')}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Subscription Status */}
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">{t('subscription')}</h3>
-                  {subscription && planDetails ? (
-                    <div className="space-y-4 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('currentPlan')}</p>
-                        <p className="text-lg font-medium text-gray-900 dark:text-white">{planDetails.title[language]}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{subscription.status === 'canceled' ? t('canceledOn') : t('renewsOn')}</p>
-                        <p className="text-lg font-medium text-gray-900 dark:text-white">{new Date(subscription.current_period_end * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</p>
-                      </div>
-                      <button onClick={redirectToCustomerPortal} disabled={isPortalLoading} className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors disabled:bg-primary-400">
-                        {isPortalLoading ? <Loader2 className="animate-spin" size={20} /> : <CreditCard size={16} />}
-                        {t('manageSubscription')}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center p-6 border-2 border-dashed rounded-lg dark:border-gray-600">
-                      <p className="text-gray-600 dark:text-gray-300">{t('noActiveSubscription')}</p>
-                      <button onClick={() => onNavigate('subscriptions')} className="mt-4 px-6 py-2 text-sm font-semibold text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors">
-                        {t('browsePlans')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {/* Token Balance */}
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">{t('tokenBalance')}</h3>
-                  <div className="flex items-center justify-center p-8 bg-primary-50 dark:bg-primary-900/30 rounded-lg h-full">
-                    <Gem className="text-primary-500 dark:text-primary-400" size={40} />
-                    <div className="ml-4 rtl:mr-4 text-left rtl:text-right">
-                      <p className="text-4xl font-bold text-gray-900 dark:text-white">{currentUser.tokenBalance?.toLocaleString() || 0}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{t('tokens')}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
-          );
-      }
-  }
+        </div>
 
-  const NavButton: React.FC<{ tab: ProfileTab; icon: React.ReactNode; label: string }> = ({ tab, icon, label }) => (
-    <button
-      onClick={() => setActiveTab(tab)}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md text-left transition-colors ${activeTab === tab ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-    >
-      {icon} {label}
-    </button>
-  );
-
-  return (
-    <>
-    <div className="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">{t('myProfile')}</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <aside className="md:col-span-1">
-            <div className="p-4 bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-md border dark:border-gray-700/50">
-                <div className="text-center mb-6">
-                    <div className="w-24 h-24 rounded-full bg-primary-100 dark:bg-primary-900/50 mx-auto flex items-center justify-center mb-3">
-                        <User size={48} className="text-primary-600 dark:text-primary-400" />
-                    </div>
-                    <h2 className="font-bold text-xl text-gray-800 dark:text-white">{currentUser.displayName || currentUser.email?.split('@')[0]}</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{currentUser.email}</p>
-                </div>
-                 <nav className="space-y-2">
-                    <NavButton tab="overview" icon={<CreditCard size={18} />} label={t('overview')} />
-                    <NavButton tab="edit" icon={<User size={18} />} label={t('editProfile')} />
-                    <NavButton tab="security" icon={<Shield size={18} />} label={t('security')} />
-                </nav>
-            </div>
-        </aside>
-        
-        <main className="md:col-span-3">
-            <div className="bg-light-card-bg dark:bg-dark-card-bg p-8 rounded-lg shadow-md border dark:border-gray-700/50 min-h-[400px]">
-                {updateError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 border border-red-300 dark:border-red-600 rounded-md">{updateError}</div>}
-                {updateSuccess && <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-200 border border-green-300 dark:border-green-600 rounded-md flex items-center gap-2"><CheckCircle size={18}/> {updateSuccess}</div>}
-                {renderTabContent()}
-            </div>
-        </main>
-      </div>
+        <ReauthModal 
+            isOpen={reauth.isOpen}
+            onClose={() => setReauth(prev => ({...prev, isOpen: false, error: null}))}
+            onConfirm={handleReauthentication}
+            error={reauth.error}
+        />
     </div>
-     <ReauthModal 
-        isOpen={reauth.isOpen}
-        onClose={() => setReauth(prev => ({...prev, isOpen: false, error: null}))}
-        onConfirm={handleReauthentication}
-        error={reauth.error}
-    />
-    </>
   );
 };
 
