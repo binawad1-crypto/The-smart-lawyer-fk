@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
-import { Service, ServiceCategory, Translations } from '../types';
+import { Service, ServiceCategory, Translations, Language } from '../types';
 import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { runGemini } from '../services/geminiService';
@@ -30,6 +31,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     
     const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>(ServiceCategory.LitigationAndPleadings);
+    const [outputLanguage, setOutputLanguage] = useState<Language>(language);
+
+    useEffect(() => {
+        setOutputLanguage(language);
+    }, [language]);
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -108,7 +114,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
 
         try {
-            const response = await runGemini('gemini-2.5-flash', prompt, undefined, handleRetry);
+            const languageInstruction = `\n\nIMPORTANT: Provide the response strictly in ${outputLanguage === 'ar' ? 'Arabic' : 'English'} language.`;
+            const finalPrompt = prompt + languageInstruction;
+            
+            const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry);
             setResult(response.text);
 
             if (currentUser && !currentUser.isAdmin) {
@@ -116,7 +125,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 if (tokensConsumed > 0) {
                     const userRef = doc(db, 'users', currentUser.uid);
                     await updateDoc(userRef, {
-                        tokenBalance: increment(-tokensConsumed)
+                        tokenBalance: increment(-tokensConsumed),
+                        tokensUsed: increment(tokensConsumed)
                     });
                 }
             }
@@ -176,6 +186,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const inputConfig = selectedService.formInputs.find(i => i.name === key);
                 prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
             }
+            prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
             return prompt;
         };
     
@@ -195,11 +206,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             const isSuccess = !!response.text;
     
             if (isSuccess && selectedService?.id) {
-                // Increment service usage count
-                const serviceRef = doc(db, 'services', selectedService.id);
-                await updateDoc(serviceRef, {
-                    usageCount: increment(1)
-                });
+                // Increment service usage count - wrap in try/catch to prevent UI error on permission fail
+                try {
+                    const serviceRef = doc(db, 'services', selectedService.id);
+                    await updateDoc(serviceRef, {
+                        usageCount: increment(1)
+                    });
+                } catch (err) {
+                    console.error("Failed to update service usage count:", err);
+                }
 
                 // Decrement user token balance (if not admin)
                 if (currentUser && !currentUser.isAdmin) {
@@ -207,7 +222,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                      if (tokensConsumed > 0) {
                         const userRef = doc(db, 'users', currentUser.uid);
                         await updateDoc(userRef, {
-                            tokenBalance: increment(-tokensConsumed)
+                            tokenBalance: increment(-tokensConsumed),
+                            tokensUsed: increment(tokensConsumed)
                         });
                     }
                 }
@@ -237,7 +253,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 <head>
                   <title>Print Result</title>
                   <style>
-                    body { font-family: sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                    body { font-family: 'Noto Naskh Arabic', 'Cairo', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                     pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
                   </style>
                 </head>
@@ -272,6 +288,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setIsSpeaking(false);
         }
     };
+
+    const renderOutputLanguageSelector = () => (
+        <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('outputLanguage')}</span>
+            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                <button
+                    type="button"
+                    onClick={() => setOutputLanguage(Language.AR)}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                >
+                    {t('arabic')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setOutputLanguage(Language.EN)}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                >
+                    {t('english')}
+                </button>
+            </div>
+        </div>
+    );
 
     const renderServiceSelectionView = () => (
         <>
@@ -363,15 +401,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </div>
                 )}
                 
-                <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 flex flex-row items-center gap-3">
                     <button
                         onClick={handleExecutePrompt}
                         disabled={isGenerating || !prompt.trim()}
-                        className="w-full bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                        className="flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                     >
                         {isGenerating && <Loader2 className="animate-spin" size={20} />}
                         {t('execute')}
                     </button>
+                    {renderOutputLanguageSelector()}
                 </div>
             </div>
         </>
@@ -421,11 +460,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             </div>
                         ))}
                     </div>
-                    <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700">
-                        <button type="submit" disabled={isGenerating} className="w-full bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+                    <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700 flex flex-row items-center gap-3">
+                        <button type="submit" disabled={isGenerating} className="flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
                             {isGenerating && <Loader2 className="animate-spin" size={20} />}
                             {t('executeTask')}
                         </button>
+                        {renderOutputLanguageSelector()}
                     </div>
                 </form>
             </div>
@@ -465,7 +505,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('results')}</h3>
                     </div>
                     <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
-                         <pre className="whitespace-pre-wrap font-sans text-left rtl:text-right bg-transparent p-0 m-0">{result}</pre>
+                         {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
+                         <pre className="whitespace-pre-wrap font-naskh text-base sm:text-lg leading-loose text-left rtl:text-right bg-transparent p-0 m-0">{result}</pre>
                     </div>
                 </div>
             );

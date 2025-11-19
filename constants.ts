@@ -103,6 +103,9 @@ export const translations: Translations = {
   enterTokenAmount: { en: 'Enter the number of tokens to add:', ar: 'أدخل عدد التوكنات المراد إضافتها:' },
   add: { en: 'Add', ar: 'إضافة' },
   tokensAddedSuccess: { en: 'Tokens added successfully!', ar: 'تمت إضافة الرصيد بنجاح!' },
+  outputLanguage: { en: 'Output Language', ar: 'لغة المخرجات' },
+  arabic: { en: 'Arabic', ar: 'العربية' },
+  english: { en: 'English', ar: 'الإنجليزية' },
 
   // Admin
   adminPanel: { en: 'Admin Panel', ar: 'لوحة الإدارة' },

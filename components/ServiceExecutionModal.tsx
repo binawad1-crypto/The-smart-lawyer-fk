@@ -1,6 +1,7 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { X, File, Loader2, Download, Printer, Volume2, Copy, Check } from 'lucide-react';
-import { Service } from '../types';
+import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { runGemini } from '../services/geminiService';
 import { exportTextToPdf } from '../services/pdfService';
@@ -21,6 +22,11 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [retryMessage, setRetryMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [outputLanguage, setOutputLanguage] = useState<Language>(language);
+
+  useEffect(() => {
+      setOutputLanguage(language);
+  }, [language]);
 
   useEffect(() => {
     // Cleanup speech synthesis on component unmount or modal close
@@ -49,8 +55,9 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       const inputConfig = service.formInputs.find(i => i.name === key);
       prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
     }
+    prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
     return prompt;
-  }, [formData, service]);
+  }, [formData, service, outputLanguage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +137,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             <head>
               <title>${service?.title[language] || 'Print'}</title>
               <style>
-                body { font-family: sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                body { font-family: 'Noto Naskh Arabic', 'Cairo', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                 pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
               </style>
             </head>
@@ -213,10 +220,33 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                             </div>
                         ))}
                     </div>
-                    <button type="submit" disabled={isLoading} className="w-full bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center mt-auto">
-                        {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
-                        {t('executeTask')}
-                    </button>
+                    
+                    <div className="flex flex-row items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+                        <button type="submit" disabled={isLoading} className="flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                            {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
+                            {t('executeTask')}
+                        </button>
+                        
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
+                            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setOutputLanguage(Language.AR)}
+                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                >
+                                    {t('arabic')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setOutputLanguage(Language.EN)}
+                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                >
+                                    {t('english')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -251,7 +281,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('results')}</h3>
                     </div>
                      <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
-                         <pre className="whitespace-pre-wrap font-sans text-left rtl:text-right bg-transparent p-0 m-0">{result}</pre>
+                         {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
+                         <pre className="whitespace-pre-wrap font-naskh text-base sm:text-lg leading-loose text-left rtl:text-right bg-transparent p-0 m-0">{result}</pre>
                     </div>
                 </div>
               ) : (

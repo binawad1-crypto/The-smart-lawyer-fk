@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -19,6 +19,7 @@ interface UserData {
     role: 'admin' | 'user';
     status: 'active' | 'disabled';
     tokenBalance?: number;
+    tokensUsed?: number;
     stripeId?: string;
     createdAt?: {
         seconds: number;
@@ -93,17 +94,28 @@ const GrantSubscriptionModal: React.FC<{
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedUserId || !tokenAmount || !durationDays) {
-            alert("Please fill all fields.");
+        if (isSubmitting) return;
+
+        if (!selectedUserId) {
+            alert(t('selectUser'));
             return;
         }
+        if (!tokenAmount || tokenAmount < 0) {
+            alert("Please enter a valid token amount");
+            return;
+        }
+        if (!durationDays || durationDays <= 0) {
+            alert("Please enter a valid duration");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + durationDays);
 
             const subId = `manual_${Date.now()}`;
-            // CHANGED: Write to 'customers' collection for consistency with Stripe
+            // Write to 'customers' collection for consistency
             const subRef = doc(db, 'customers', selectedUserId, 'subscriptions', subId);
             const userRef = doc(db, 'users', selectedUserId);
 
@@ -117,17 +129,22 @@ const GrantSubscriptionModal: React.FC<{
                 items: [{ price: { product: { metadata: { planId: selectedPlanId } } } }]
             });
 
-            batch.update(userRef, {
+            // FIX: Use batch.set with merge instead of batch.update to prevent errors if doc doesn't exist or permissions are strict on update.
+            batch.set(userRef, {
                 tokenBalance: increment(tokenAmount)
-            });
+            }, { merge: true });
 
             await batch.commit();
+            
             alert(t('grantSuccess'));
-            onGrant();
+            
+            if (onGrant) {
+                await onGrant();
+            }
             onClose();
         } catch (error) {
             console.error("Error granting subscription:", error);
-            alert(t('grantError'));
+            alert(`${t('grantError')}: ${(error as Error).message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -199,7 +216,7 @@ const GrantSubscriptionModal: React.FC<{
 
                     <div className="flex justify-end gap-4 pt-4">
                         <button type="button" onClick={onClose} className="bg-gray-200 dark:bg-gray-600 font-bold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">{t('cancel')}</button>
-                        <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                        <button type="submit" disabled={isSubmitting} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center min-w-[100px]">
                             {isSubmitting && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('grant')}
                         </button>
@@ -1094,52 +1111,125 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     };
 
     const renderUserManagementContent = () => {
-        if (loadingUsers) return <tr><td colSpan={6} className="text-center py-8">{t('loading')}</td></tr>;
-        if (userError) return <tr><td colSpan={6} className="text-center py-8 text-red-500">{userError}</td></tr>;
-        if (users.length === 0) return <tr><td colSpan={6} className="text-center py-8">{t('noUsersFound')}</td></tr>;
-        
-        return users.map((user) => {
-            const isSelf = user.email === ADMIN_EMAIL;
-            return (
-                 <tr key={user.id} className="dark:even:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors">
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-0">{user.email}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>{user.role}</span></td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
-                           {user.status ? t(user.status) : t('active')}
-                        </span>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm font-mono">{user.tokenBalance?.toLocaleString() ?? 0}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                         <div className="flex items-center justify-end gap-x-3">
-                            {!isSelf && (
-                                <>
-                                    <button onClick={() => handleOpenGrantModalForUser(user)} className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors" title={t('grantSubscription')}>
-                                        <Gift size={18} />
-                                    </button>
-                                    <button onClick={() => handleOpenTokenModal(user)} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('addTokens')}>
-                                        <Coins size={18} />
-                                    </button>
-                                    {user.status === 'disabled' ? (
-                                        <button onClick={() => handleUpdateUserStatus(user.id, 'active')} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('enable')}>
-                                            <CheckCircle size={18}/>
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => handleUpdateUserStatus(user.id, 'disabled')} className="text-yellow-600 hover:text-yellow-800 p-1 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors" title={t('disable')}>
-                                            <Ban size={18} />
-                                        </button>
-                                    )}
-                                    <button onClick={() => handleDeleteUser(user.id)} className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors" title={t('delete')}>
-                                        <Trash2 size={18} />
-                                    </button>
-                                </>
-                            )}
+        const totalUsers = users.length;
+        const totalTokenBalance = users.reduce((acc, user) => acc + (user.tokenBalance || 0), 0);
+        const totalTokensUsed = users.reduce((acc, user) => acc + (user.tokensUsed || 0), 0);
+        // Crude approximation of active subscribers (stripeId present)
+        const activeSubscribers = users.filter(u => u.stripeId).length;
+
+        const StatCard = ({ title, value, icon: Icon, color }: any) => (
+             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex items-center space-x-4 rtl:space-x-reverse border border-gray-200 dark:border-gray-700">
+                <div className={`p-3 rounded-full ${color}`}>
+                    <Icon size={24} className="text-white" />
+                </div>
+                <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+                </div>
+             </div>
+        );
+
+        return (
+            <div>
+                <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('userManagement')}</h2>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                     <StatCard 
+                        title="Total Users" 
+                        value={totalUsers} 
+                        icon={Users} 
+                        color="bg-blue-500" 
+                    />
+                    <StatCard 
+                        title="Active Subscribers" 
+                        value={activeSubscribers} 
+                        icon={CreditCard} 
+                        color="bg-green-500" 
+                    />
+                    <StatCard 
+                        title="Total Token Balance" 
+                        value={totalTokenBalance.toLocaleString()} 
+                        icon={Coins} 
+                        color="bg-yellow-500" 
+                    />
+                     <StatCard 
+                        title="Total Tokens Used" 
+                        value={totalTokensUsed.toLocaleString()} 
+                        icon={Activity} 
+                        color="bg-purple-500" 
+                    />
+                </div>
+
+                <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
+                     <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                            <table className="min-w-full divide-y dark:divide-gray-700">
+                                <thead><tr>
+                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('email')}</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('role')}</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('status')}</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('tokenBalance')}</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-purple-600 dark:text-purple-400">Tokens Used</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('dateJoined')}</th>
+                                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
+                                </tr></thead>
+                                <tbody className="divide-y dark:divide-gray-800">
+                                    {loadingUsers ? (
+                                        <tr><td colSpan={7} className="text-center py-8">{t('loading')}</td></tr>
+                                    ) : userError ? (
+                                        <tr><td colSpan={7} className="text-center py-8 text-red-500">{userError}</td></tr>
+                                    ) : users.length === 0 ? (
+                                        <tr><td colSpan={7} className="text-center py-8">{t('noUsersFound')}</td></tr>
+                                    ) : users.map((user) => {
+                                        const isSelf = user.email === ADMIN_EMAIL;
+                                        return (
+                                            <tr key={user.id} className="dark:even:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors">
+                                                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-0">{user.email}</td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>{user.role}</span></td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
+                                                    {user.status ? t(user.status) : t('active')}
+                                                    </span>
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm font-mono">{user.tokenBalance?.toLocaleString() ?? 0}</td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm font-mono font-bold text-purple-600 dark:text-purple-400">{user.tokensUsed?.toLocaleString() ?? 0}</td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm">{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                                                <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                                    <div className="flex items-center justify-end gap-x-3">
+                                                        {!isSelf && (
+                                                            <>
+                                                                <button onClick={() => handleOpenGrantModalForUser(user)} className="text-purple-600 hover:text-purple-800 p-1 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors" title={t('grantSubscription')}>
+                                                                    <Gift size={18} />
+                                                                </button>
+                                                                <button onClick={() => handleOpenTokenModal(user)} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('addTokens')}>
+                                                                    <Coins size={18} />
+                                                                </button>
+                                                                {user.status === 'disabled' ? (
+                                                                    <button onClick={() => handleUpdateUserStatus(user.id, 'active')} className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors" title={t('enable')}>
+                                                                        <CheckCircle size={18}/>
+                                                                    </button>
+                                                                ) : (
+                                                                    <button onClick={() => handleUpdateUserStatus(user.id, 'disabled')} className="text-yellow-600 hover:text-yellow-800 p-1 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors" title={t('disable')}>
+                                                                        <Ban size={18} />
+                                                                    </button>
+                                                                )}
+                                                                <button onClick={() => handleDeleteUser(user.id)} className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors" title={t('delete')}>
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
-                    </td>
-                </tr>
-            )
-        });
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     const renderServiceManagementContent = () => (
@@ -1651,28 +1741,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 </div>
             </aside>
             <main className="flex-1 min-w-0">
-                {activeTab === 'users' && (
-                     <div>
-                        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">{t('userManagement')}</h2>
-                        <div className="bg-light-card-bg dark:bg-dark-card-bg p-6 rounded-lg shadow border dark:border-gray-700">
-                             <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                                    <table className="min-w-full divide-y dark:divide-gray-700">
-                                        <thead><tr>
-                                            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-0">{t('email')}</th>
-                                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('role')}</th>
-                                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('status')}</th>
-                                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('tokenBalance')}</th>
-                                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('dateJoined')}</th>
-                                            <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0 text-right">{t('actions')}</th>
-                                        </tr></thead>
-                                        <tbody className="divide-y dark:divide-gray-800">{renderUserManagementContent()}</tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {activeTab === 'users' && renderUserManagementContent()}
                 {activeTab === 'services' && renderServiceManagementContent()}
                 {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
                 {activeTab === 'plans' && renderPlanManagementContent()}

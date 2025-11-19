@@ -89,9 +89,13 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto" />
              ) : (
-                <div className="flex flex-col items-start">
-                  <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 leading-none">{siteName}</h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">{t('appSubtitle')}</p>
+                <div className="flex flex-col items-start leading-none">
+                  <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                    المساعد الذكي
+                  </h1>
+                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1">
+                    للمحاماه
+                  </p>
                 </div>
              )}
           </button>
