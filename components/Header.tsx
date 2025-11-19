@@ -1,14 +1,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
-import { Language } from '../types';
+import { Language, SystemNotification } from '../types';
 import { View } from '../App';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface HeaderProps {
     onLoginClick: () => void;
@@ -67,6 +68,104 @@ const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = (
         </div>
     )
 }
+
+const NotificationsMenu: React.FC = () => {
+    const { language } = useLanguage();
+    const { currentUser } = useAuth();
+    const [notifications, setNotifications] = useState<SystemNotification[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!currentUser) return;
+
+        try {
+            // IMPORTANT: Removed orderBy('createdAt', 'desc') to avoid requiring a composite index.
+            // Sorting is done client-side.
+            const q = query(
+                collection(db, 'system_notifications'),
+                where('isActive', '==', true)
+            );
+
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SystemNotification));
+                // Sort client-side
+                data.sort((a, b) => {
+                    const timeA = a.createdAt?.seconds || 0;
+                    const timeB = b.createdAt?.seconds || 0;
+                    return timeB - timeA; // Descending
+                });
+                setNotifications(data);
+            }, (error) => {
+                console.warn("Notifications subscription error:", error.message);
+            });
+
+            return () => unsubscribe();
+        } catch (e) {
+            console.error("Failed to setup notifications listener", e);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative" ref={menuRef}>
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+            >
+                <Bell size={20} />
+                {notifications.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900"></span>
+                )}
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 rtl:left-0 rtl:right-auto mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    <div className="p-3 border-b border-gray-100 dark:border-gray-700">
+                        <h4 className="font-bold text-sm text-gray-800 dark:text-white">
+                            {language === 'ar' ? 'الإشعارات' : 'Notifications'}
+                        </h4>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                        {notifications.length === 0 ? (
+                            <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                {language === 'ar' ? 'لا توجد إشعارات جديدة' : 'No new notifications'}
+                            </div>
+                        ) : (
+                            notifications.map(notif => (
+                                <div key={notif.id} className="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors last:border-0">
+                                    <div className="flex gap-3">
+                                        <div className="flex-shrink-0 mt-1">
+                                            {notif.type === 'info' && <Info size={18} className="text-blue-500" />}
+                                            {notif.type === 'success' && <CheckCircle size={18} className="text-green-500" />}
+                                            {notif.type === 'warning' || notif.type === 'alert' ? <AlertTriangle size={18} className="text-amber-500" /> : null}
+                                        </div>
+                                        <div>
+                                            <h5 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">{notif.title[language]}</h5>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{notif.message[language]}</p>
+                                            <span className="text-[10px] text-gray-400 mt-2 block">
+                                                {notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleDateString() : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onHomeClick, onServicesClick, view }) => {
@@ -127,6 +226,10 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
                     </div>
                 </>
             )}
+
+             {/* Notification Bell */}
+             {currentUser && <NotificationsMenu />}
+
              <button onClick={toggleTheme} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
              </button>

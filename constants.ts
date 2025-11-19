@@ -2,7 +2,7 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2 } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +16,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 export const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
-  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2,
+  FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate,
   // FIX: Alias non-existent 'AspectRatio' icon to 'Ratio' for backward compatibility.
   AspectRatio: Ratio,
   // FIX: Alias non-existent 'Body' icon to 'PersonStanding' to prevent app crash from bad seed data.
@@ -28,7 +28,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
   // General
   appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-  appSubtitle: { en: 'For Law & Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
+  appSubtitle: { en: 'For Law', ar: 'للمحاماة' },
   startWithUs: { en: 'Start With Us', ar: 'ابدأ معنا' },
   login: { en: 'Login', ar: 'تسجيل الدخول' },
   signup: { en: 'Sign Up', ar: 'تسجيل جديد' },
@@ -147,11 +147,17 @@ export const translations: Translations = {
 
   // Admin
   adminPanel: { en: 'Admin Panel', ar: 'لوحة الإدارة' },
+  welcomeAdmin: { en: 'Welcome back, Admin. Manage your platform efficiently.', ar: 'مرحباً بك، أدمن. قم بإدارة منصتك بكفاءة.' },
+  mainMenu: { en: 'Main Menu', ar: 'القائمة الرئيسية' },
+  configuration: { en: 'Configuration', ar: 'الإعدادات والتكوين' },
   userManagement: { en: 'User Management', ar: 'إدارة المستخدمين' },
   subscriptionManagement: { en: 'Subscription Management', ar: 'إدارة الاشتراكات' },
   planManagement: { en: 'Plan Management', ar: 'إدارة الباقات' },
   siteSettings: { en: 'Site Settings', ar: 'إعدادات الموقع' },
   marketing: { en: 'Marketing & Tracking', ar: 'التسويق والربط' },
+  landingPage: { en: 'Landing Page', ar: 'صفحة الهبوط' },
+  notifications: { en: 'Notifications', ar: 'الإشعارات' },
+  createNotification: { en: 'Create New Notification', ar: 'إنشاء إشعار جديد' },
   grantSubscription: { en: 'Grant Subscription', ar: 'منح اشتراك' },
   grant: { en: 'Grant', ar: 'منح' },
   selectUser: { en: 'Select User', ar: 'اختر مستخدم' },
@@ -173,7 +179,10 @@ export const translations: Translations = {
   edit: { en: 'Edit', ar: 'تعديل' },
   actions: { en: 'Actions', ar: 'إجراءات' },
   role: { en: 'Role', ar: 'الدور' },
+  adminRole: { en: 'Admin', ar: 'مدير' },
+  userRole: { en: 'User', ar: 'مستخدم' },
   dateJoined: { en: 'Date Joined', ar: 'تاريخ الانضمام' },
+  used: { en: 'Used', ar: 'مستخدم' },
   manageServices: { en: 'Manage Services', ar: 'إدارة الخدمات' },
   addNewService: { en: 'Add New Service', ar: 'إضافة خدمة جديدة' },
   editService: { en: 'Edit Service', ar: 'تعديل الخدمة' },
@@ -239,28 +248,6 @@ export const translations: Translations = {
   runService: { en: 'Run Service', ar: 'شغّل الخدمة' },
   timesUsed: { en: 'times used', ar: 'مرة استخدام' },
   cancel: { en: 'Cancel', ar: 'إلغاء' },
-  databaseSeeding: { en: 'Database Seeding', ar: 'تعبئة قاعدة البيانات' },
-  databaseSeedingDescription: { en: 'Quickly populate the database with predefined service sets.', ar: 'تعبئة قاعدة البيانات بسرعة بمجموعات خدمات محددة مسبقًا.' },
-  seedLitigationButton: { en: 'Seed Litigation Services', ar: 'تعبئة خدمات المرافعات' },
-  seedConsultationsButton: { en: 'Seed Consultation Services', ar: 'تعبئة خدمات الاستشارات' },
-  seedInvestigationsButton: { en: 'Seed Investigation Services', ar: 'تعبئة خدمات التحقيقات' },
-  seedCorporateButton: { en: 'Seed Corporate Services', ar: 'تعبئة خدمات الشركات' },
-  seedCreativeButton: { en: 'Seed Creative Services', ar: 'تعبئة الخدمات الإبداعية' },
-  seedLitigationConfirm: { en: 'Are you sure you want to add all litigation and pleadings services?', ar: 'هل أنت متأكد من رغبتك في إضافة جميع خدمات المحاماة والمرافعات القضائية؟' },
-  seedConsultationsConfirm: { en: 'Are you sure you want to add all specialized consultation services?', ar: 'هل أنت متأكد من رغبتك في إضافة جميع خدمات الاستشارات المتخصصة؟' },
-  seedInvestigationsConfirm: { en: 'Are you sure you want to add all investigation and criminal services?', ar: 'هل أنت متأكد من رغبتك في إضافة جميع خدمات التحقيقات والخدمات الجنائية؟' },
-  seedCorporateConfirm: { en: 'Are you sure you want to add all corporate and compliance services?', ar: 'هل أنت متأكد من رغبتك في إضافة جميع خدمات الشركات والامتثال القانوني؟' },
-  seedCreativeConfirm: { en: 'Are you sure you want to add all creative and general services?', ar: 'هل أنت متأكد من رغبتك في إضافة جميع الخدمات الإبداعية والعامة؟' },
-  seedingLitigationInProgress: { en: 'Adding litigation services...', ar: 'جاري إضافة خدمات المرافعات...' },
-  seedingConsultationsInProgress: { en: 'Adding consultation services...', ar: 'جاري إضافة خدمات الاستشارات...' },
-  seedingInvestigationsInProgress: { en: 'Adding investigation services...', ar: 'جاري إضافة خدمات التحقيقات...' },
-  seedingCorporateInProgress: { en: 'Adding corporate services...', ar: 'جاري إضافة خدمات الشركات...' },
-  seedingCreativeInProgress: { en: 'Adding creative services...', ar: 'جاري إضافة الخدمات الإبداعية...' },
-  seedLitigationSuccess: { en: 'Litigation services added successfully!', ar: 'تمت إضافة خدمات المرافعات بنجاح!' },
-  seedConsultationsSuccess: { en: 'Specialized consultation services added successfully!', ar: 'تمت إضافة خدمات الاستشارات المتخصصة بنجاح!' },
-  seedInvestigationsSuccess: { en: 'Investigation services added successfully!', ar: 'تمت إضافة خدمات التحقيقات بنجاح!' },
-  seedCorporateSuccess: { en: 'Corporate services added successfully!', ar: 'تمت إضافة خدمات الشركات بنجاح!' },
-  seedCreativeSuccess: { en: 'Creative services added successfully!', ar: 'تمت إضافة الخدمات الإبداعية بنجاح!' },
   allCategories: { en: 'All', ar: 'الكل' },
   deleteSelected: { en: 'Delete Selected', ar: 'حذف المحدد' },
   deleteSelectedConfirm: { en: 'Are you sure you want to delete {count} selected services? This action cannot be undone.', ar: 'هل أنت متأكد أنك تريد حذف {count} من الخدمات المحددة؟ لا يمكن التراجع عن هذا الإجراء.' },
@@ -406,4 +393,37 @@ export const translations: Translations = {
   addType: { en: 'Add Type', ar: 'إضافة نوع' },
   typePlaceholder: { en: 'Enter type name...', ar: 'أدخل اسم النوع...' },
   supportSettings: { en: 'Support Settings', ar: 'إعدادات الدعم' },
+
+  // Admin Dashboard Extras
+  totalUsers: { en: 'Total Users', ar: 'إجمالي المستخدمين' },
+  activeSubscribers: { en: 'Active Subscribers', ar: 'المشتركون النشطون' },
+  tokensUsed: { en: 'Tokens Used', ar: 'التوكنات المستخدمة' },
+  currentStatus: { en: 'Current Status', ar: 'الحالة الحالية' },
+  customPageActive: { en: 'Custom Page Active', ar: 'الصفحة المخصصة نشطة' },
+  defaultPageActive: { en: 'Default Page Active', ar: 'الصفحة الافتراضية نشطة' },
+  resetToDefault: { en: 'Reset to Default', ar: 'استعادة الافتراضي' },
+  generateWithAIConfig: { en: 'Generate Landing Page with AI', ar: 'إنشاء صفحة هبوط بالذكاء الاصطناعي' },
+  titleEn: { en: 'Title (English)', ar: 'العنوان (إنجليزي)' },
+  titleAr: { en: 'Title (Arabic)', ar: 'العنوان (عربي)' },
+  messageEn: { en: 'Message (English)', ar: 'الرسالة (إنجليزي)' },
+  messageAr: { en: 'Message (Arabic)', ar: 'الرسالة (عربي)' },
+  notificationType: { en: 'Type', ar: 'النوع' },
+  info: { en: 'Info', ar: 'معلومة' },
+  warning: { en: 'Warning', ar: 'تحذير' },
+  alert: { en: 'Alert', ar: 'تنبيه' },
+  success: { en: 'Success', ar: 'نجاح' },
+  fillAllFields: { en: 'Please fill in all required fields.', ar: 'يرجى تعبئة جميع الحقول المطلوبة.' },
+  notificationCreated: { en: 'Notification created successfully!', ar: 'تم إنشاء الإشعار بنجاح!' },
+  notificationFailed: { en: 'Failed to create notification.', ar: 'فشل إنشاء الإشعار.' },
+  areYouSure: { en: 'Are you sure?', ar: 'هل أنت متأكد؟' },
+  validTokenAmount: { en: 'Please enter a valid token amount', ar: 'يرجى إدخال كمية توكن صالحة' },
+  validDuration: { en: 'Please enter a valid duration', ar: 'يرجى إدخال مدة صالحة' },
+  enterTopic: { en: 'Please enter a topic to generate the landing page.', ar: 'يرجى إدخال موضوع لإنشاء صفحة الهبوط.' },
+  resetLandingConfirm: { en: 'Are you sure? This will reset the landing page to the default hardcoded content.', ar: 'هل أنت متأكد؟ سيؤدي هذا إلى إعادة تعيين صفحة الهبوط إلى المحتوى الافتراضي.' },
+  landingResetSuccess: { en: 'Landing page reset to default.', ar: 'تمت استعادة صفحة الهبوط الافتراضية.' },
+  landingGeneratedSuccess: { en: 'Landing Page Generated and Saved Successfully!', ar: 'تم إنشاء وحفظ صفحة الهبوط بنجاح!' },
+  landingGenerateFailed: { en: 'Failed to generate landing page. Please try again.', ar: 'فشل إنشاء صفحة الهبوط. يرجى المحاولة مرة أخرى.' },
+  
+  // Additional translations for Admin Panel
+  noNotificationsFound: { en: 'No notifications found.', ar: 'لم يتم العثور على إشعارات.' },
 };

@@ -1,5 +1,5 @@
 {
   "name": "المساعد الذكي",
-  "description": "An AI-powered platform providing specialized services for lawyers and legal consultants, with features for case analysis, document summarization, and legal research, available in Arabic and English.",
+  "description": "منصة مدعومة بالذكاء الاصطناعي تقدم خدمات متخصصة للمحامين والمستشارين القانونيين، مع ميزات لتحليل القضايا، وتلخيص المستندات، والبحث القانوني.",
   "requestFramePermissions": []
 }

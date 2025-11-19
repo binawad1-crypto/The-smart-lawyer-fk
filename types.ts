@@ -161,3 +161,14 @@ export interface Ticket {
   unreadUser?: boolean;
   unreadAdmin?: boolean;
 }
+
+// Notification System
+export interface SystemNotification {
+  id: string;
+  title: Record<Language, string>;
+  message: Record<Language, string>;
+  type: 'info' | 'warning' | 'success' | 'alert';
+  targetAudience: 'all' | 'admins';
+  isActive: boolean;
+  createdAt: any;
+}
