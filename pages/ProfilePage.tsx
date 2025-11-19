@@ -138,18 +138,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    // Use auth.currentUser specifically for SDK operations to avoid "i.getIdToken is not a function"
+    if (!auth.currentUser) return;
+    
     setIsUpdatingProfile(true);
     setFeedback(null);
     try {
-        await updateProfile(currentUser, { displayName });
-        const userDocRef = doc(db, 'users', currentUser.uid);
+        // FIX: Use auth.currentUser instead of currentUser context object
+        await updateProfile(auth.currentUser, { displayName });
+        
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userDocRef, { 
             displayName,
             location: location 
         });
         showFeedback('success', t('profileUpdatedSuccess'));
     } catch (error) {
+        console.error("Error updating profile:", error);
         showFeedback('error', (error as any).message || t('profileUpdatedError'));
     } finally {
         setIsUpdatingProfile(false);
@@ -157,11 +162,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
 
   const handleReauthentication = async (password: string) => {
-    if (!currentUser || !currentUser.email) return;
+    if (!auth.currentUser || !auth.currentUser.email) return;
     setReauth(prev => ({ ...prev, error: null }));
     try {
-        const credential = EmailAuthProvider.credential(currentUser.email, password);
-        await reauthenticateWithCredential(currentUser, credential);
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+        await reauthenticateWithCredential(auth.currentUser, credential);
         // On success, trigger the intended action
         if (reauth.action === 'email') {
             await performEmailUpdate();
@@ -170,6 +175,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
         }
         setReauth({ isOpen: false, action: null, error: null });
     } catch (error) {
+        console.error("Reauth error:", error);
         setReauth(prev => ({...prev, error: t('authenticationError')}));
     }
   };
@@ -183,10 +189,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
 
   const performEmailUpdate = async () => {
-    if (!currentUser || !newEmail) return;
+    if (!auth.currentUser || !newEmail) return;
     setIsUpdatingSecurity(true);
     try {
-        await verifyBeforeUpdateEmail(currentUser, newEmail);
+        await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
         showFeedback('success', t('emailUpdateSuccess'));
         setNewEmail('');
     } catch (error) {
@@ -197,13 +203,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
 
   const performPasswordUpdate = async () => {
-    if (!currentUser || passwords.newPassword !== passwords.confirmNewPassword) {
+    if (!auth.currentUser || passwords.newPassword !== passwords.confirmNewPassword) {
         showFeedback('error', t('passwordsDontMatch'));
         return;
     }
     setIsUpdatingSecurity(true);
     try {
-        await updatePassword(currentUser, passwords.newPassword);
+        await updatePassword(auth.currentUser, passwords.newPassword);
         showFeedback('success', t('passwordUpdateSuccess'));
         setPasswords({ newPassword: '', confirmNewPassword: '' });
     } catch (error) {
