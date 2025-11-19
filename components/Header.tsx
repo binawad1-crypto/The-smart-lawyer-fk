@@ -121,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
             )}
             {currentUser && !currentUser.isAdmin && (
                 <>
-                    <div className="flex items-center gap-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 px-3 py-1.5 rounded-full text-sm font-semibold">
+                    <div className="hidden md:flex items-center gap-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 px-3 py-1.5 rounded-full text-sm font-semibold">
                         <Gem size={14} />
                         <span>{currentUser.tokenBalance?.toLocaleString() || 0}</span>
                     </div>

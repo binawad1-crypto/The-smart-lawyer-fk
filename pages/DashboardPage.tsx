@@ -385,14 +385,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const renderServiceSelectionView = () => (
         <>
-            <div className="mb-6 flex-shrink-0 flex justify-between items-start">
-                 <div className="text-right rtl:text-left">
+            <div className="mb-6 flex-shrink-0 flex flex-col-reverse gap-3 sm:gap-0 sm:flex-row sm:justify-between sm:items-start">
+                 <div className="text-right rtl:text-left w-full sm:w-auto">
                     <span className="text-xs text-blue-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
                         <Wand2 size={14} /> {t('poweredByAI')}
                     </span>
                 </div>
-                <div className="text-right">
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('legalAssistant')}</h2>
+                <div className="text-right w-full sm:w-auto">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('legalAssistant')}</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('howCanIHelp')}</p>
                 </div>
             </div>
