@@ -19,7 +19,7 @@ const ChatWidget: React.FC = () => {
   const { t, dir, language } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch location on mount
+  // Fetch location on mount with fallback
   useEffect(() => {
     const fetchLocation = async () => {
         try {
@@ -27,9 +27,20 @@ const ChatWidget: React.FC = () => {
             if (response.ok) {
                 const data = await response.json();
                 setUserLocation(data.country_name);
+            } else {
+                throw new Error('Primary API failed');
             }
         } catch (error) {
-            console.error("Error fetching location for chat:", error);
+            try {
+                const fallback = await fetch('https://ipwho.is/');
+                if (fallback.ok) {
+                    const data = await fallback.json();
+                    if (data.success) setUserLocation(data.country);
+                }
+            } catch (e) {
+                // Fail silently or log warn
+                console.warn("Could not fetch user location for chat context.");
+            }
         }
     };
     fetchLocation();

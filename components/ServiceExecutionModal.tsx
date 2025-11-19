@@ -43,20 +43,35 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   
   useEffect(() => {
       if (isOpen) {
-        // Fetch User Location based on IP when modal opens
+        // Fetch User Location based on IP when modal opens with fallback
         const fetchLocation = async () => {
             setIsLocating(true);
+            const defaultLoc = language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia';
             try {
                 const response = await fetch('https://ipapi.co/json/');
                 if (response.ok) {
                     const data = await response.json();
-                    setUserLocation(data.country_name || (language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia'));
+                    setUserLocation(data.country_name || defaultLoc);
                 } else {
-                    throw new Error("Failed to fetch location");
+                    throw new Error("Primary API failed");
                 }
             } catch (error) {
-                console.error("Error fetching location:", error);
-                setUserLocation(language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia');
+                try {
+                    const fallbackResponse = await fetch('https://ipwho.is/');
+                    if (fallbackResponse.ok) {
+                        const data = await fallbackResponse.json();
+                        if (data.success) {
+                             setUserLocation(data.country || defaultLoc);
+                        } else {
+                             throw new Error("Secondary API returned error");
+                        }
+                    } else {
+                        throw new Error("Secondary API failed");
+                    }
+                } catch (fallbackError) {
+                    console.warn("Error fetching location, using default:", fallbackError);
+                    setUserLocation(defaultLoc);
+                }
             } finally {
                 setIsLocating(false);
             }

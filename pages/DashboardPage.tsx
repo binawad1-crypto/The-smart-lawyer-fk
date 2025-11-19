@@ -67,21 +67,37 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
         fetchServices();
 
-        // Fetch User Location based on IP
+        // Fetch User Location based on IP with fallback
         const fetchLocation = async () => {
             setIsLocating(true);
+            const defaultLoc = language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia';
             try {
+                // Try Primary API
                 const response = await fetch('https://ipapi.co/json/');
                 if (response.ok) {
                     const data = await response.json();
-                    // Default to 'Saudi Arabia' if data is missing, or use country_name
-                    setUserLocation(data.country_name || (language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia'));
+                    setUserLocation(data.country_name || defaultLoc);
                 } else {
-                    throw new Error("Failed to fetch location");
+                    throw new Error("Primary API failed");
                 }
             } catch (error) {
-                console.error("Error fetching location:", error);
-                setUserLocation(language === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia');
+                // Try Secondary API
+                try {
+                    const fallbackResponse = await fetch('https://ipwho.is/');
+                    if (fallbackResponse.ok) {
+                        const data = await fallbackResponse.json();
+                        if (data.success) {
+                             setUserLocation(data.country || defaultLoc);
+                        } else {
+                             throw new Error("Secondary API returned error");
+                        }
+                    } else {
+                        throw new Error("Secondary API failed");
+                    }
+                } catch (fallbackError) {
+                    console.warn("Location detection failed, using default.", fallbackError);
+                    setUserLocation(defaultLoc);
+                }
             } finally {
                 setIsLocating(false);
             }
