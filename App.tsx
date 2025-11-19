@@ -71,7 +71,7 @@ const App: React.FC = () => {
   }
 
   const handleLogoClick = () => {
-      setView('dashboard');
+      setView('landing');
   }
   
   const loading = authLoading || settingsLoading;
@@ -126,6 +126,8 @@ const App: React.FC = () => {
         onLogoClick={handleLogoClick}
         onProfileClick={() => handleNavigate('profile')}
         onHomeClick={() => setView('landing')}
+        onServicesClick={() => setView('dashboard')}
+        view={view}
       />
       <main className="flex-grow flex flex-col">
         {renderContent()}

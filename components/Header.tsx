@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useTheme } from '../hooks/useTheme';
@@ -8,6 +8,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { Language } from '../types';
+import { View } from '../App';
 
 interface HeaderProps {
     onLoginClick: () => void;
@@ -15,6 +16,8 @@ interface HeaderProps {
     onLogoClick: () => void;
     onProfileClick: () => void;
     onHomeClick: () => void;
+    onServicesClick?: () => void;
+    view?: View;
 }
 
 const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = ({ onProfileClick, onLogout }) => {
@@ -66,7 +69,7 @@ const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = (
 }
 
 
-const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onHomeClick }) => {
+const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onHomeClick, onServicesClick, view }) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { currentUser } = useAuth();
@@ -102,10 +105,17 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
           </button>
           <div className="flex items-center space-x-1 md:space-x-2">
             {currentUser && (
-                <button onClick={onHomeClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('home')}>
-                    <Home size={20} />
-                    <span className="hidden sm:inline text-sm font-semibold">{t('home')}</span>
-                </button>
+                view === 'landing' && onServicesClick ? (
+                    <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
+                        <LayoutDashboard size={20} />
+                        <span className="hidden sm:inline text-sm font-semibold">{t('services')}</span>
+                    </button>
+                ) : (
+                    <button onClick={onHomeClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('home')}>
+                        <Home size={20} />
+                        <span className="hidden sm:inline text-sm font-semibold">{t('home')}</span>
+                    </button>
+                )
             )}
             {currentUser && !currentUser.isAdmin && (
                 <>
