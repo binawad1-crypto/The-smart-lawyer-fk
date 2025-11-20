@@ -407,7 +407,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+        // Force dark theme styling for this sidebar even in light mode
+        <div className="flex flex-col h-full rounded-2xl bg-slate-900 shadow-lg border border-slate-800 overflow-hidden">
             {/* Header */}
             <div className="p-6 bg-gradient-to-br from-teal-600 to-teal-800 text-white shrink-0">
                  <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight">
@@ -419,22 +420,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="p-4 border-b border-slate-800">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-3 rtl:left-auto" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
                     <input
                         type="text"
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all"
+                        // Use dark mode styles for input
+                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-slate-800 text-slate-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-slate-500"
                     />
                 </div>
             </div>
 
             {/* Categories Navigation */}
             <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1">
-                <p className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <p className="px-3 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
                     {language === 'ar' ? 'الأقسام' : 'Categories'}
                 </p>
                 {categories.map(cat => (
@@ -446,15 +448,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group ${
                             selectedCategory === cat.id
-                                ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                ? 'bg-teal-900/30 text-teal-400 shadow-sm' // Dark mode active style
+                                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' // Dark mode inactive style
                         }`}
                     >
-                        <div className={`p-1.5 rounded-lg transition-colors ${selectedCategory === cat.id ? 'bg-white dark:bg-slate-800' : 'bg-gray-100 dark:bg-slate-800 group-hover:bg-white'}`}>
-                             <cat.icon size={16} className={selectedCategory === cat.id ? 'text-teal-600' : cat.color} />
+                        <div className={`p-1.5 rounded-lg transition-colors ${selectedCategory === cat.id ? 'bg-slate-800' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
+                             <cat.icon size={16} className={selectedCategory === cat.id ? 'text-teal-400' : cat.color} />
                         </div>
                         <span className="flex-grow text-left rtl:text-right">{cat.label}</span>
-                        {selectedCategory === cat.id && <ChevronRightIcon size={14} className="rtl:rotate-180" />}
+                        {selectedCategory === cat.id && <ChevronRightIcon size={14} className="rtl:rotate-180 text-teal-500" />}
                     </button>
                 ))}
             </div>
