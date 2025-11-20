@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -45,6 +46,53 @@
   }
 }
 </script>
+<style>
+  /* Custom Scrollbar Styling for a Sleek Look */
+  
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent; 
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; /* slate-300 */
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8; /* slate-400 */
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  
+  /* Dark mode support */
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: #334155; /* slate-700 */
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: #475569; /* slate-600 */
+  }
+  
+  /* Firefox */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  
+  html.dark {
+    scrollbar-color: #334155 transparent;
+  }
+</style>
 </head>
   <body>
     <div id="root"></div>

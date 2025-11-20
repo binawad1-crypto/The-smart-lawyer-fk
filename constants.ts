@@ -106,7 +106,7 @@ export const translations: Translations = {
   resultPlaceholder: { en: "The result will appear here.", ar: "ستظهر النتيجة هنا." },
   uploadFile: { en: "Upload a file", ar: "رفع ملف" },
   noFileSelected: { en: "No file selected", ar: "لم يتم اختيار ملف" },
-  legalAssistant: { en: 'The Legal Assistant', ar: 'المساعد القانوني' },
+  legalAssistant: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
   howCanIHelp: { en: 'How can I help you today?', ar: 'كيف يمكنني مساعدتك اليوم؟' },
   poweredByAI: { en: 'Powered by AI', ar: 'مدعوم بالذكاء الاصطناعي' },
   typeYourRequest: { en: 'Type your request here...', ar: 'اكتب طلبك هنا...' },

@@ -29,7 +29,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [fontSize, setFontSize] = useState(16);
+    const [fontSize, setFontSize] = useState(14);
     
     // Voice Settings
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -46,7 +46,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [favorites, setFavorites] = useState<string[]>([]);
     
     // Layout State
-    const [isFullWidth, setIsFullWidth] = useState(false);
+    const [isFullWidth, setIsFullWidth] = useState(true);
 
     useEffect(() => {
         setOutputLanguage(language);
@@ -229,6 +229,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setSelectedService(service);
         setFormData({});
         setCurrentView('form');
+        // When clicking a service, we might want to clear the previous result or keep it.
+        // For now, let's clear to focus on the new task.
+        setResult('');
     };
 
     const handleBackToServices = () => {
@@ -416,177 +419,183 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
     );
 
+    // -------------------- LEFT PANEL CONTENT (Services) --------------------
     const renderServiceSelectionView = () => (
-        <>
-            <div className="mb-4 flex-shrink-0 flex flex-col gap-2">
-                 <div className="flex flex-col-reverse gap-3 sm:gap-0 sm:flex-row sm:justify-between sm:items-start">
-                     <div className="text-right rtl:text-left w-full sm:w-auto">
-                        <span className="text-xs text-primary-400 font-semibold flex items-center gap-2 pt-2 justify-end rtl:justify-start">
-                            <Wand2 size={14} /> {t('poweredByAI')}
-                        </span>
+        <div className="flex flex-col h-full rounded-xl overflow-hidden shadow-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900">
+            {/* Top Header (Teal Gradient Background with Light Effect) */}
+            <div className="bg-gradient-to-br from-teal-600 via-teal-800 to-slate-900 p-6 flex-shrink-0 relative overflow-hidden">
+                {/* Subtle Light Effect */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-full bg-gradient-to-b from-white/10 to-transparent opacity-30 pointer-events-none"></div>
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        {/* Title Area */}
+                        <div className="text-right rtl:text-right ltr:text-left">
+                            <span className="text-xs text-teal-200 font-bold flex items-center gap-2 mb-1 justify-end rtl:justify-start ltr:justify-start">
+                                <Wand2 size={14} /> {t('poweredByAI')}
+                            </span>
+                            <h2 className="text-2xl font-black text-white tracking-tight drop-shadow-sm">{t('legalAssistant')}</h2>
+                            <p className="text-xs text-teal-100/80 mt-1">{t('appSubtitle')}</p>
+                        </div>
+
+                        {/* Search Area - Glassmorphic */}
+                        <div className="relative w-full md:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-100 rtl:right-3 rtl:left-auto" size={16} />
+                            <input
+                                type="text"
+                                placeholder={t('searchServicePlaceholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-teal-100/70 focus:ring-2 focus:ring-white/30 focus:border-transparent text-sm transition-all outline-none"
+                            />
+                        </div>
                     </div>
-                    <div className="text-right w-full sm:w-auto">
-                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('legalAssistant')}</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('howCanIHelp')}</p>
+
+                    {/* Category Tabs (Inside Header) - Glassmorphic Pills */}
+                    <div className="flex flex-wrap gap-2">
+                        {categories.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => setSelectedCategory(cat.id)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 flex items-center gap-2 backdrop-blur-sm ${
+                                    selectedCategory === cat.id
+                                        ? 'bg-white text-teal-900 shadow-md'
+                                        : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'
+                                }`}
+                            >
+                                {cat.id === 'favorites' && <Star size={12} fill={selectedCategory === 'favorites' ? 'currentColor' : 'none'} />}
+                                {cat.id === 'all' && <LayoutGrid size={12}/>}
+                                {cat.label}
+                            </button>
+                        ))}
                     </div>
-                </div>
-                {/* Language Selector & Layout Toggle above the prompt box */}
-                <div className="flex justify-end items-center gap-3">
-                     <button
-                        onClick={() => setIsFullWidth(!isFullWidth)}
-                        className="p-1.5 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-                        title={isFullWidth ? t('standardWidth') : t('fullWidth')}
-                    >
-                        {isFullWidth ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                    </button>
-                    {renderOutputLanguageSelector(false)}
                 </div>
             </div>
 
-            <div className="relative flex-shrink-0 mb-6">
+            {/* Services Grid (Light Background) */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar p-4 bg-gray-50 dark:bg-slate-900/50">
+                {loadingServices ? (
+                    <div className="text-center p-8"><Loader2 className="animate-spin inline-block text-primary-500" size={32} /></div>
+                ) : errorServices ? (
+                    <p className="text-center text-red-500 p-8">{errorServices}</p>
+                ) : filteredServices.length === 0 ? (
+                    <p className="text-center text-gray-500 p-8">{t('noServicesFound')}</p>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filteredServices.map(service => {
+                            const Icon = iconMap[service.icon] || FileText;
+                            const isFav = favorites.includes(service.id);
+                            return (
+                                <button
+                                    key={service.id}
+                                    onClick={() => handleServiceClick(service)}
+                                    className="group flex flex-col text-right rtl:text-right ltr:text-left p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-50/30 to-transparent dark:from-primary-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    
+                                    <div className="flex items-start justify-between w-full mb-3 relative z-10">
+                                        <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-slate-700 text-primary-600 dark:text-primary-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                            <Icon size={20} strokeWidth={2} />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div 
+                                                role="button"
+                                                onClick={(e) => toggleFavorite(e, service.id)}
+                                                className={`p-1 rounded-full transition-colors ${isFav ? 'text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                            >
+                                                <Star size={16} fill={isFav ? "currentColor" : "none"} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-xs font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 leading-snug relative z-10 w-full">
+                                        {service.title[language] || service.title['en']}
+                                    </h3>
+                                    
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 relative z-10 w-full opacity-80">
+                                        {service.description[language] || service.description['en']}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    // -------------------- RIGHT PANEL CONTENT (Output & Chat) --------------------
+    
+    const renderPromptInput = () => (
+        <div className="p-4 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 relative">
+            <div className="relative">
                 <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder={t('typeYourRequest')}
-                    className="w-full h-32 p-4 ltr:pl-16 rtl:pr-16 resize-none border-0 rounded-2xl bg-slate-100 dark:bg-dark-bg text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:outline-none placeholder-gray-500 text-right shadow-inner"
+                    className="w-full h-20 max-h-32 p-3 ltr:pl-12 rtl:pr-12 resize-none border-0 rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:outline-none placeholder-gray-400 text-right text-sm"
                 />
                 <button
                     onClick={handleExecutePrompt}
                     disabled={isGenerating || !prompt.trim()}
-                    className="absolute top-4 ltr:left-4 rtl:right-4 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-all shadow-lg z-10 hover:scale-105"
+                    className="absolute bottom-3 ltr:left-3 rtl:right-3 w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 disabled:bg-primary-300 disabled:cursor-not-allowed transition-all shadow-md"
                     aria-label="Send"
                 >
-                    {isGenerating ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} className="ltr:-scale-x-100" />}
+                    {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ltr:-scale-x-100" />}
                 </button>
             </div>
-
-            <div className="flex flex-col h-full">
-                {/* Search Bar */}
-                <div className="mb-4 relative w-full max-w-md mx-auto sm:mx-0">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-3 rtl:left-auto" size={18} />
-                    <input
-                        type="text"
-                        placeholder={t('searchServicePlaceholder')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full py-2.5 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm transition-all shadow-sm"
-                    />
-                </div>
-
-                {/* Category Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start">
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            onClick={() => setSelectedCategory(cat.id)}
-                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
-                                selectedCategory === cat.id
-                                    ? 'bg-primary-600 text-white shadow-md scale-105'
-                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
-                            }`}
-                        >
-                            {cat.id === 'favorites' && <Star size={14} fill={selectedCategory === 'favorites' ? 'white' : 'none'} />}
-                            {cat.id === 'all' && <LayoutGrid size={14}/>}
-                            {cat.label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Services Grid */}
-                <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 -mr-2 pb-4">
-                    {loadingServices ? (
-                        <div className="text-center p-8"><Loader2 className="animate-spin inline-block text-primary-500" size={32} /></div>
-                    ) : errorServices ? (
-                        <p className="text-center text-red-500 p-8">{errorServices}</p>
-                    ) : filteredServices.length === 0 ? (
-                        <p className="text-center text-gray-500 p-8">{t('noServicesFound')}</p>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredServices.map(service => {
-                                const Icon = iconMap[service.icon] || FileText;
-                                const isFav = favorites.includes(service.id);
-                                return (
-                                    <button
-                                        key={service.id}
-                                        onClick={() => handleServiceClick(service)}
-                                        className="group flex flex-col text-right rtl:text-right ltr:text-left p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent dark:from-primary-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                        
-                                        <div className="flex items-start justify-between w-full mb-3 relative z-10">
-                                            <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-slate-700 text-primary-600 dark:text-primary-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                                <Icon size={24} strokeWidth={2} />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {/* Star Button */}
-                                                <div 
-                                                    role="button"
-                                                    onClick={(e) => toggleFavorite(e, service.id)}
-                                                    className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                                >
-                                                    <Star size={20} fill={isFav ? "currentColor" : "none"} />
-                                                </div>
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 rtl:-translate-x-2 group-hover:translate-x-0 rtl:group-hover:translate-x-0 text-primary-500">
-                                                    {language === 'ar' ? <ArrowLeft size={20}/> : <ArrowRight size={20}/>}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 leading-snug relative z-10 w-full">
-                                            {service.title[language] || service.title['en']}
-                                        </h3>
-                                        
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 relative z-10 w-full opacity-80">
-                                            {service.description[language] || service.description['en']}
-                                        </p>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+            <div className="flex justify-between items-center mt-2">
+                {renderOutputLanguageSelector(false)}
+                <button
+                    onClick={() => setIsFullWidth(!isFullWidth)}
+                    className="p-1.5 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                    title={isFullWidth ? t('standardWidth') : t('fullWidth')}
+                >
+                    {isFullWidth ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
             </div>
-        </>
+        </div>
     );
 
     const renderServiceFormView = () => (
         selectedService && (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-white dark:bg-slate-800/50 rounded-xl p-6">
                 <div className="flex items-center mb-4 flex-shrink-0">
-                    <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button onClick={handleBackToServices} className="p-2 rounded-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
                         {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
                     </button>
                     <div className="mx-3 text-right rtl:text-left">
                         <h3 className="text-xl font-bold text-gray-800 dark:text-white">{selectedService.title[language] || selectedService.title['en']}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{selectedService.description[language] || selectedService.description['en']}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{selectedService.description[language] || selectedService.description['en']}</p>
                     </div>
                 </div>
                  <div className="border-t border-gray-200 dark:border-slate-700 mb-4"></div>
-                <form onSubmit={handleServiceFormSubmit} className="space-y-4 flex-grow flex flex-col">
+                <form onSubmit={handleServiceFormSubmit} className="space-y-4 flex-grow flex flex-col overflow-hidden">
                     <div className="flex-grow space-y-4 overflow-y-auto custom-scrollbar pr-2 -mr-2">
                         {selectedService.formInputs.map(input => (
                             <div key={input.name}>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{input.label[language]}</label>
-                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={5} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
-                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
-                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
+                                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1 uppercase">{input.label[language]}</label>
+                                {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border-0 rounded-lg bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
+                                {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border-0 rounded-lg bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
+                                {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border-0 rounded-lg bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:outline-none" />}
                                 {input.type === 'select' && (
-                                    <select name={input.name} onChange={handleInputChange} className="w-full p-2 border-0 rounded-md bg-slate-100 dark:bg-dark-bg focus:ring-2 focus:ring-primary-500 focus:outline-none">
+                                    <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border-0 rounded-lg bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:outline-none">
                                         <option value="">{`Select ${input.label[language]}`}</option>
                                         {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                     </select>
                                 )}
                                 {input.type === 'file' && (
-                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-lg hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors">
                                         <div className="space-y-1 text-center">
-                                            <File className="mx-auto h-12 w-12 text-gray-400"/>
-                                            <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                                                <label htmlFor={input.name} className="relative cursor-pointer bg-transparent rounded-md font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+                                            <File className="mx-auto h-10 w-10 text-gray-400"/>
+                                            <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
+                                                <label htmlFor={input.name} className="relative cursor-pointer rounded-md font-bold text-primary-600 dark:text-primary-400 hover:text-primary-500">
                                                     <span>{t('uploadFile')}</span>
                                                     <input id={input.name} name={input.name} type="file" className="sr-only" onChange={handleInputChange} />
                                                 </label>
                                             </div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
+                                            <p className="text-[10px] text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
                                         </div>
                                     </div>
                                 )}
@@ -594,11 +603,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         ))}
                     </div>
                     <div className="pt-4 flex-shrink-0 border-t border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-3">
-                        <button type="submit" disabled={isGenerating} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg transform active:scale-95">
+                        <button type="submit" disabled={isGenerating} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/20 transform active:scale-95">
                             {isGenerating && <Loader2 className="animate-spin" size={20} />}
                             {t('executeTask')}
                         </button>
-                        {renderOutputLanguageSelector()}
+                         {renderOutputLanguageSelector(false)}
                     </div>
                 </form>
             </div>
@@ -606,178 +615,108 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     const renderOutputPanelContent = () => {
-        if (isGenerating) {
-            return (
-                <div className="flex flex-col items-center justify-center h-full">
-                    <Loader2 className="animate-spin text-primary-500" size={48} />
-                    <p className="mt-4 text-gray-500 text-center">{retryMessage || t('generatingResponse')}</p>
-                </div>
-            );
-        }
-        if (result) {
-            const currentLangPrefix = outputLanguage === Language.AR ? 'ar' : 'en';
-            const filteredVoices = voices.filter(v => v.lang.startsWith(currentLangPrefix));
-
-            return (
-                <div className="flex flex-col w-full h-full">
-                    <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
-                         <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600 dark:text-gray-300">
-                             <button onClick={handleIncreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom In">
-                                 <ZoomIn size={18} />
-                             </button>
-                             <button onClick={handleDecreaseFont} className="hover:text-primary-500 transition-colors p-1" title="Zoom Out">
-                                 <ZoomOut size={18} />
-                             </button>
-                             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                             
-                             {/* Voice Controls */}
-                             <div className="relative" ref={settingsRef}>
-                                <div className="flex items-center rounded-full bg-gray-100 dark:bg-gray-800 p-1">
-                                    <button onClick={handleListen} className="flex items-center gap-1.5 px-3 py-1 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all">
-                                        <Volume2 size={16} className={isSpeaking ? "text-green-500 animate-pulse" : ""} />
-                                        <span className="hidden sm:inline">{isSpeaking ? t('stop') : t('listen')}</span>
-                                    </button>
-                                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                                    <button onClick={() => setShowVoiceSettings(!showVoiceSettings)} className="p-1.5 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all text-gray-500 hover:text-primary-600" title={t('voiceSettings')}>
-                                        <Settings2 size={16} />
-                                    </button>
-                                </div>
-
-                                {/* Voice Settings Popover */}
-                                {showVoiceSettings && (
-                                    <div className="absolute top-full mt-2 left-0 rtl:right-0 rtl:left-auto w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 z-20 animate-fade-in-down">
-                                        <h4 className="font-bold text-sm mb-3 text-gray-800 dark:text-white flex items-center gap-2">
-                                            <Sliders size={14} /> {t('voiceSettings')}
-                                        </h4>
-                                        
-                                        {/* Voice Select */}
-                                        <div className="mb-3">
-                                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('selectVoice')}</label>
-                                            <select 
-                                                value={selectedVoice?.name || ''} 
-                                                onChange={(e) => {
-                                                    const voice = voices.find(v => v.name === e.target.value);
-                                                    setSelectedVoice(voice || null);
-                                                }}
-                                                className="w-full p-2 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                            >
-                                                <option value="">Default</option>
-                                                {filteredVoices.map(v => (
-                                                    <option key={v.name} value={v.name}>{v.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {/* Speed Slider */}
-                                        <div className="mb-3">
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-gray-500 dark:text-gray-400">{t('speed')}</span>
-                                                <span className="font-mono">{speechRate}x</span>
-                                            </div>
-                                            <input 
-                                                type="range" 
-                                                min="0.5" 
-                                                max="2" 
-                                                step="0.1" 
-                                                value={speechRate} 
-                                                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary-600"
-                                            />
-                                        </div>
-
-                                        {/* Pitch Slider */}
-                                        <div className="mb-3">
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-gray-500 dark:text-gray-400">{t('pitch')}</span>
-                                                <span className="font-mono">{speechPitch}</span>
-                                            </div>
-                                            <input 
-                                                type="range" 
-                                                min="0.5" 
-                                                max="2" 
-                                                step="0.1" 
-                                                value={speechPitch} 
-                                                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
-                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary-600"
-                                            />
-                                        </div>
-
-                                        <button 
-                                            onClick={() => { setSpeechRate(1); setSpeechPitch(1); setSelectedVoice(null); }}
-                                            className="w-full py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-colors"
-                                        >
-                                            {t('reset')}
-                                        </button>
-                                    </div>
-                                )}
-                             </div>
-
-                             <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
-                                {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                                <span className="hidden sm:inline">{isCopied ? t('copied') : t('copy')}</span>
-                            </button>
-                            <button onClick={handlePrint} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
-                                <Printer size={16} />
-                                <span className="hidden sm:inline">{t('print')}</span>
-                            </button>
-                            <button onClick={handleClear} className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-white hidden md:block">{t('results')}</h3>
-                    </div>
-                    <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
-                         {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
-                         <pre 
-                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
-                            style={{ fontSize: `${fontSize}px` }}
-                        >
-                            {result}
-                        </pre>
-                    </div>
-                </div>
-            );
-        }
-        
-        // Initial state or out of tokens message
-        const hasTokens = !currentUser || currentUser.isAdmin || (currentUser.tokenBalance || 0) > 0;
-
         return (
-            <div className='text-center p-4 flex flex-col justify-center items-center h-full'>
-                <div className="inline-block p-4 mb-4 rounded-full bg-primary-50 dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-inner">
-                    <Wand2 size={40} />
+            <div className="flex flex-col h-full overflow-hidden rounded-xl bg-primary-50/50 dark:bg-slate-900 border border-primary-100 dark:border-slate-700">
+                 {/* Result Area */}
+                <div className="flex-grow overflow-y-auto custom-scrollbar relative">
+                    {isGenerating ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                            <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-lg mb-4">
+                                <Loader2 className="animate-spin text-primary-500" size={32} />
+                            </div>
+                            <p className="text-gray-500 text-center font-medium animate-pulse">{retryMessage || t('generatingResponse')}</p>
+                        </div>
+                    ) : result ? (
+                        <div className="flex flex-col min-h-full">
+                            <div className="sticky top-0 z-10 flex justify-between items-center p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-700">
+                                <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
+                                    <Sparkles size={16} className="text-yellow-500"/>
+                                    {t('results')}
+                                </h3>
+                                <div className="flex items-center gap-1">
+                                    <div className="flex bg-gray-100 dark:bg-slate-700 rounded-lg p-1 mr-2">
+                                         <button onClick={handleIncreaseFont} className="hover:bg-white dark:hover:bg-slate-600 rounded p-1 transition-colors" title="Zoom In"><ZoomIn size={16} /></button>
+                                         <button onClick={handleDecreaseFont} className="hover:bg-white dark:hover:bg-slate-600 rounded p-1 transition-colors" title="Zoom Out"><ZoomOut size={16} /></button>
+                                    </div>
+                                     
+                                     {/* Voice Popover trigger */}
+                                     <div className="relative" ref={settingsRef}>
+                                         <button onClick={() => setShowVoiceSettings(!showVoiceSettings)} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500">
+                                             <Settings2 size={16}/>
+                                         </button>
+                                          {showVoiceSettings && (
+                                            <div className="absolute top-full mt-2 right-0 w-60 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 z-20">
+                                                {/* Voice Settings Content same as before, just positioned differently */}
+                                                <div className="mb-3">
+                                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('selectVoice')}</label>
+                                                    <select 
+                                                        value={selectedVoice?.name || ''} 
+                                                        onChange={(e) => {
+                                                            const voice = voices.find(v => v.name === e.target.value);
+                                                            setSelectedVoice(voice || null);
+                                                        }}
+                                                        className="w-full p-1 text-xs border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                    >
+                                                        <option value="">Default</option>
+                                                        {voices.filter(v => v.lang.startsWith(outputLanguage === Language.AR ? 'ar' : 'en')).map(v => (
+                                                            <option key={v.name} value={v.name}>{v.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="mb-3">
+                                                     <span className="text-xs text-gray-500 block mb-1">{t('speed')}: {speechRate}x</span>
+                                                     <input type="range" min="0.5" max="2" step="0.1" value={speechRate} onChange={(e) => setSpeechRate(parseFloat(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"/>
+                                                </div>
+                                            </div>
+                                        )}
+                                     </div>
+
+                                    <button onClick={handleListen} className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 ${isSpeaking ? 'text-green-500' : 'text-gray-500'}`}><Volume2 size={16} /></button>
+                                    <button onClick={copyToClipboard} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500">{isCopied ? <Check size={16} className="text-green-500"/> : <Copy size={16} />}</button>
+                                    <button onClick={handlePrint} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500"><Printer size={16} /></button>
+                                    <button onClick={handleClear} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"><X size={16} /></button>
+                                </div>
+                            </div>
+                            <div className="p-6 prose dark:prose-invert max-w-none">
+                                <pre 
+                                    className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
+                                    style={{ fontSize: `${fontSize}px` }}
+                                >
+                                    {result}
+                                </pre>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                            <div className="w-16 h-16 bg-gray-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                <Sparkles size={32} className="text-gray-400"/>
+                            </div>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">{t('resultPlaceholder')}</p>
+                        </div>
+                    )}
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('smartLegalAssistant')}</h2>
-                {hasTokens ? (
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">{t('selectServiceToStart')}</p>
-                ) : (
-                    <div className="mt-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg text-center" role="alert">
-                        <strong className="font-bold block">{t('outOfTokens')}</strong>
-                        <span className="block sm:inline">{t('outOfTokensUser')}</span>
-                         <button onClick={() => onNavigate('subscriptions')} className="mt-3 w-full bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700">
-                            {t('upgradeNow')}
-                        </button>
-                    </div>
-                )}
+                
+                {/* Prompt Input at the Bottom of Output Panel */}
+                {renderPromptInput()}
             </div>
         );
-    };
+    }
 
     return (
-        <div className={`${isFullWidth ? 'w-full px-2' : 'container mx-auto px-4 sm:px-6 lg:px-8'} flex-grow flex items-start justify-center py-8 transition-all duration-300`}>
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 bg-light-card-bg dark:bg-dark-card-bg shadow-2xl p-4 sm:p-6 lg:p-8 overflow-hidden transition-all duration-300 ${
+        <div className={`${isFullWidth ? 'w-full px-2' : 'container mx-auto px-4 sm:px-6 lg:px-8'} flex-grow flex items-start justify-center py-4 lg:py-8 transition-all duration-300`}>
+            <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 w-full max-w-[1920px] ${
                 isFullWidth 
-                ? 'w-full max-w-none h-[calc(100vh-80px)] rounded-xl' 
-                : 'w-[95vw] max-w-[1800px] h-[calc(100vh-120px)] rounded-3xl'
+                ? 'lg:h-[calc(100vh-80px)] h-auto min-h-[calc(100vh-80px)]' 
+                : 'lg:h-[calc(100vh-100px)] h-auto min-h-[calc(100vh-100px)]'
             }`}>
 
-                {/* Left Panel (Input) */}
-                <div className="flex flex-col h-full overflow-hidden">
+                {/* Left Panel (Input / Services) - Takes more space now (8/12) */}
+                <div className="lg:col-span-8 xl:col-span-8 min-h-[600px] lg:h-full overflow-hidden shadow-xl rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 flex flex-col">
                     {currentView === 'services' ? renderServiceSelectionView() : renderServiceFormView()}
                 </div>
 
-                {/* Right Panel (Output) */}
-                <div className="flex flex-col rounded-2xl bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-700 h-full overflow-hidden">
+                {/* Right Panel (Output) - Takes less space (4/12) */}
+                <div className="lg:col-span-4 xl:col-span-4 min-h-[500px] lg:h-full overflow-hidden shadow-xl rounded-xl flex flex-col">
                     {renderOutputPanelContent()}
                 </div>
 
