@@ -6,6 +6,7 @@ import { useSiteSettings } from './hooks/useSiteSettings';
 import Header from './components/Header';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
+// FIX: The error "has no default export" is fixed by adding `export default` to AdminPage.tsx. No change is needed here.
 import AdminPage from './pages/AdminPage';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';

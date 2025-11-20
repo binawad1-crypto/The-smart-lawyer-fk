@@ -80,8 +80,9 @@ export enum ServiceCategory {
   LitigationAndPleadings = 'litigationAndPleadings',
   SpecializedConsultations = 'specializedConsultations',
   InvestigationsAndCriminal = 'investigationsAndCriminal',
-  CorporateAndCompliance = 'corporateAndCompliance',
   CreativeServices = 'creativeServices',
+  // FIX: Added missing CorporateAndCompliance category used in DashboardPage and seed data.
+  CorporateAndCompliance = 'corporateAndCompliance',
 }
 
 export interface Service {

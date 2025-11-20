@@ -109,7 +109,7 @@ const ChatWidget: React.FC = () => {
             <button
               onClick={toggleChat}
               className="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Close chat"
+              aria-label={t('cancel')}
             >
               <X size={20} />
             </button>
@@ -153,7 +153,7 @@ const ChatWidget: React.FC = () => {
                 type="submit"
                 className={`absolute inset-y-0 ${dir === 'rtl' ? 'left-1' : 'right-1'} flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:bg-primary-300`}
                 disabled={isLoading || !inputValue.trim()}
-                aria-label="Send message"
+                aria-label={t('send')}
               >
                 <Send size={20} />
               </button>

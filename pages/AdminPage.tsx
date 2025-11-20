@@ -60,7 +60,12 @@ const initialSiteSettings: SiteSettings = {
     logoUrl: '',
     faviconUrl: '',
     isMaintenanceMode: false,
-    adPixels: {},
+    adPixels: {
+        googleTagId: '',
+        facebookPixelId: '',
+        snapchatPixelId: 'c3a97bbb-5508-4710-82b9-abebc81eb7a7',
+        tiktokPixelId: '',
+    },
 };
 
 const GrantSubscriptionModal: React.FC<{
@@ -270,7 +275,7 @@ const AddTokenModal: React.FC<{
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <p className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                        Adding tokens for: <br/><b>{userEmail}</b>
+                        {t('addTokens')} لـ: <br/><b>{userEmail}</b>
                     </p>
                     <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('tokenAmount')}</label>
@@ -1532,7 +1537,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('geminiModel')}</label>
                              <select value={newService.geminiModel} onChange={e => handleServiceInputChange('geminiModel', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
                                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
                             </select>
                         </div>
                     </div>
@@ -1610,8 +1615,8 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                          {input.options?.map((option, optIndex) => (
                                              <div key={optIndex} className="flex gap-2 mb-1">
                                                  <input type="text" placeholder="Value" value={option.value} onChange={e => handleOptionChange(index, optIndex, 'value', e.target.value)} className="p-1 border rounded text-xs w-20 dark:bg-gray-700 dark:border-gray-500"/>
-                                                 <input type="text" placeholder="Label EN" value={option.label.en} onChange={e => handleOptionLabelChange(index, optIndex, 'en', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500"/>
-                                                 <input type="text" placeholder="Label AR" value={option.label.ar} onChange={e => handleOptionLabelChange(index, optIndex, 'ar', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500 text-right"/>
+                                                 <input type="text" placeholder={t('featureEn')} value={option.label.en} onChange={e => handleOptionLabelChange(index, optIndex, 'en', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500"/>
+                                                 <input type="text" placeholder={t('featureAr')} value={option.label.ar} onChange={e => handleOptionLabelChange(index, optIndex, 'ar', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500 text-right"/>
                                                  <button type="button" onClick={() => handleRemoveOption(index, optIndex)} className="text-red-500 text-xs"><X size={14}/></button>
                                              </div>
                                          ))}
@@ -1804,6 +1809,8 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                  {loadingPlans ? (
                      <div className="col-span-full text-center py-10"><Loader2 className="animate-spin inline-block" size={32}/></div>
+                 ) : planError ? (
+                     <p className="col-span-full text-center py-10 text-red-500">{planError}</p>
                  ) : plans.length === 0 ? (
                      <div className="col-span-full text-center py-10 text-gray-500">{t('noPlansFound')}</div>
                  ) : plans.map(plan => (
@@ -1814,7 +1821,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                      <h3 className="font-bold text-lg text-gray-900 dark:text-white">{plan.title[language]}</h3>
                                      <p className="text-sm text-gray-500 dark:text-gray-400">{plan.id}</p>
                                  </div>
-                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${plan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${plan.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
                                      {t(plan.status)}
                                  </span>
                              </div>
@@ -1953,14 +1960,14 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                      <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('logo')}</label>
                          <div className="flex items-center gap-4">
-                            {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt="Logo" className="h-12 w-auto bg-gray-100 p-1 rounded" />}
+                            {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt={t('logo')} className="h-12 w-auto bg-gray-100 p-1 rounded" />}
                             <input type="file" accept="image/*" onChange={(e) => e.target.files && setLogoFile(e.target.files[0])} className="text-sm" />
                          </div>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('favicon')}</label>
                         <div className="flex items-center gap-4">
-                            {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt="Favicon" className="h-8 w-8 bg-gray-100 p-1 rounded" />}
+                            {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt={t('favicon')} className="h-8 w-8 bg-gray-100 p-1 rounded" />}
                              <input type="file" accept="image/*" onChange={(e) => e.target.files && setFaviconFile(e.target.files[0])} className="text-sm" />
                         </div>
                     </div>
@@ -2010,9 +2017,9 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
                         <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={(e) => handleAdPixelChange('snapchatPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
                     </div>
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
-                        <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={(e) => handleAdPixelChange('tiktokPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="CXXXXXXXXXXXXX" />
+                        <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={(e) => handleAdPixelChange('tiktokPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="CXXXXXXXXXXXXXX" />
                     </div>
                 </div>
                  <div className="flex justify-end pt-4">
@@ -2051,7 +2058,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                      </div>
                                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{ticket.subject}</p>
                                      <div className="mt-2 flex items-center gap-2">
-                                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ticket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>{t(ticket.status)}</span>
+                                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ticket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : ticket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>{t(ticket.status)}</span>
                                          <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-400">{ticket.type}</span>
                                           {ticket.unreadAdmin && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
                                      </div>
@@ -2068,14 +2075,15 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
                                  <div className="flex items-center gap-3">
                                      <button onClick={() => setSelectedTicket(null)} className="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                                         <ChevronLeft size={20}/>
+                                         <ChevronLeft size={20} className={language === 'ar' ? 'rotate-180' : ''} />
                                      </button>
                                      <div>
                                          <h3 className="font-bold text-gray-800 dark:text-white">{selectedTicket.subject}</h3>
                                          <p className="text-xs text-gray-500">{selectedTicket.userEmail}</p>
                                      </div>
                                  </div>
-                                 <span className={`text-xs px-2 py-1 rounded-full border ${selectedTicket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+{/*// FIX: Changed 'ticket.status' to 'selectedTicket.status' to fix a reference error.*/}
+                                 <span className={`text-xs px-2 py-1 rounded-full border ${selectedTicket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : selectedTicket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                      {t(selectedTicket.status)}
                                  </span>
                              </div>
@@ -2110,7 +2118,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                      ) : (
                          <div className="flex flex-col items-center justify-center h-full text-center p-8 text-gray-500">
                              <LifeBuoy size={48} className="mb-4 opacity-50"/>
-                             <p>{t('selectTicket') || "Select a ticket to view details"}</p>
+                             <p>{t('selectTicket')}</p>
                          </div>
                      )}
                  </div>
@@ -2125,47 +2133,45 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
                     <Bell className="text-primary-500" /> {t('createNotification')}
                 </h2>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5">
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('titleEn')}</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('titleEn')}</label>
                         <input 
                             type="text" 
-                            value={newNotification.title?.en} 
-                            onChange={(e) => setNewNotification(prev => ({...prev, title: {...prev.title!, en: e.target.value}}))}
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600"
+                            value={newNotification.title?.en}
+                            onChange={e => setNewNotification(p => ({ ...p, title: { ...p.title, en: e.target.value } as Record<Language, string> }))}
+                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('titleAr')}</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('titleAr')}</label>
                         <input 
-                            type="text" 
-                            value={newNotification.title?.ar} 
-                            onChange={(e) => setNewNotification(prev => ({...prev, title: {...prev.title!, ar: e.target.value}}))}
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('messageEn')}</label>
-                        <textarea 
-                            value={newNotification.message?.en} 
-                            onChange={(e) => setNewNotification(prev => ({...prev, message: {...prev.message!, en: e.target.value}}))}
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows={3}
+                            type="text"
+                            value={newNotification.title?.ar}
+                            onChange={e => setNewNotification(p => ({ ...p, title: { ...p.title, ar: e.target.value } as Record<Language, string> }))}
+                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-right"
                         />
                     </div>
                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('messageAr')}</label>
-                        <textarea 
-                            value={newNotification.message?.ar} 
-                            onChange={(e) => setNewNotification(prev => ({...prev, message: {...prev.message!, ar: e.target.value}}))}
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" rows={3}
-                        />
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('messageEn')}</label>
+                        <textarea
+                            value={newNotification.message?.en}
+                            onChange={e => setNewNotification(p => ({ ...p, message: { ...p.message, en: e.target.value } as Record<Language, string> }))}
+                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" rows={3}/>
+                    </div>
+                     <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('messageAr')}</label>
+                        <textarea
+                            value={newNotification.message?.ar}
+                            onChange={e => setNewNotification(p => ({ ...p, message: { ...p.message, ar: e.target.value } as Record<Language, string> }))}
+                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-right" rows={3}/>
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('notificationType')}</label>
-                        <select 
-                            value={newNotification.type} 
-                            onChange={(e) => setNewNotification(prev => ({...prev, type: e.target.value as any}))}
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600"
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('notificationType')}</label>
+                        <select
+                            value={newNotification.type}
+                            onChange={e => setNewNotification(p => ({ ...p, type: e.target.value as any }))}
+                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
                         >
                             <option value="info">{t('info')}</option>
                             <option value="success">{t('success')}</option>
@@ -2173,156 +2179,141 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                             <option value="alert">{t('alert')}</option>
                         </select>
                     </div>
-                    <button 
-                        onClick={handleCreateNotification} 
-                        className="w-full py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all"
-                    >
+                    <button onClick={handleCreateNotification} className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl hover:bg-primary-700 transition-colors shadow-lg">
                         {t('createNotification')}
                     </button>
                 </div>
             </div>
 
-            {/* Notifications List */}
+            {/* Existing Notifications */}
             <div className="lg:col-span-2 space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <Bell className="text-primary-500" /> {t('notifications')}
+                    <Archive className="text-primary-500" /> {t('notifications')}
                 </h2>
-                <div className="space-y-4">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4 max-h-[80vh] overflow-y-auto">
                     {loadingNotifications ? (
-                        <div className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500"/></div>
+                         <div className="text-center py-10"><Loader2 className="animate-spin inline-block"/></div>
                     ) : notifications.length === 0 ? (
-                        <div className="text-center py-10 text-gray-500 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                            {t('noNotificationsFound')}
-                        </div>
-                    ) : (
-                        notifications.map(notif => (
-                            <div key={notif.id} className={`bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border transition-all ${notif.isActive ? 'border-l-4 border-l-primary-500 border-gray-200 dark:border-gray-700' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex gap-4">
-                                        <div className={`p-2 rounded-lg h-fit ${
-                                            notif.type === 'info' ? 'bg-blue-100 text-blue-600' :
-                                            notif.type === 'success' ? 'bg-green-100 text-green-600' :
-                                            notif.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                            'bg-red-100 text-red-600'
-                                        }`}>
-                                            {notif.type === 'info' && <Info size={20}/>}
-                                            {notif.type === 'success' && <CheckCircle size={20}/>}
-                                            {notif.type === 'warning' && <AlertTriangle size={20}/>}
-                                            {notif.type === 'alert' && <AlertTriangle size={20}/>}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-900 dark:text-white mb-1">{notif.title[language]}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300">{notif.message[language]}</p>
-                                            <span className="text-xs text-gray-400 mt-2 block">{notif.createdAt?.toDate().toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => handleToggleNotificationStatus(notif)} 
-                                            className={`p-2 rounded-lg transition-colors ${notif.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
-                                            title={notif.isActive ? t('deactivate') : t('activate')}
-                                        >
-                                            {notif.isActive ? <CheckCircle size={18}/> : <Ban size={18}/>}
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteNotification(notif.id)} 
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title={t('delete')}
-                                        >
-                                            <Trash2 size={18}/>
-                                        </button>
-                                    </div>
-                                </div>
+                         <div className="text-center py-10 text-gray-500">{t('noNotificationsFound')}</div>
+                    ) : notifications.map(notif => (
+                        <div key={notif.id} className={`p-4 rounded-lg border flex items-start gap-4 ${
+                            notif.type === 'info' ? 'bg-blue-50 border-blue-200' :
+                            notif.type === 'success' ? 'bg-green-50 border-green-200' :
+                            'bg-yellow-50 border-yellow-200'
+                        }`}>
+                            <div className={`mt-1 ${
+                                notif.type === 'info' ? 'text-blue-500' :
+                                notif.type === 'success' ? 'text-green-500' :
+                                'text-yellow-500'
+                            }`}>
+                                {notif.type === 'info' && <Info size={20}/>}
+                                {notif.type === 'success' && <CheckCircle size={20}/>}
+                                {(notif.type === 'warning' || notif.type === 'alert') && <AlertTriangle size={20}/>}
                             </div>
-                        ))
-                    )}
+                            <div className="flex-grow">
+                                <h4 className="font-bold text-gray-800">{notif.title[language]}</h4>
+                                <p className="text-sm text-gray-600 mt-1">{notif.message[language]}</p>
+                                <span className="text-xs text-gray-400 mt-2 block">
+                                    {notif.createdAt?.toDate().toLocaleString()}
+                                </span>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                 <label className="relative inline-flex items-center cursor-pointer">
+                                     <input type="checkbox" checked={notif.isActive} onChange={() => handleToggleNotificationStatus(notif)} className="sr-only peer" />
+                                     <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                                </label>
+                                <button onClick={() => handleDeleteNotification(notif.id)} className="text-red-500 hover:text-red-700 transition-colors">
+                                    <Trash2 size={16}/>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
     );
 
-    if (!currentUser || !currentUser.isAdmin) {
-        return <div className="flex justify-center items-center h-screen">{t('loading')}</div>;
-    }
+
+    const tabs = [
+        { id: 'users', label: t('userManagement'), icon: Users },
+        { id: 'services', label: t('manageServices'), icon: PlusSquare },
+        { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
+        { id: 'plans', label: t('planManagement'), icon: Star },
+        { id: 'settings', label: t('siteSettings'), icon: Cog },
+        { id: 'landing', label: t('landingPage'), icon: LayoutTemplate },
+        { id: 'marketing', label: t('marketing'), icon: BarChart },
+        { id: 'support', label: t('support'), icon: LifeBuoy },
+        { id: 'notifications', label: t('notifications'), icon: Bell },
+    ];
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-             {/* Top Bar */}
-             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                         <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-                             <span className="bg-primary-600 text-white p-1.5 rounded-lg"><LayoutTemplate size={20}/></span>
-                             {t('adminPanel')}
-                         </h1>
-                         <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl overflow-x-auto max-w-[60vw] md:max-w-none no-scrollbar">
-                             {[
-                                 { id: 'users', label: t('userManagement'), icon: Users },
-                                 { id: 'services', label: t('manageServices'), icon: PlusSquare },
-                                 { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
-                                 { id: 'plans', label: t('planManagement'), icon: Star },
-                                 { id: 'landing', label: t('landingPage'), icon: LayoutTemplate },
-                                 { id: 'settings', label: t('siteSettings'), icon: Cog },
-                                 { id: 'marketing', label: t('marketing'), icon: BarChart },
-                                 { id: 'support', label: t('support'), icon: LifeBuoy },
-                                 { id: 'notifications', label: t('notifications'), icon: Bell },
-                             ].map(tab => (
-                                 <button
-                                     key={tab.id}
-                                     onClick={() => setActiveTab(tab.id)}
-                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap flex items-center gap-2 transition-all ${
-                                         activeTab === tab.id 
-                                             ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-white shadow-sm' 
-                                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                     }`}
-                                 >
-                                     <tab.icon size={16} />
-                                     <span className="hidden md:inline">{tab.label}</span>
-                                 </button>
-                             ))}
-                         </div>
-                    </div>
-                </div>
-             </div>
-
-             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-4">{t('adminPanel')}</h1>
+            
+            <div className="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200
+                                ${activeTab === tab.id
+                                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
+                                }
+                            `}
+                        >
+                            <tab.icon size={16} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+            
+            <div>
                 {activeTab === 'users' && renderUserManagementContent()}
                 {activeTab === 'services' && renderServiceManagementContent()}
                 {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
                 {activeTab === 'plans' && renderPlanManagementContent()}
-                {activeTab === 'landing' && renderLandingPageGenerator()}
                 {activeTab === 'settings' && renderSiteSettingsContent()}
+                {activeTab === 'landing' && renderLandingPageGenerator()}
                 {activeTab === 'marketing' && renderMarketingContent()}
                 {activeTab === 'support' && renderSupportContent()}
                 {activeTab === 'notifications' && renderNotificationsContent()}
-             </main>
-
-            <GrantSubscriptionModal 
-                isOpen={isGrantModalOpen}
-                onClose={() => { setIsGrantModalOpen(false); setSelectedUserForAction(null); }}
-                users={users}
-                plans={plans}
-                onGrant={fetchUsersWithSubscriptions}
-                initialUserId={selectedUserForAction?.id}
-            />
+            </div>
             
-             {selectedUserForAction && (
-                 <AddTokenModal
-                     isOpen={isTokenModalOpen}
-                     onClose={() => { setIsTokenModalOpen(false); setSelectedUserForAction(null); }}
-                     userId={selectedUserForAction.id}
-                     userEmail={selectedUserForAction.email}
-                     onSuccess={fetchUsers}
-                 />
-             )}
-
-             <ServiceExecutionModal 
-                isOpen={isExecutionModalOpen} 
-                onClose={() => { setIsExecutionModalOpen(false); setSelectedService(null); }} 
+            <ServiceExecutionModal 
+                isOpen={isExecutionModalOpen}
+                onClose={() => setIsExecutionModalOpen(false)}
                 service={selectedService}
-             />
+            />
+
+            {isTokenModalOpen && selectedUserForAction && (
+                <AddTokenModal
+                    isOpen={isTokenModalOpen}
+                    onClose={() => setIsTokenModalOpen(false)}
+                    userId={selectedUserForAction.id}
+                    userEmail={selectedUserForAction.email}
+                    onSuccess={fetchUsers}
+                />
+            )}
+            
+            {isGrantModalOpen && (
+                <GrantSubscriptionModal
+                    isOpen={isGrantModalOpen}
+                    onClose={() => {
+                        setIsGrantModalOpen(false);
+                        setSelectedUserForAction(null);
+                    }}
+                    users={users}
+                    plans={plans}
+                    onGrant={fetchUsersWithSubscriptions}
+                    initialUserId={selectedUserForAction?.id}
+                />
+            )}
         </div>
     );
 };
 
+// FIX: Added default export for the component.
 export default AdminPage;

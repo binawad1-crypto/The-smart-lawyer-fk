@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -112,7 +113,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 setServices(servicesList);
             } catch (err) {
                 console.error("Error fetching services: ", err);
-                setErrorServices(t('failedToLoadServices'));
+                setErrorServices(t('fetchServicesError'));
             } finally {
                 setLoadingServices(false);
             }
@@ -154,13 +155,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     }, [services, selectedCategory, searchQuery, favorites]);
 
     const categories = [
-        { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-500' },
-        { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-yellow-500' },
-        { id: ServiceCategory.LitigationAndPleadings, label: t('litigationAndPleadings'), icon: Gavel, color: 'text-blue-500' },
-        { id: ServiceCategory.SpecializedConsultations, label: t('specializedConsultations'), icon: Briefcase, color: 'text-purple-500' },
-        { id: ServiceCategory.InvestigationsAndCriminal, label: t('investigationsAndCriminal'), icon: Shield, color: 'text-red-500' },
-        { id: ServiceCategory.CorporateAndCompliance, label: t('corporateAndCompliance'), icon: Building2, color: 'text-emerald-500' },
-        { id: ServiceCategory.CreativeServices, label: t('creativeServices'), icon: Wand2, color: 'text-pink-500' }
+        { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
+        { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-yellow-400' },
+        { id: ServiceCategory.LitigationAndPleadings, label: t('litigationAndPleadings'), icon: Gavel, color: 'text-blue-400' },
+        { id: ServiceCategory.SpecializedConsultations, label: t('specializedConsultations'), icon: Briefcase, color: 'text-purple-400' },
+        { id: ServiceCategory.InvestigationsAndCriminal, label: t('investigationsAndCriminal'), icon: Shield, color: 'text-red-400' },
+        { id: ServiceCategory.CorporateAndCompliance, label: t('corporateAndCompliance'), icon: Building2, color: 'text-emerald-400' },
+        { id: ServiceCategory.CreativeServices, label: t('creativeServices'), icon: Wand2, color: 'text-pink-400' }
     ];
 
     const toggleFavorite = (e: React.MouseEvent, serviceId: string) => {
@@ -462,8 +463,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
-        // Force dark theme styling for this sidebar even in light mode
-        <div className="flex flex-col h-full rounded-2xl bg-slate-900 shadow-lg border border-slate-800 overflow-hidden">
+        <div className="flex flex-col h-full rounded-2xl bg-slate-950 shadow-lg border border-slate-800 overflow-hidden">
             {/* Header */}
             <div className="p-6 bg-gradient-to-br from-teal-600 to-teal-800 text-white shrink-0">
                  <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight">
@@ -483,7 +483,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        // Use dark mode styles for input
                         className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-slate-800 text-slate-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-slate-500"
                     />
                 </div>
@@ -494,26 +493,53 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 <p className="px-3 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
                     {language === 'ar' ? 'الأقسام' : 'Categories'}
                 </p>
-                {categories.map(cat => (
-                    <button
-                        key={cat.id}
-                        onClick={() => {
-                            setSelectedCategory(cat.id);
-                            setSelectedService(null); // Reset service when category changes
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group ${
-                            selectedCategory === cat.id
-                                ? 'bg-teal-900/30 text-teal-400 shadow-sm' // Dark mode active style
-                                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' // Dark mode inactive style
-                        }`}
-                    >
-                        <div className={`p-1.5 rounded-lg transition-colors ${selectedCategory === cat.id ? 'bg-slate-800' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-                             <cat.icon size={16} className={selectedCategory === cat.id ? 'text-teal-400' : cat.color} />
-                        </div>
-                        <span className="flex-grow text-left rtl:text-right">{cat.label}</span>
-                        {selectedCategory === cat.id && <ChevronRightIcon size={14} className="rtl:rotate-180 text-teal-500" />}
-                    </button>
-                ))}
+                {categories.map(cat => {
+                    const isActive = selectedCategory === cat.id;
+                    const IconComponent = cat.icon;
+
+                    // For inactive icons, derive background from text color class
+                    const iconColorClass = cat.color; // e.g., 'text-blue-400'
+                    const iconBgClass = iconColorClass.replace('text-', 'bg-').replace('-400', '-500/10');
+                    const borderColorClass = iconColorClass.replace('text-', 'border-').replace('-400', '-500/20');
+                    
+                    const finalIconBg = cat.id === 'all' ? 'bg-slate-700/50' : iconBgClass;
+                    const finalBorderColor = cat.id === 'all' ? 'border-slate-600/50' : borderColorClass;
+
+                    return (
+                        <button
+                            key={cat.id}
+                            onClick={() => {
+                                setSelectedCategory(cat.id);
+                                setSelectedService(null); // Reset service when category changes
+                            }}
+                            className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group ${
+                                isActive
+                                    ? 'bg-teal-700 text-white shadow-sm' // Active style
+                                    : 'text-slate-300 hover:bg-slate-800/60' // Inactive style
+                            }`}
+                        >
+                            {/* RTL Layout: Chevron, Text, Icon */}
+                            {language === 'ar' ? (
+                                <>
+                                    <div className="w-4">{isActive && <ArrowLeft size={16} />}</div>
+                                    <span className="flex-grow text-right">{cat.label}</span>
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? '' : `${finalIconBg} border ${finalBorderColor}`}`}>
+                                        <IconComponent size={20} className={isActive ? 'text-white' : iconColorClass} />
+                                    </div>
+                                </>
+                            ) : (
+                            // LTR Layout: Icon, Text, Chevron
+                                <>
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? '' : `${finalIconBg} border ${finalBorderColor}`}`}>
+                                        <IconComponent size={20} className={isActive ? 'text-white' : iconColorClass} />
+                                    </div>
+                                    <span className="flex-grow text-left">{cat.label}</span>
+                                    <div className="w-4">{isActive && <ChevronRightIcon size={16} />}</div>
+                                </>
+                            )}
+                        </button>
+                    )
+                })}
             </div>
         </div>
     );

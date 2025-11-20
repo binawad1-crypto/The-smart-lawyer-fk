@@ -14,7 +14,12 @@ const defaultSettings: SiteSettings = {
     faviconUrl: '',
     isMaintenanceMode: false,
     landingPageConfig: undefined, // Will fall back to hardcoded constants if undefined
-    adPixels: {},
+    adPixels: {
+        googleTagId: '',
+        facebookPixelId: '',
+        snapchatPixelId: 'c3a97bbb-5508-4710-82b9-abebc81eb7a7',
+        tiktokPixelId: '',
+    },
     ticketTypes: [],
 };
 
