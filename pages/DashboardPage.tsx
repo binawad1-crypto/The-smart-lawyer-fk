@@ -1,6 +1,7 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -153,6 +154,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [outputScale, setOutputScale] = useState(1);
     
     // Voice Settings
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -171,7 +173,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
-    const SERVICES_PER_PAGE = 8;
+    const SERVICES_PER_PAGE = 12;
 
     useEffect(() => {
         setOutputLanguage(language);
@@ -621,6 +623,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         }
     };
 
+    const handleZoomIn = () => setOutputScale(s => Math.min(s + 0.1, 2));
+    const handleZoomOut = () => setOutputScale(s => Math.max(s - 0.1, 0.5));
+
     const renderOutputLanguageSelector = (showLabel = true) => (
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
@@ -676,13 +681,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800">
+        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
-            <div className="p-6 bg-gray-50 dark:bg-gradient-to-br dark:from-teal-600 dark:to-teal-800 border-b border-gray-200 dark:border-transparent shrink-0">
-                 <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight text-slate-900 dark:text-white">
+            <div className="h-16 flex flex-col justify-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 shadow-sm">
+                 <h2 className="text-xl font-black tracking-tight leading-tight text-white">
                     {settings?.siteName[language] || t('appName')}
                 </h2>
-                <p className="text-xs text-gray-500 dark:text-teal-100 font-medium">
+                <p className="text-xs text-teal-100 font-medium">
                     {settings?.siteSubtitle?.[language] || t('appSubtitle')}
                 </p>
             </div>
@@ -703,9 +708,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Categories Navigation */}
             <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1">
-                <p className="px-3 py-2 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                    {language === 'ar' ? 'الأقسام' : 'Categories'}
-                </p>
                 {loadingCategories ? (
                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
                 ) : sidebarCategories.map(cat => {
@@ -843,7 +845,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-4">
                                         {paginatedServices.map(service => {
                                             const Icon = iconMap[service.icon] || FileText;
                                             const isFav = favorites.includes(service.id);
@@ -853,12 +855,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                                 <button
                                                     key={service.id}
                                                     onClick={() => handleServiceClick(service)}
-                                                    className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left"
+                                                    className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
                                                 >
-                                                    {/* Colored Side Border/Strip */}
-                                                    <div className={`absolute top-3 bottom-3 right-0 rtl:right-0 ltr:left-0 w-1.5 rounded-l-full rtl:rounded-l-full ltr:rounded-r-full ${colors.border}`}></div>
-                                                    
-                                                    <div className="flex items-start justify-between w-full mb-4 pl-3 rtl:pr-3 ltr:pl-3">
+                                                    <div className="flex items-start justify-between w-full mb-4">
                                                         <div className="p-1 text-gray-300 hover:text-yellow-400 transition-colors" 
                                                              onClick={(e) => toggleFavorite(e, service.id)}>
                                                             <Star size={18} fill={isFav ? "#FACC15" : "none"} className={isFav ? "text-yellow-400" : "text-gray-300"} />
@@ -869,7 +868,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex flex-col justify-between flex-grow w-full pl-3 rtl:pr-3 ltr:pl-3">
+                                                    <div className="flex flex-col justify-between flex-grow w-full">
                                                         <div>
                                                             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
                                                                 {service.title[language] || service.title['en']}
@@ -918,21 +917,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
         <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
-             <div className="h-16 flex items-center px-4 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shrink-0 justify-between shadow-sm relative z-10">
-                <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
+             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 justify-between shadow-sm relative z-10">
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
                     <Sparkles size={16} className="text-yellow-400"/>
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
-                    <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-500 bg-green-100 dark:bg-green-900/20' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700'}`}><Volume2 size={16} /></button>
-                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700 transition-colors">{isCopied ? <Check size={16} className="text-green-500"/> : <Copy size={16} />}</button>
-                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700 transition-colors"><Printer size={16} /></button>
-                    <button onClick={handleClear} title={t('cancel')} className="p-1.5 rounded text-red-500 hover:bg-red-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"><X size={16} /></button>
+                    <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-400 bg-white/10' : 'text-teal-100 hover:bg-white/10'}`}><Volume2 size={16} /></button>
+                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
+                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                    
+                    <div className="w-px h-4 bg-white/20 mx-1"></div>
+                    
+                    <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
+                    <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                    
+                    <div className="w-px h-4 bg-white/20 mx-1"></div>
+
+                    <button onClick={handleClear} title={t('cancel')} className="p-1.5 rounded text-red-300 hover:bg-white/10 hover:text-red-400 transition-colors"><X size={16} /></button>
                 </div>
              </div>
 
              {/* Output Content */}
-             <div className="flex-grow overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 relative p-4">
+             <div className="flex-grow overflow-auto custom-scrollbar bg-white dark:bg-slate-900 relative p-4">
                 {isGenerating ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <div className="relative">
@@ -942,11 +949,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         <p className="text-gray-500 text-center font-medium mt-4 animate-pulse">{retryMessage || t('generatingResponse')}</p>
                     </div>
                 ) : result ? (
-                    <div className="max-w-none">
+                    <div 
+                        className="max-w-none transition-transform duration-200 ease-out"
+                        style={{ transform: `scale(${outputScale})`, transformOrigin: dir === 'rtl' ? 'top right' : 'top left' }}
+                    >
                         {result.trim().startsWith('<section') ? (
                             <div dangerouslySetInnerHTML={{ __html: result }} />
                         ) : (
-                            <pre 
+                             <pre 
                                 className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
                                 style={{ fontSize: '16px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
                             >
