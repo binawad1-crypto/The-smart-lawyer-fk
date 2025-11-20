@@ -1,7 +1,7 @@
 
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -174,6 +174,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
     const SERVICES_PER_PAGE = 12;
+
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isOutputExpanded, setIsOutputExpanded] = useState(false);
+
+    const handleToggleServices = () => {
+        const nextState = !isExpanded;
+        setIsExpanded(nextState);
+        if (nextState) {
+            setIsOutputExpanded(false);
+        }
+    };
+
+    const handleToggleOutput = () => {
+        const nextState = !isOutputExpanded;
+        setIsOutputExpanded(nextState);
+        if (nextState) {
+            setIsExpanded(false);
+        }
+    };
+
 
     useEffect(() => {
         setOutputLanguage(language);
@@ -721,7 +741,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 setSelectedCategory(cat.id);
                                 setSelectedService(null); // Reset service when category changes
                             }}
-                            className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group ${
+                            className={`font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group ${
                                 isActive
                                     ? 'bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm' // Active style
                                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60' // Inactive style
@@ -768,16 +788,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     {selectedService ? (
                         <div className="flex items-center gap-3 w-full">
                              <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
-                                {language === 'ar' ? <ArrowRight size={20}/> : <ArrowLeft size={20}/>}
+                                {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
                             </button>
                             <div>
-                                 <h3 className="font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
+                                 <h3 className="font-cairo font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
                             </div>
                         </div>
                     ) : (
-                        <h3 className="font-bold text-white text-lg">
-                            {sidebarCategories.find(c => c.id === selectedCategory)?.label}
-                        </h3>
+                        <div className="flex items-center justify-between w-full">
+                            <h3 className="font-cairo font-bold text-white text-lg">
+                                {sidebarCategories.find(c => c.id === selectedCategory)?.label}
+                            </h3>
+                            <button
+                                onClick={handleToggleServices}
+                                className="p-2 rounded-full hover:bg-white/20 transition-colors text-white"
+                                title={isExpanded ? t('collapse') : t('expand')}
+                            >
+                                {dir === 'rtl' ? (
+                                    isExpanded ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />
+                                ) : (
+                                    isExpanded ? <PanelRightOpen size={20} /> : <PanelRightClose size={20} />
+                                )}
+                            </button>
+                        </div>
                     )}
                  </div>
 
@@ -870,7 +903,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
                                                     <div className="flex flex-col justify-between flex-grow w-full">
                                                         <div>
-                                                            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
+                                                            <h3 className="font-cairo text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
                                                                 {service.title[language] || service.title['en']}
                                                             </h3>
                                                             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80">
@@ -887,7 +920,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                                                 disabled={currentPage === 0}
-                                                className="p-2 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-500 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                                                 aria-label={language === 'ar' ? 'الصفحة السابقة' : 'Previous Page'}
                                             >
                                                 {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
@@ -898,7 +931,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                                                 disabled={currentPage >= totalPages - 1}
-                                                className="p-2 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-500 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                                                 aria-label={language === 'ar' ? 'الصفحة التالية' : 'Next Page'}
                                             >
                                                 {language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
@@ -923,6 +956,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleToggleOutput}
+                        className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"
+                        title={isOutputExpanded ? t('collapse') : t('expand')}
+                    >
+                        {dir === 'rtl' ? (
+                            isOutputExpanded ? <PanelRightOpen size={16} /> : <PanelRightClose size={16} />
+                        ) : (
+                            isOutputExpanded ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />
+                        )}
+                    </button>
+                    <div className="w-px h-4 bg-white/20 mx-1"></div>
                     <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-400 bg-white/10' : 'text-teal-100 hover:bg-white/10'}`}><Volume2 size={16} /></button>
                     <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
                     <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
@@ -1004,8 +1049,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
              <div className="w-[90%] mx-auto h-full">
                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
                     <div className="lg:col-span-1 h-full">{renderSidebar()}</div>
-                    <div className="lg:col-span-2 h-full">{renderMainContent()}</div>
-                    <div className="lg:col-span-1 h-full">{renderOutputPanel()}</div>
+                    <div className={`${
+                        isOutputExpanded
+                            ? 'hidden'
+                            : isExpanded
+                            ? 'lg:col-span-3'
+                            : 'lg:col-span-2'
+                    } h-full transition-all duration-300`}>
+                        {renderMainContent()}
+                    </div>
+                    <div className={`${
+                        isExpanded
+                            ? 'hidden'
+                            : isOutputExpanded
+                            ? 'lg:col-span-3'
+                            : 'lg:col-span-1'
+                    } h-full transition-all duration-300`}>
+                        {renderOutputPanel()}
+                    </div>
                 </div>
             </div>
         </div>

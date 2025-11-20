@@ -1826,7 +1826,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                         />
                                     </td>
                                     <td className="px-4 py-3 font-medium dark:text-white">
-                                        <div>{service.title[language]}</div>
+                                        <div className="font-cairo">{service.title[language]}</div>
                                         <div className="text-xs text-gray-400 font-mono">{service.id}</div>
                                     </td>
                                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{categoryMap.get(service.category) || service.category}</td>
@@ -1962,7 +1962,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                 return (
                                     <tr key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
                                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                            <div>{category.title[language]}</div>
+                                            <div className="font-cairo">{category.title[language]}</div>
                                             <div className="text-xs text-gray-400 font-mono">{category.id}</div>
                                         </td>
                                         <td className="px-6 py-4">

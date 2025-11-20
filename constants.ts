@@ -44,6 +44,8 @@ export const translations: Translations = {
     password: { en: 'Password', ar: 'كلمة المرور' },
     confirmPassword: { en: 'Confirm Password', ar: 'تأكيد كلمة المرور' },
     or: { en: 'OR', ar: 'أو' },
+    expand: { en: 'Expand', ar: 'توسيع' },
+    collapse: { en: 'Collapse', ar: 'تصغير' },
     arabic: { en: 'Arabic', ar: 'العربية' },
     english: { en: 'English', ar: 'الإنجليزية' },
     
