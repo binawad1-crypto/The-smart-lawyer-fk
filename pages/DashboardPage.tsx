@@ -5,7 +5,7 @@
 
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -174,9 +174,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
     
-    // Layout State
-    const [isFullWidth, setIsFullWidth] = useState(true);
-
     useEffect(() => {
         setOutputLanguage(language);
     }, [language]);
@@ -956,37 +953,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-end mb-4">
-                 <div className="hidden lg:flex items-center gap-2">
-                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                         {language === 'ar' ? 'تخطيط الواجهة' : 'Layout'}
-                     </p>
-                     <div className="flex bg-gray-200 dark:bg-slate-800 rounded-lg p-1">
-                         <button onClick={() => setIsFullWidth(false)} className={`p-1.5 rounded-md ${!isFullWidth ? 'bg-white dark:bg-slate-700 shadow' : 'text-gray-500 hover:bg-white/50'}`}>
-                             <LayoutGrid size={18} />
-                         </button>
-                         <button onClick={() => setIsFullWidth(true)} className={`p-1.5 rounded-md ${isFullWidth ? 'bg-white dark:bg-slate-700 shadow' : 'text-gray-500 hover:bg-white/50'}`}>
-                             <Maximize2 size={18} />
-                         </button>
-                     </div>
-                 </div>
-            </div>
-
-             <div className={`transition-all duration-500 grid gap-6 ${isFullWidth ? 'grid-cols-1' : 'lg:grid-cols-dashboard'}`} style={{ minHeight: 'calc(100vh - 150px)' }}>
-                {isFullWidth ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-1 h-full">{renderSidebar()}</div>
-                        <div className="lg:col-span-2 h-full">{renderMainContent()}</div>
-                        <div className="lg:col-span-1 h-full">{renderOutputPanel()}</div>
-                    </div>
-                ) : (
-                    <>
-                        <div className="hidden lg:block">{renderSidebar()}</div>
-                        <div className="col-span-1 lg:col-span-2">{renderMainContent()}</div>
-                        <div className="hidden lg:block">{renderOutputPanel()}</div>
-                    </>
-                )}
+        <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8" style={{ minHeight: 'calc(100vh - 64px)' }}>
+             <div className="w-[90%] mx-auto h-full">
+                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+                    <div className="lg:col-span-1 h-full">{renderSidebar()}</div>
+                    <div className="lg:col-span-2 h-full">{renderMainContent()}</div>
+                    <div className="lg:col-span-1 h-full">{renderOutputPanel()}</div>
+                </div>
             </div>
         </div>
     );
