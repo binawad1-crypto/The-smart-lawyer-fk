@@ -1605,14 +1605,14 @@ export const investigationsAndCriminalSeedServices: Service[] = [
         usageCount: 0
     },
     {
-        id: "fingerprint-forensic-analysis",
-        title: { en: "Analysis of Fingerprints and Forensic Evidence", ar: "تحليل البصمات والأدلة الجنائية" },
-        description: { en: "Detailed analysis of fingerprint evidence and other forensic materials.", ar: "تحليل مفصل لأدلة البصمات والمواد الجنائية الأخرى." },
+        id: "fingerprint-dna-analysis",
+        title: { en: "Analysis of Fingerprints and DNA", ar: "تحليل البصمات والحمض النووي" },
+        description: { en: "Specialized analysis of fingerprint and DNA evidence for identification and case linkage.", ar: "تحليل متخصص لأدلة البصمات والحمض النووي لتحديد الهوية وربط القضايا." },
         category: ServiceCategory.InvestigationsAndCriminal,
         subCategory: { en: "Crimes Against Persons", ar: "جرائم النفس والاعتداءات الجسدية" },
         icon: "Fingerprint",
         geminiModel: "gemini-2.5-flash",
-        formInputs: [{ name: "evidence_report", label: { en: "Forensic Evidence Report", ar: "تقرير الأدلة الجنائية" }, type: "file" }],
+        formInputs: [{ name: "lab_report", label: { en: "Lab Report on Fingerprints/DNA", ar: "تقرير المختبر عن البصمات/الحمض النووي" }, type: "file" }],
         usageCount: 0
     },
     // 6) Property & Theft Crimes
@@ -1879,7 +1879,7 @@ export const corporateAndComplianceSeedServices: Service[] = [
       category: ServiceCategory.CorporateAndCompliance,
       subCategory: { en: 'Legal Compliance & Governance', ar: 'الامتثال القانوني والحوكمة' },
       icon: 'ShieldCheck',
-      geminiModel: 'gemini-2.5-pro',
+      geminiModel: 'gemini-3-pro-preview',
       formInputs: [
         { name: 'company_documents', label: { en: 'Upload Company Policies & Procedures', ar: 'رفع سياسات وإجراءات الشركة' }, type: 'file' }
       ],
@@ -1903,75 +1903,44 @@ export const corporateAndComplianceSeedServices: Service[] = [
     {
       id: 'trademark-registration',
       title: { en: 'Trademark Registration', ar: 'تسجيل العلامات التجارية' },
-      description: { en: 'Protecting your brand by registering trademarks with the relevant authorities.', ar: 'حماية علامتك التجارية من خلال تسجيلها لدى الجهات المختصة.' },
+      description: { en: 'Protecting your brand by registering trademarks locally and internationally.', ar: 'حماية علامتك التجارية من خلال تسجيلها محلياً ودولياً.' },
+      category: ServiceCategory.CorporateAndCompliance,
+      // FIX: Added missing 'ar' translation for subCategory.
+      subCategory: { en: 'Intellectual Property', ar: 'الملكية الفكرية' },
+      icon: 'Tag',
+      geminiModel: 'gemini-2.5-flash',
+      formInputs: [
+        { name: 'trademark_name', label: { en: 'Trademark Name', ar: 'اسم العلامة التجارية' }, type: 'text' },
+        { name: 'trademark_logo', label: { en: 'Trademark Logo (if any)', ar: 'شعار العلامة التجارية (إن وجد)' }, type: 'file' }
+      ],
+      usageCount: 0
+    },
+    {
+      id: 'copyright-protection',
+      title: { en: 'Copyright Protection', ar: 'حماية حقوق المؤلف' },
+      description: { en: 'Advisory on copyright law, registration of works, and handling infringement cases.', ar: 'استشارات حول قانون حقوق المؤلف، تسجيل المصنفات، والتعامل مع حالات التعدي.' },
       category: ServiceCategory.CorporateAndCompliance,
       subCategory: { en: 'Intellectual Property', ar: 'الملكية الفكرية' },
       icon: 'Copyright',
       geminiModel: 'gemini-2.5-flash',
       formInputs: [
-        { name: 'trademark_name', label: { en: 'Trademark Name/Logo', ar: 'اسم/شعار العلامة التجارية' }, type: 'text' },
-        { name: 'goods_services', label: { en: 'Goods/Services Associated', ar: 'السلع/الخدمات المرتبطة' }, type: 'textarea' }
+        { name: 'work_description', label: { en: 'Description of the Work', ar: 'وصف المصنف' }, type: 'textarea' }
       ],
       usageCount: 0
     },
+    // 4) Contracts & Agreements
     {
-      id: 'copyright-protection-consulting',
-      title: { en: 'Copyright Protection Consulting', ar: 'استشارات حماية حقوق المؤلف' },
-      description: { en: 'Advisory on protecting creative works like software, literature, and art under copyright law.', ar: 'استشارات حول حماية الأعمال الإبداعية مثل البرمجيات والمؤلفات والفنون بموجب قانون حقوق المؤلف.' },
+      id: 'draft-commercial-contracts',
+      title: { en: 'Drafting Commercial Contracts', ar: 'صياغة العقود التجارية' },
+      description: { en: 'Drafting various commercial contracts such as supply, distribution, and agency agreements.', ar: 'صياغة مختلف العقود التجارية كاتفاقيات التوريد والتوزيع والوكالة.' },
       category: ServiceCategory.CorporateAndCompliance,
-      subCategory: { en: 'Intellectual Property', ar: 'الملكية الفكرية' },
-      icon: 'Gem',
+      subCategory: { en: 'Contracts & Agreements', ar: 'العقود والاتفاقيات' },
+      icon: 'Handshake',
       geminiModel: 'gemini-2.5-flash',
       formInputs: [
-        { name: 'work_description', label: { en: 'Description of the Work', ar: 'وصف العمل' }, type: 'textarea' }
+        { name: 'contract_type', label: { en: 'Type of Contract', ar: 'نوع العقد' }, type: 'text' },
+        { name: 'key_terms', label: { en: 'Key Terms and Conditions', ar: 'الشروط والأحكام الرئيسية' }, type: 'textarea' }
       ],
       usageCount: 0
-    },
-];
-
-export const creativeSeedServices: Service[] = [
-    // 1) Content Generation
-    {
-      id: 'generate-social-media-posts',
-      title: { en: 'Generate Social Media Posts', ar: 'إنشاء منشورات لوسائل التواصل الاجتماعي' },
-      description: { en: 'Create engaging and relevant social media posts for various platforms based on a topic.', ar: 'إنشاء منشورات جذابة وذات صلة لمنصات التواصل الاجتماعي المختلفة بناءً على موضوع معين.' },
-      category: ServiceCategory.CreativeServices,
-      subCategory: { en: 'Content Generation', ar: 'إنشاء المحتوى' },
-      icon: 'Wand2',
-      geminiModel: 'gemini-2.5-flash',
-      formInputs: [
-        { name: 'topic', label: { en: 'Topic', ar: 'الموضوع' }, type: 'text' },
-        { name: 'platform', label: { en: 'Platform (e.g., Twitter, LinkedIn)', ar: 'المنصة (مثل تويتر، لينكدإن)' }, type: 'text' },
-        { name: 'tone', label: { en: 'Tone (e.g., professional, witty)', ar: 'نبرة الخطاب (مثال: احترافي, فكاهي)' }, type: 'text' }
-      ],
-      usageCount: 0
-    },
-    {
-      id: 'draft-blog-post',
-      title: { en: 'Draft a Blog Post', ar: 'صياغة مقال للمدونة' },
-      description: { en: 'Generate a well-structured blog post or article on a given subject with key points.', ar: 'إنشاء مقال أو تدوينة جيدة التنظيم حول موضوع معين مع نقاط رئيسية.' },
-      category: ServiceCategory.CreativeServices,
-      subCategory: { en: 'Content Generation', ar: 'إنشاء المحتوى' },
-      icon: 'FileText',
-      geminiModel: 'gemini-2.5-pro',
-      formInputs: [
-        { name: 'blog_title', label: { en: 'Blog Post Title', ar: 'عنوان المقال' }, type: 'text' },
-        { name: 'key_points', label: { en: 'Key Points to Include', ar: 'النقاط الرئيسية المراد تضمينها' }, type: 'textarea' }
-      ],
-      usageCount: 0
-    },
-    {
-      id: 'summarize-document',
-      title: { en: 'Summarize Document', ar: 'تلخيص مستند' },
-      description: { en: 'Provide a concise summary of a long document or text.', ar: 'تقديم ملخص موجز لمستند أو نص طويل.' },
-      category: ServiceCategory.CreativeServices,
-      subCategory: { en: 'Content Analysis', ar: 'تحليل المحتوى' },
-      icon: 'BookOpen',
-      geminiModel: 'gemini-2.5-flash',
-      formInputs: [
-        { name: 'document_file', label: { en: 'Upload Document', ar: 'رفع المستند' }, type: 'file' },
-        { name: 'summary_length', label: { en: 'Desired Summary Length (e.g., 3 sentences)', ar: 'طول الملخص المطلوب (مثال: 3 جمل)' }, type: 'text' }
-      ],
-      usageCount: 0
-    },
+    }
 ];

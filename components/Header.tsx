@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle, LifeBuoy } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -190,6 +189,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
   };
   
   const siteName = settings?.siteName[language] || t('appName');
+  const siteSubtitle = settings?.siteSubtitle?.[language] || t('appSubtitle');
   
   return (
     <header className="bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700/50">
@@ -201,10 +201,10 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              ) : (
                 <div className="flex flex-col items-start leading-none min-w-0 overflow-hidden">
                   <h1 className="text-lg sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight truncate w-full">
-                    {t('appName')}
+                    {siteName}
                   </h1>
                   <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1 truncate w-full">
-                    {t('appSubtitle')}
+                    {siteSubtitle}
                   </p>
                 </div>
              )}

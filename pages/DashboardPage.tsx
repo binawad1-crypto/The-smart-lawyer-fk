@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 import { Service, ServiceCategory, Translations, Language } from '../types';
 import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -16,6 +16,7 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const { currentUser } = useAuth();
+    const { settings } = useSiteSettings();
     const [services, setServices] = useState<Service[]>([]);
     const [loadingServices, setLoadingServices] = useState(true);
     const [errorServices, setErrorServices] = useState<string | null>(null);
@@ -466,10 +467,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             {/* Header */}
             <div className="p-6 bg-gradient-to-br from-teal-600 to-teal-800 text-white shrink-0">
                  <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight">
-                    {t('appName')}
+                    {settings?.siteName[language] || t('appName')}
                 </h2>
                 <p className="text-xs text-teal-100 font-medium opacity-90">
-                    {t('appSubtitle')}
+                    {settings?.siteSubtitle?.[language] || t('appSubtitle')}
                 </p>
             </div>
 

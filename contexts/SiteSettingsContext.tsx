@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -8,12 +7,15 @@ export const SiteSettingsContext = createContext<SiteSettingsContextType | undef
 
 const defaultSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
+    siteSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
     metaDescription: { en: 'AI-Powered Legal Services', ar: 'خدمات قانونية مدعومة بالذكاء الاصطناعي' },
     seoKeywords: { en: 'law, legal, ai, lawyer, assistant', ar: 'قانون, محاماة, ذكاء اصطناعي, محامي, مساعد' },
     logoUrl: '',
     faviconUrl: '',
     isMaintenanceMode: false,
-    landingPageConfig: undefined // Will fall back to hardcoded constants if undefined
+    landingPageConfig: undefined, // Will fall back to hardcoded constants if undefined
+    adPixels: {},
+    ticketTypes: [],
 };
 
 interface SiteSettingsProviderProps {
@@ -30,7 +32,18 @@ export const SiteSettingsProvider: React.FC<SiteSettingsProviderProps> = ({ chil
     const unsubscribe = onSnapshot(settingsDocRef, 
       (docSnap) => {
         if (docSnap.exists()) {
-          setSettings(docSnap.data() as SiteSettings);
+          const data = docSnap.data() as Partial<SiteSettings>;
+          // Deep merge with defaults to ensure all fields are present, especially new ones
+          const mergedSettings: SiteSettings = {
+            ...defaultSettings,
+            ...data,
+            siteName: { ...defaultSettings.siteName, ...data.siteName },
+            siteSubtitle: { ...defaultSettings.siteSubtitle, ...data.siteSubtitle },
+            metaDescription: { ...defaultSettings.metaDescription, ...data.metaDescription },
+            seoKeywords: { ...defaultSettings.seoKeywords, ...data.seoKeywords },
+            adPixels: { ...defaultSettings.adPixels, ...data.adPixels },
+          };
+          setSettings(mergedSettings);
         } else {
           console.log("Site settings document not found, using defaults.");
           setSettings(defaultSettings);

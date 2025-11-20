@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -55,6 +54,7 @@ const initialPlanState: Plan = {
 
 const initialSiteSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
+    siteSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
     metaDescription: { en: '', ar: '' },
     seoKeywords: { en: '', ar: '' },
     logoUrl: '',
@@ -626,6 +626,7 @@ const AdminPage = () => {
                     ...initialSiteSettings,
                     ...data,
                     siteName: { ...initialSiteSettings.siteName, ...(data.siteName || {}) },
+                    siteSubtitle: { ...initialSiteSettings.siteSubtitle, ...(data.siteSubtitle || {}) },
                     metaDescription: { ...initialSiteSettings.metaDescription, ...(data.metaDescription || {}) },
                     seoKeywords: { ...initialSiteSettings.seoKeywords, ...(data.seoKeywords || {}) },
                     adPixels: { ...initialSiteSettings.adPixels, ...(data.adPixels || {}) },
@@ -1236,10 +1237,10 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }));
     };
 
-    const handleNestedSiteSettingsChange = (field: 'siteName' | 'metaDescription' | 'seoKeywords', lang: Language, value: string) => {
+    const handleNestedSiteSettingsChange = (field: 'siteName' | 'siteSubtitle' | 'metaDescription' | 'seoKeywords', lang: Language, value: string) => {
         setSiteSettings(prev => ({
             ...prev,
-            [field]: { ...prev[field], [lang]: value }
+            [field]: { ...(prev[field] as Record<Language, string>), [lang]: value }
         }));
     };
 
@@ -1915,6 +1916,17 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                     </div>
                 </div>
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleEn')}</label>
+                        <input type="text" value={siteSettings.siteSubtitle.en} onChange={(e) => handleNestedSiteSettingsChange('siteSubtitle', Language.EN, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleAr')}</label>
+                        <input type="text" value={siteSettings.siteSubtitle.ar} onChange={(e) => handleNestedSiteSettingsChange('siteSubtitle', Language.AR, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" />
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionEn')}</label>

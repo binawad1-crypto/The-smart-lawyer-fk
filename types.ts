@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 
@@ -60,6 +59,7 @@ export interface AdPixels {
 
 export interface SiteSettings {
   siteName: Record<Language, string>;
+  siteSubtitle: Record<Language, string>;
   metaDescription: Record<Language, string>;
   seoKeywords: Record<Language, string>;
   logoUrl: string;
