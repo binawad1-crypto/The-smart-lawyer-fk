@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -174,9 +169,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
     
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(0);
+    const SERVICES_PER_PAGE = 8;
+
     useEffect(() => {
         setOutputLanguage(language);
     }, [language]);
+    
+    // Reset page number when filters change
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [selectedCategory, searchQuery]);
 
     // Load favorites from local storage
     useEffect(() => {
@@ -748,135 +752,168 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     // -------------------- FRAME 2: SERVICES & INPUT (MIDDLE) --------------------
-    const renderMainContent = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
-             {/* Header for Main Content */}
-             <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
-                {selectedService ? (
-                    <div className="flex items-center gap-3 w-full">
-                         <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
-                            {language === 'ar' ? <ArrowRight size={20}/> : <ArrowLeft size={20}/>}
-                        </button>
-                        <div>
-                             <h3 className="font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
+    const renderMainContent = () => {
+        const totalPages = Math.ceil(filteredServices.length / SERVICES_PER_PAGE);
+        const paginatedServices = filteredServices.slice(
+            currentPage * SERVICES_PER_PAGE,
+            (currentPage + 1) * SERVICES_PER_PAGE
+        );
+
+        return (
+            <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
+                 {/* Header for Main Content */}
+                 <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
+                    {selectedService ? (
+                        <div className="flex items-center gap-3 w-full">
+                             <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
+                                {language === 'ar' ? <ArrowRight size={20}/> : <ArrowLeft size={20}/>}
+                            </button>
+                            <div>
+                                 <h3 className="font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <h3 className="font-bold text-white text-lg">
-                        {sidebarCategories.find(c => c.id === selectedCategory)?.label}
-                    </h3>
-                )}
-             </div>
+                    ) : (
+                        <h3 className="font-bold text-white text-lg">
+                            {sidebarCategories.find(c => c.id === selectedCategory)?.label}
+                        </h3>
+                    )}
+                 </div>
 
-             <div className="flex-grow overflow-y-auto custom-scrollbar p-4">
-                 {selectedService ? (
-                     /* Active Service Form */
-                     <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
-                         <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30 text-sm text-blue-800 dark:text-blue-300">
-                             {selectedService.description[language]}
-                         </div>
-                         
-                         <div className="space-y-4">
-                             {selectedService.formInputs.map(input => (
-                                 <div key={input.name}>
-                                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
-                                     {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                     {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                     {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                     {input.type === 'select' && (
-                                         <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm">
-                                             <option value="">{`Select ${input.label[language]}`}</option>
-                                             {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
-                                         </select>
-                                     )}
-                                     {input.type === 'file' && (
-                                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer relative">
-                                             <input id={input.name} name={input.name} type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleInputChange} />
-                                             <div className="space-y-1 text-center">
-                                                 <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-teal-500 transition-colors"/>
-                                                 <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
-                                                     <span className="font-bold text-teal-600 dark:text-teal-400">{t('uploadFile')}</span>
+                 <div className="flex-grow overflow-y-auto custom-scrollbar p-4">
+                     {selectedService ? (
+                         /* Active Service Form */
+                         <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
+                             <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30 text-sm text-blue-800 dark:text-blue-300">
+                                 {selectedService.description[language]}
+                             </div>
+                             
+                             <div className="space-y-4">
+                                 {selectedService.formInputs.map(input => (
+                                     <div key={input.name}>
+                                         <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
+                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'select' && (
+                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm">
+                                                 <option value="">{`Select ${input.label[language]}`}</option>
+                                                 {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
+                                             </select>
+                                         )}
+                                         {input.type === 'file' && (
+                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer relative">
+                                                 <input id={input.name} name={input.name} type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleInputChange} />
+                                                 <div className="space-y-1 text-center">
+                                                     <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-teal-500 transition-colors"/>
+                                                     <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
+                                                         <span className="font-bold text-teal-600 dark:text-teal-400">{t('uploadFile')}</span>
+                                                     </div>
+                                                     <p className="text-[10px] text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
                                                  </div>
-                                                 <p className="text-[10px] text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
                                              </div>
-                                         </div>
-                                     )}
-                                 </div>
-                             ))}
-                         </div>
-                         
-                         <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-900 pt-4 pb-2">
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                                <button type="submit" disabled={isGenerating} className="w-full md:w-auto flex-grow bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-600/20 transform active:scale-95">
-                                    {isGenerating && <Loader2 className="animate-spin" size={20} />}
-                                    {t('executeTask')}
-                                </button>
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    {renderOutputLengthSelector(false)}
-                                    {renderOutputLanguageSelector(false)}
+                                         )}
+                                     </div>
+                                 ))}
+                             </div>
+                             
+                             <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-900 pt-4 pb-2">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                                    <button type="submit" disabled={isGenerating} className="w-full md:w-auto flex-grow bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-600/20 transform active:scale-95">
+                                        {isGenerating && <Loader2 className="animate-spin" size={20} />}
+                                        {t('executeTask')}
+                                    </button>
+                                    <div className="flex items-center gap-3 w-full md:w-auto">
+                                        {renderOutputLengthSelector(false)}
+                                        {renderOutputLanguageSelector(false)}
+                                    </div>
                                 </div>
-                            </div>
-                         </div>
-                     </form>
-                 ) : (
-                     /* Services Grid */
-                     <>
-                        {loadingServices ? (
-                            <div className="text-center p-12"><Loader2 className="animate-spin inline-block text-teal-500" size={32} /></div>
-                        ) : filteredServices.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                                <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-full mb-4">
-                                    <Search size={32} className="text-gray-400" />
+                             </div>
+                         </form>
+                     ) : (
+                         /* Services Grid */
+                         <>
+                            {loadingServices ? (
+                                <div className="text-center p-12"><Loader2 className="animate-spin inline-block text-teal-500" size={32} /></div>
+                            ) : filteredServices.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                                    <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-full mb-4">
+                                        <Search size={32} className="text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500 font-medium">{t('noServicesFound')}</p>
                                 </div>
-                                <p className="text-gray-500 font-medium">{t('noServicesFound')}</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-4">
-                                {filteredServices.map(service => {
-                                    const Icon = iconMap[service.icon] || FileText;
-                                    const isFav = favorites.includes(service.id);
-                                    const colors = getServiceColorTheme(service.category);
-                                    
-                                    return (
-                                        <button
-                                            key={service.id}
-                                            onClick={() => handleServiceClick(service)}
-                                            className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left"
-                                        >
-                                            {/* Colored Side Border/Strip */}
-                                            <div className={`absolute top-3 bottom-3 right-0 rtl:right-0 ltr:left-0 w-1.5 rounded-l-full rtl:rounded-l-full ltr:rounded-r-full ${colors.border}`}></div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-4">
+                                        {paginatedServices.map(service => {
+                                            const Icon = iconMap[service.icon] || FileText;
+                                            const isFav = favorites.includes(service.id);
+                                            const colors = getServiceColorTheme(service.category);
                                             
-                                            <div className="flex items-start justify-between w-full mb-4 pl-3 rtl:pr-3 ltr:pl-3">
-                                                <div className="p-1 text-gray-300 hover:text-yellow-400 transition-colors" 
-                                                     onClick={(e) => toggleFavorite(e, service.id)}>
-                                                    <Star size={18} fill={isFav ? "#FACC15" : "none"} className={isFav ? "text-yellow-400" : "text-gray-300"} />
-                                                </div>
-                                                
-                                                <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${colors.iconBg} ${colors.iconColor} ${colors.darkIconBg} ${colors.darkIconColor}`}>
-                                                    <Icon size={24} strokeWidth={1.5} />
-                                                </div>
-                                            </div>
+                                            return (
+                                                <button
+                                                    key={service.id}
+                                                    onClick={() => handleServiceClick(service)}
+                                                    className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left"
+                                                >
+                                                    {/* Colored Side Border/Strip */}
+                                                    <div className={`absolute top-3 bottom-3 right-0 rtl:right-0 ltr:left-0 w-1.5 rounded-l-full rtl:rounded-l-full ltr:rounded-r-full ${colors.border}`}></div>
+                                                    
+                                                    <div className="flex items-start justify-between w-full mb-4 pl-3 rtl:pr-3 ltr:pl-3">
+                                                        <div className="p-1 text-gray-300 hover:text-yellow-400 transition-colors" 
+                                                             onClick={(e) => toggleFavorite(e, service.id)}>
+                                                            <Star size={18} fill={isFav ? "#FACC15" : "none"} className={isFav ? "text-yellow-400" : "text-gray-300"} />
+                                                        </div>
+                                                        
+                                                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${colors.iconBg} ${colors.iconColor} ${colors.darkIconBg} ${colors.darkIconColor}`}>
+                                                            <Icon size={24} strokeWidth={1.5} />
+                                                        </div>
+                                                    </div>
 
-                                            <div className="flex flex-col justify-between flex-grow w-full pl-3 rtl:pr-3 ltr:pl-3">
-                                                <div>
-                                                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
-                                                        {service.title[language] || service.title['en']}
-                                                    </h3>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80">
-                                                        {service.description[language] || service.description['en']}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                     </>
-                 )}
-             </div>
-        </div>
-    );
+                                                    <div className="flex flex-col justify-between flex-grow w-full pl-3 rtl:pr-3 ltr:pl-3">
+                                                        <div>
+                                                            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
+                                                                {service.title[language] || service.title['en']}
+                                                            </h3>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80">
+                                                                {service.description[language] || service.description['en']}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {totalPages > 1 && (
+                                        <div className="mt-6 flex justify-center items-center gap-4">
+                                            <button
+                                                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                                                disabled={currentPage === 0}
+                                                className="p-2 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label={language === 'ar' ? 'الصفحة السابقة' : 'Previous Page'}
+                                            >
+                                                {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
+                                            </button>
+                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                                {language === 'ar' ? `صفحة ${currentPage + 1} من ${totalPages}` : `Page ${currentPage + 1} of ${totalPages}`}
+                                            </span>
+                                            <button
+                                                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                                                disabled={currentPage >= totalPages - 1}
+                                                className="p-2 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label={language === 'ar' ? 'الصفحة التالية' : 'Next Page'}
+                                            >
+                                                {language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                         </>
+                     )}
+                 </div>
+            </div>
+        )
+    };
 
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
@@ -953,7 +990,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8" style={{ minHeight: 'calc(100vh - 64px)' }}>
+        <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8">
              <div className="w-[90%] mx-auto h-full">
                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
                     <div className="lg:col-span-1 h-full">{renderSidebar()}</div>
