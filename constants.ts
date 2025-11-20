@@ -74,9 +74,9 @@ export const translations: Translations = {
     outOfTokens: { en: 'You are out of tokens. Please upgrade your plan.', ar: 'لقد نفدت الرموز لديك. يرجى ترقية خطتك.' },
 
     // Landing Page
-    heroTitleMain: { en: 'The Future of Legal Work', ar: 'مستقبل العمل القانوني' },
-    heroTitleHighlight: { en: 'Powered by AI', ar: 'مدعوم بالذكاء الاصطناعي' },
-    heroSubtitle: { en: 'Leverage artificial intelligence for legal research, document drafting, and case analysis to enhance efficiency and accuracy.', ar: 'استفد من الذكاء الاصطناعي في الأبحاث القانونية وصياغة المستندات وتحليل القضايا لتعزيز الكفاءة والدقة.' },
+    heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
+    heroTitleHighlight: { en: 'For Lawyers and Legal Consultants', ar: 'للمحامين والمستشارين القانونيين' },
+    heroSubtitle: { en: 'Simplify your legal research, edit documents in seconds, and manage your cases with unparalleled efficiency. Dedicate more time to your clients and strategies, and let artificial intelligence handle the rest.', ar: 'بسّط أبحاثك القانونية، وحرّر المستندات في ثوانٍ، وأدر قضاياك بكفاءة لا مثيل لها. خصص المزيد من الوقت لعملائك واستراتيجياتك، ودع الذكاء الاصطناعي يتولى الباقي.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
     goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },
     startFreeTrial: { en: 'Start Free Trial', ar: 'ابدأ تجربتك المجانية' },

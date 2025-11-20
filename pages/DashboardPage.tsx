@@ -30,7 +30,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [fontSize, setFontSize] = useState(14);
+    const [fontSize, setFontSize] = useState(16);
     
     // Voice Settings
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -463,7 +463,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-950 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
+        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
             <div className="p-6 bg-gray-50 dark:bg-gradient-to-br dark:from-teal-600 dark:to-teal-800 border-b border-gray-200 dark:border-transparent shrink-0">
                  <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight text-slate-900 dark:text-white">
@@ -538,7 +538,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 2: SERVICES & INPUT (MIDDLE) --------------------
     const renderMainContent = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
+        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
              {/* Header for Main Content */}
              <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
                 {selectedService ? (

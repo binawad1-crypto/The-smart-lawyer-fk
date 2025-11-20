@@ -199,11 +199,11 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto object-contain max-w-full" />
              ) : (
-                <div className="flex flex-col items-start leading-none min-w-0 overflow-hidden">
-                  <h1 className="text-lg sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight truncate w-full">
+                <div className="flex flex-col items-start min-w-0 overflow-hidden">
+                  <h1 className="text-xl sm:text-4xl font-black bg-gradient-to-r from-primary-600 to-teal-400 dark:from-primary-400 dark:to-teal-300 bg-clip-text text-transparent tracking-tight truncate w-full">
                     {siteName}
                   </h1>
-                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold mt-1 truncate w-full">
+                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold truncate w-full">
                     {siteSubtitle}
                   </p>
                 </div>

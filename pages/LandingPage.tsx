@@ -116,10 +116,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
           </div>
           
           <h1 className="flex flex-col items-center justify-center mb-6 leading-tight">
-            <span className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight mb-2 md:mb-4">
+            <span className="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-cyan-500 to-sky-400 animate-gradient-x mb-2 md:mb-4">
                 {heroTitleMain}
             </span>
-            <span className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-cyan-500 to-sky-400 animate-gradient-x">
+            <span className="text-2xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {heroTitleHighlight}
             </span>
           </h1>
