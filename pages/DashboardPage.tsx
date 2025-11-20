@@ -14,6 +14,67 @@ interface DashboardPageProps {
     onNavigate: (view: 'dashboard' | 'admin' | 'profile' | 'subscriptions') => void;
 }
 
+const professionalOutputInstructionSystem = `أنت مساعد قانوني خبير. مهمتك هي تحليل طلب المستخدم وتقديم إجابة احترافية ودقيقة.
+يجب عليك **دائمًا** تنسيق إجابتك النهائية باستخدام قالب HTML التالي فقط. لا تكتب أي نص أو تعليقات خارج وسوم HTML.
+
+أولاً، قم بتنفيذ المهمة المطلوبة في طلب المستخدم.
+ثانياً، ضع نتائج تحليلك وإجابتك داخل القالب التالي:
+
+<section style="
+  font-family: 'Noto Naskh Arabic', sans-serif;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  padding: 22px;
+  border-radius: 14px;
+  line-height: 1.8;
+  direction: rtl;
+  text-align: right;
+">
+  <h2 style="
+    font-size: 1.45rem;
+    margin-bottom: 10px;
+    color: #222;
+    font-weight: 700;
+  ">[ضع هنا عنواناً مناسباً للنتيجة، مثل "تحليل المستند" أو "ملخص القضية"]</h2>
+
+  <p style="
+    font-size: 1.05rem;
+    color: #555;
+    margin-bottom: 14px;
+    font-weight: 700;
+  ">[ضع هنا مقدمة موجزة عن النتائج التي توصلت إليها]</p>
+
+  <div style="font-size: 1rem; color: #333; margin-bottom: 18px; font-weight: 400;">
+    <!-- ابدأ بوضع المحتوى الرئيسي هنا. يمكنك استخدام فقرات <p> وقوائم <ul> بحرية -->
+    <p>[هنا تضع الفقرة الأولى من التحليل أو الرد...]</p>
+    <p>[وهنا الفقرة الثانية إذا لزم الأمر...]</p>
+    
+    <ul style="padding-right: 20px; margin-top: 15px; margin-bottom: 15px;">
+        <li style="margin-bottom: 6px;">• [النقطة الأولى من التحليل]</li>
+        <li style="margin-bottom: 6px;">• [النقطة الثانية من التحليل]</li>
+        <li style="margin-bottom: 6px;">• [النقطة الثالثة، وهكذا...]</li>
+    </ul>
+    
+    <p>[فقرة ختامية أو توصيات.]</p>
+  </div>
+
+  <p style="
+    font-size: 0.95rem;
+    color: #444;
+    margin-top: 10px;
+    font-weight: 400;
+  ">💡 ملاحظة: تم إنشاء هذا المستند بواسطة المساعد الذكي ويجب مراجعته من قبل متخصص.</p>
+</section>
+
+التعليمات الهامة:
+- مهمتك الأساسية هي الإجابة على طلب المستخدم. القالب هو فقط لتنسيق تلك الإجابة.
+- لا تصف الخدمة، بل قم بتنفيذها.
+- استبدل كل المحتوى الموجود بين القوسين \`[...]\` بالنتائج الفعلية لتحليلك.
+- التزم تماماً بتقديم المخرج بصيغة HTML فقط.
+`;
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
+
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const { t, language, dir } = useLanguage();
     const { currentUser } = useAuth();
@@ -45,6 +106,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [outputLanguage, setOutputLanguage] = useState<Language>(language);
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
     
     // Layout State
     const [isFullWidth, setIsFullWidth] = useState(true);
@@ -196,13 +258,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
 
         try {
-            const languageInstruction = `\n\nIMPORTANT: Provide the response strictly in ${outputLanguage === 'ar' ? 'Arabic' : 'English'} language.`;
             const userLocation = currentUser?.location;
             const locationContext = userLocation ? `\n\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.` : '';
             
-            const finalPrompt = prompt + locationContext + languageInstruction;
+            let finalPrompt = prompt + locationContext;
+
+            let geminiConfig: any = {};
+            if (outputLength === 'short') {
+                geminiConfig = { maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 256 } };
+            } else if (outputLength === 'medium') {
+                geminiConfig = { maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 1024 } };
+            }
+
+            if (outputLanguage === Language.AR) {
+                geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystem };
+            } else {
+                finalPrompt += `\n\nIMPORTANT: Provide the response strictly in English language.`;
+            }
             
-            const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry);
+            const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry, geminiConfig);
             setResult(response.text);
 
             if (currentUser && !currentUser.isAdmin) {
@@ -274,7 +348,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             if (userLocation) {
                 prompt += `\nCONTEXT: The user is located in ${userLocation}. Apply the laws and regulations of ${userLocation}.`;
             }
-            prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
+
+            if (outputLanguage === Language.EN) {
+                prompt += `\n\nIMPORTANT: The output must be in English language.`;
+            }
             return prompt;
         };
     
@@ -288,7 +365,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
     
         try {
-            const response = await runGemini(selectedService.geminiModel, promptText, file, handleRetry, selectedService.geminiConfig);
+            let geminiConfig = selectedService.geminiConfig || {};
+            if (outputLength === 'short') {
+                geminiConfig = { ...geminiConfig, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 256 } };
+            } else if (outputLength === 'medium') {
+                geminiConfig = { ...geminiConfig, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 1024 } };
+            }
+
+            if (outputLanguage === Language.AR) {
+                geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystem };
+            }
+
+            const response = await runGemini(selectedService.geminiModel, promptText, file, handleRetry, geminiConfig);
             setResult(response.text);
 
             const isSuccess = !!response.text;
@@ -325,7 +413,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const copyToClipboard = () => {
         if (result) {
-            navigator.clipboard.writeText(result);
+            navigator.clipboard.writeText(stripHtml(result));
             setIsCopied(true);
             setTimeout(() => setIsCopied(false), 2000);
         }
@@ -334,16 +422,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const handlePrint = () => {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
+            const contentToPrint = outputLanguage === Language.AR && result.trim().startsWith('<section')
+                ? result
+                : `<pre>${result}</pre>`;
             printWindow.document.write(`
               <html>
                 <head>
                   <title>Print Result</title>
                   <style>
-                    body { font-family: 'Noto Naskh Arabic', 'Cairo', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                    @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+                    body { font-family: 'Noto Naskh Arabic', 'Tajawal', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                     pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
                   </style>
                 </head>
-                <body><pre>${result}</pre></body>
+                <body>${contentToPrint}</body>
               </html>
             `);
             printWindow.document.close();
@@ -359,7 +451,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             speechSynthesis.cancel();
             setIsSpeaking(false);
         } else {
-            const utterance = new SpeechSynthesisUtterance(result);
+            const utterance = new SpeechSynthesisUtterance(stripHtml(result));
             utterance.lang = outputLanguage === Language.AR ? 'ar-SA' : 'en-US';
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
@@ -403,6 +495,35 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {t('english')}
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+
+    const renderOutputLengthSelector = (showLabel = true) => (
+         <div className="flex items-center gap-2">
+            {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLength')}</span>}
+            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                <button
+                    type="button"
+                    onClick={() => setOutputLength('short')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                >
+                    {t('short')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setOutputLength('medium')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                >
+                    {t('medium')}
+                </button>
+                 <button
+                    type="button"
+                    onClick={() => setOutputLength('default')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                >
+                    {t('default')}
+                </button>
             </div>
         </div>
     );
@@ -595,12 +716,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                          </div>
                          
                          <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-900 pt-4 pb-2">
-                            <div className="flex items-center gap-3">
-                                <button type="submit" disabled={isGenerating} className="flex-grow bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-600/20 transform active:scale-95">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                                <button type="submit" disabled={isGenerating} className="w-full md:w-auto flex-grow bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-600/20 transform active:scale-95">
                                     {isGenerating && <Loader2 className="animate-spin" size={20} />}
                                     {t('executeTask')}
                                 </button>
-                                {renderOutputLanguageSelector(false)}
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    {renderOutputLengthSelector(false)}
+                                    {renderOutputLanguageSelector(false)}
+                                </div>
                             </div>
                          </div>
                      </form>
@@ -696,13 +820,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         <p className="text-gray-500 text-center font-medium mt-4 animate-pulse">{retryMessage || t('generatingResponse')}</p>
                     </div>
                 ) : result ? (
-                    <div className="prose dark:prose-invert max-w-none">
-                        <pre 
-                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
-                            style={{ fontSize: `${fontSize}px` }}
-                        >
-                            {result}
-                        </pre>
+                    <div className="max-w-none">
+                        {outputLanguage === Language.AR && result.trim().startsWith('<section') ? (
+                            <div dangerouslySetInnerHTML={{ __html: result }} />
+                        ) : (
+                            <pre 
+                                className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
+                                style={{ fontSize: `${fontSize}px` }}
+                            >
+                                {result}
+                            </pre>
+                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
@@ -716,6 +844,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
              {/* Prompt Input Area */}
              <div className="p-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3">
+                    {renderOutputLengthSelector(false)}
+                    {renderOutputLanguageSelector(false)}
+                </div>
                 <div className="relative">
                     <textarea
                         value={prompt}

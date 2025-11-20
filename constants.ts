@@ -26,7 +26,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
     // General
     appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    appSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
+    appSubtitle: { en: 'For Law Practice', ar: 'للمحاماه' },
     home: { en: 'Home', ar: 'الرئيسية' },
     services: { en: 'Services', ar: 'الخدمات' },
     support: { en: 'Support', ar: 'الدعم الفني' },
@@ -72,10 +72,14 @@ export const translations: Translations = {
     resultPlaceholder: { en: 'The generated result will appear here.', ar: 'ستظهر النتائج التي تم إنشاؤها هنا.' },
     generatingResponse: { en: 'Generating response...', ar: 'جاري إنشاء الرد...' },
     outOfTokens: { en: 'You are out of tokens. Please upgrade your plan.', ar: 'لقد نفدت الرموز لديك. يرجى ترقية خطتك.' },
+    outputLength: { en: 'Output Length', ar: 'طول المخرجات' },
+    default: { en: 'Default', ar: 'افتراضي' },
+    short: { en: 'Short', ar: 'قصير' },
+    medium: { en: 'Medium', ar: 'متوسط' },
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    heroTitleHighlight: { en: 'For Lawyers and Legal Consultants', ar: 'للمحامين والمستشارين القانونيين' },
+    heroTitleHighlight: { en: 'For Law Practice', ar: 'للمحاماة' },
     heroSubtitle: { en: 'Simplify your legal research, edit documents in seconds, and manage your cases with unparalleled efficiency. Dedicate more time to your clients and strategies, and let artificial intelligence handle the rest.', ar: 'بسّط أبحاثك القانونية، وحرّر المستندات في ثوانٍ، وأدر قضاياك بكفاءة لا مثيل لها. خصص المزيد من الوقت لعملائك واستراتيجياتك، ودع الذكاء الاصطناعي يتولى الباقي.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
     goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },

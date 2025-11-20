@@ -14,6 +14,67 @@ interface ServiceExecutionModalProps {
   service: Service | null;
 }
 
+const professionalOutputInstructionSystem = `أنت مساعد قانوني خبير. مهمتك هي تحليل طلب المستخدم وتقديم إجابة احترافية ودقيقة.
+يجب عليك **دائمًا** تنسيق إجابتك النهائية باستخدام قالب HTML التالي فقط. لا تكتب أي نص أو تعليقات خارج وسوم HTML.
+
+أولاً، قم بتنفيذ المهمة المطلوبة في طلب المستخدم.
+ثانياً، ضع نتائج تحليلك وإجابتك داخل القالب التالي:
+
+<section style="
+  font-family: 'Noto Naskh Arabic', sans-serif;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  padding: 22px;
+  border-radius: 14px;
+  line-height: 1.8;
+  direction: rtl;
+  text-align: right;
+">
+  <h2 style="
+    font-size: 1.45rem;
+    margin-bottom: 10px;
+    color: #222;
+    font-weight: 700;
+  ">[ضع هنا عنواناً مناسباً للنتيجة، مثل "تحليل المستند" أو "ملخص القضية"]</h2>
+
+  <p style="
+    font-size: 1.05rem;
+    color: #555;
+    margin-bottom: 14px;
+    font-weight: 700;
+  ">[ضع هنا مقدمة موجزة عن النتائج التي توصلت إليها]</p>
+
+  <div style="font-size: 1rem; color: #333; margin-bottom: 18px; font-weight: 400;">
+    <!-- ابدأ بوضع المحتوى الرئيسي هنا. يمكنك استخدام فقرات <p> وقوائم <ul> بحرية -->
+    <p>[هنا تضع الفقرة الأولى من التحليل أو الرد...]</p>
+    <p>[وهنا الفقرة الثانية إذا لزم الأمر...]</p>
+    
+    <ul style="padding-right: 20px; margin-top: 15px; margin-bottom: 15px;">
+        <li style="margin-bottom: 6px;">• [النقطة الأولى من التحليل]</li>
+        <li style="margin-bottom: 6px;">• [النقطة الثانية من التحليل]</li>
+        <li style="margin-bottom: 6px;">• [النقطة الثالثة، وهكذا...]</li>
+    </ul>
+    
+    <p>[فقرة ختامية أو توصيات.]</p>
+  </div>
+
+  <p style="
+    font-size: 0.95rem;
+    color: #444;
+    margin-top: 10px;
+    font-weight: 400;
+  ">💡 ملاحظة: تم إنشاء هذا المستند بواسطة المساعد الذكي ويجب مراجعته من قبل متخصص.</p>
+</section>
+
+التعليمات الهامة:
+- مهمتك الأساسية هي الإجابة على طلب المستخدم. القالب هو فقط لتنسيق تلك الإجابة.
+- لا تصف الخدمة، بل قم بتنفيذها.
+- استبدل كل المحتوى الموجود بين القوسين \`[...]\` بالنتائج الفعلية لتحليلك.
+- التزم تماماً بتقديم المخرج بصيغة HTML فقط.
+`;
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
+
 const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, onClose, service }) => {
   const { language, t } = useLanguage();
   const { currentUser } = useAuth();
@@ -25,6 +86,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [fontSize, setFontSize] = useState(16);
+  const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
   
   useEffect(() => {
       setOutputLanguage(language);
@@ -64,7 +126,10 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
         prompt += `\nCONTEXT: The user is located in ${userLocation}. Please answer based on the laws and regulations of ${userLocation} unless specified otherwise.`;
     }
 
-    prompt += `\n\nIMPORTANT: The output must be in ${outputLanguage === Language.AR ? 'Arabic' : 'English'} language.`;
+    if (outputLanguage === Language.EN) {
+        prompt += `\n\nIMPORTANT: The output must be in English language.`;
+    }
+    
     return prompt;
   }, [formData, service, outputLanguage, currentUser]);
 
@@ -93,7 +158,18 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     };
 
     try {
-        const response = await runGemini(service.geminiModel, prompt, file, handleRetry, service.geminiConfig);
+        let geminiConfig = service.geminiConfig || {};
+        if (outputLength === 'short') {
+            geminiConfig = { ...geminiConfig, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 256 } };
+        } else if (outputLength === 'medium') {
+            geminiConfig = { ...geminiConfig, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 1024 } };
+        }
+        
+        if (outputLanguage === Language.AR) {
+            geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystem };
+        }
+
+        const response = await runGemini(service.geminiModel, prompt, file, handleRetry, geminiConfig);
         const resultText = response.text;
         setResult(resultText);
 
@@ -132,7 +208,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
   const copyToClipboard = () => {
     if (result) {
-        navigator.clipboard.writeText(result);
+        navigator.clipboard.writeText(stripHtml(result));
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     }
@@ -141,16 +217,21 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+        const contentToPrint = outputLanguage === Language.AR && result.trim().startsWith('<section')
+            ? result
+            : `<pre>${result}</pre>`;
+
         printWindow.document.write(`
           <html>
             <head>
               <title>${service?.title[language] || 'Print'}</title>
               <style>
-                body { font-family: 'Noto Naskh Arabic', 'Cairo', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+                body { font-family: 'Noto Naskh Arabic', 'Tajawal', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                 pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
               </style>
             </head>
-            <body><pre>${result}</pre></body>
+            <body>${contentToPrint}</body>
           </html>
         `);
         printWindow.document.close();
@@ -166,7 +247,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      const utterance = new SpeechSynthesisUtterance(result);
+      const utterance = new SpeechSynthesisUtterance(stripHtml(result));
       utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
       utterance.onend = () => setIsSpeaking(false);
       speechSynthesis.speak(utterance);
@@ -233,13 +314,41 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         ))}
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-                        <button type="submit" disabled={isLoading} className="w-full sm:flex-grow bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+                        <button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
                             {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('executeTask')}
                         </button>
                         
-                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-full sm:w-auto justify-end">
+                            {/* Output Length */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('outputLength')}</span>
+                                <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOutputLength('short')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    >
+                                        {t('short')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOutputLength('medium')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    >
+                                        {t('medium')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOutputLength('default')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                    >
+                                        {t('default')}
+                                    </button>
+                                </div>
+                            </div>
+                            {/* Output Language */}
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
                                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
@@ -301,14 +410,17 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         </div>
                         <h3 className="font-bold text-lg text-gray-800 dark:text-white hidden md:block">{t('results')}</h3>
                     </div>
-                     <div className="prose dark:prose-invert max-w-none text-sm p-4 overflow-y-auto flex-grow">
-                         {/* Apply Noto Naskh font and relax leading for better Arabic readability */}
-                         <pre 
-                            className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
-                            style={{ fontSize: `${fontSize}px` }}
-                        >
-                            {result}
-                        </pre>
+                     <div className="max-w-none text-sm p-4 overflow-y-auto flex-grow">
+                        {outputLanguage === Language.AR && result.trim().startsWith('<section') ? (
+                            <div dangerouslySetInnerHTML={{ __html: result }} />
+                        ) : (
+                             <pre 
+                                className="whitespace-pre-wrap font-naskh leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
+                                style={{ fontSize: `${fontSize}px` }}
+                            >
+                                {result}
+                            </pre>
+                        )}
                     </div>
                 </div>
               ) : (

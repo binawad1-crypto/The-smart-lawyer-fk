@@ -7,7 +7,7 @@ export const SiteSettingsContext = createContext<SiteSettingsContextType | undef
 
 const defaultSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    siteSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
+    siteSubtitle: { en: 'For Law Practice', ar: 'للمحاماة' },
     metaDescription: { en: 'AI-Powered Legal Services', ar: 'خدمات قانونية مدعومة بالذكاء الاصطناعي' },
     seoKeywords: { en: 'law, legal, ai, lawyer, assistant', ar: 'قانون, محاماة, ذكاء اصطناعي, محامي, مساعد' },
     logoUrl: '',
