@@ -15,7 +15,7 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
-    const { t, language } = useLanguage();
+    const { t, language, dir } = useLanguage();
     const { currentUser } = useAuth();
     const { settings } = useSiteSettings();
     const [services, setServices] = useState<Service[]>([]);
@@ -463,47 +463,39 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-slate-950 shadow-lg border border-slate-800 overflow-hidden">
+        <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-950 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
-            <div className="p-6 bg-gradient-to-br from-teal-600 to-teal-800 text-white shrink-0">
-                 <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight">
+            <div className="p-6 bg-gray-50 dark:bg-gradient-to-br dark:from-teal-600 dark:to-teal-800 border-b border-gray-200 dark:border-transparent shrink-0">
+                 <h2 className="text-2xl font-black tracking-tight mb-1 leading-tight text-slate-900 dark:text-white">
                     {settings?.siteName[language] || t('appName')}
                 </h2>
-                <p className="text-xs text-teal-100 font-medium opacity-90">
+                <p className="text-xs text-gray-500 dark:text-teal-100 font-medium">
                     {settings?.siteSubtitle?.[language] || t('appSubtitle')}
                 </p>
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b border-gray-200 dark:border-slate-800">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
                     <input
                         type="text"
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-slate-800 text-slate-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-slate-500"
+                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-gray-400 dark:placeholder-slate-500"
                     />
                 </div>
             </div>
 
             {/* Categories Navigation */}
             <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1">
-                <p className="px-3 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <p className="px-3 py-2 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                     {language === 'ar' ? 'الأقسام' : 'Categories'}
                 </p>
                 {categories.map(cat => {
                     const isActive = selectedCategory === cat.id;
                     const IconComponent = cat.icon;
-
-                    // For inactive icons, derive background from text color class
-                    const iconColorClass = cat.color; // e.g., 'text-blue-400'
-                    const iconBgClass = iconColorClass.replace('text-', 'bg-').replace('-400', '-500/10');
-                    const borderColorClass = iconColorClass.replace('text-', 'border-').replace('-400', '-500/20');
-                    
-                    const finalIconBg = cat.id === 'all' ? 'bg-slate-700/50' : iconBgClass;
-                    const finalBorderColor = cat.id === 'all' ? 'border-slate-600/50' : borderColorClass;
 
                     return (
                         <button
@@ -514,8 +506,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             }}
                             className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group ${
                                 isActive
-                                    ? 'bg-teal-700 text-white shadow-sm' // Active style
-                                    : 'text-slate-300 hover:bg-slate-800/60' // Inactive style
+                                    ? 'bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm' // Active style
+                                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60' // Inactive style
                             }`}
                         >
                             {/* RTL Layout: Chevron, Text, Icon */}
@@ -523,15 +515,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 <>
                                     <div className="w-4">{isActive && <ArrowLeft size={16} />}</div>
                                     <span className="flex-grow text-right">{cat.label}</span>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? '' : `${finalIconBg} border ${finalBorderColor}`}`}>
-                                        <IconComponent size={20} className={isActive ? 'text-white' : iconColorClass} />
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
+                                        <IconComponent size={20} className={isActive ? 'text-teal-700 dark:text-white' : `${cat.color.replace('400','500')} dark:${cat.color}`} />
                                     </div>
                                 </>
                             ) : (
                             // LTR Layout: Icon, Text, Chevron
                                 <>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? '' : `${finalIconBg} border ${finalBorderColor}`}`}>
-                                        <IconComponent size={20} className={isActive ? 'text-white' : iconColorClass} />
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
+                                        <IconComponent size={20} className={isActive ? 'text-teal-700 dark:text-white' : `${cat.color.replace('400','500')} dark:${cat.color}`} />
                                     </div>
                                     <span className="flex-grow text-left">{cat.label}</span>
                                     <div className="w-4">{isActive && <ChevronRightIcon size={16} />}</div>
@@ -675,21 +667,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
         <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
-             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-800 to-teal-700 dark:from-slate-900 dark:to-slate-800 border-b border-teal-700 dark:border-slate-700 shrink-0 justify-between shadow-sm relative z-10">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Sparkles size={16} className="text-yellow-300"/>
+             <div className="h-16 flex items-center px-4 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shrink-0 justify-between shadow-sm relative z-10">
+                <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
+                    <Sparkles size={16} className="text-yellow-400"/>
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
                     {/* Tools */}
-                    <div className="flex bg-white/10 rounded-lg p-1 mr-2">
-                         <button onClick={handleIncreaseFont} className="hover:bg-white/20 rounded p-1 transition-colors text-teal-100 hover:text-white"><ZoomIn size={14} /></button>
-                         <button onClick={handleDecreaseFont} className="hover:bg-white/20 rounded p-1 transition-colors text-teal-100 hover:text-white"><ZoomOut size={14} /></button>
+                    <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1 mr-2">
+                         <button onClick={handleIncreaseFont} className="hover:bg-gray-300/70 dark:hover:bg-slate-600 rounded p-1 transition-colors text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white" title="Zoom In"><ZoomIn size={14} /></button>
+                         <button onClick={handleDecreaseFont} className="hover:bg-gray-300/70 dark:hover:bg-slate-600 rounded p-1 transition-colors text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white" title="Zoom Out"><ZoomOut size={14} /></button>
                     </div>
-                    <button onClick={handleListen} className={`p-1.5 rounded hover:bg-white/20 transition-colors ${isSpeaking ? 'text-green-300' : 'text-teal-100 hover:text-white'}`}><Volume2 size={16} /></button>
-                    <button onClick={copyToClipboard} className="p-1.5 rounded hover:bg-white/20 transition-colors text-teal-100 hover:text-white">{isCopied ? <Check size={16} className="text-green-300"/> : <Copy size={16} />}</button>
-                    <button onClick={handlePrint} className="p-1.5 rounded hover:bg-white/20 transition-colors text-teal-100 hover:text-white"><Printer size={16} /></button>
-                    <button onClick={handleClear} className="p-1.5 rounded hover:bg-red-500/30 text-teal-100 hover:text-red-200 transition-colors"><X size={16} /></button>
+                    <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-500 bg-green-100 dark:bg-green-900/20' : 'text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700'}`}><Volume2 size={16} /></button>
+                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700 transition-colors">{isCopied ? <Check size={16} className="text-green-500"/> : <Copy size={16} />}</button>
+                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-700 transition-colors"><Printer size={16} /></button>
+                    <button onClick={handleClear} title={t('cancel')} className="p-1.5 rounded text-gray-500 hover:bg-red-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"><X size={16} /></button>
                 </div>
              </div>
 
@@ -722,28 +714,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 )}
              </div>
 
-             {/* Prompt Input - "Night Color" / Dark Theme */}
-             <div className="p-4 bg-slate-900 border-t border-slate-800">
+             {/* Prompt Input Area */}
+             <div className="p-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
                 <div className="relative">
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder={t('typeYourRequest')}
-                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-slate-700 rounded-xl bg-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-slate-500 text-right text-sm shadow-inner"
+                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 dark:placeholder-slate-500 text-sm shadow-inner"
+                        dir={dir}
                     />
                     <button
                         onClick={handleExecutePrompt}
                         disabled={isGenerating || !prompt.trim()}
-                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center hover:bg-teal-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all shadow-md"
+                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center hover:bg-teal-500 disabled:bg-gray-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 disabled:cursor-not-allowed transition-all shadow-md"
                     >
                         {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="ltr:-scale-x-100" />}
                     </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                     <span className="text-[10px] text-slate-500 font-medium">{t('poweredByAI')}</span>
+                     <span className="text-[10px] text-gray-500 dark:text-slate-500 font-medium">{t('poweredByAI')}</span>
                      <button
                         onClick={() => setIsFullWidth(!isFullWidth)}
-                        className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
+                        className="p-1 rounded text-gray-500 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-700 dark:hover:text-slate-300 transition-colors"
                     >
                         {isFullWidth ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </button>
@@ -753,7 +746,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className={`${isFullWidth ? 'w-full px-4' : 'container mx-auto px-4 sm:px-6 lg:px-8'} flex-grow flex flex-col py-6 transition-all duration-300`}>
+        <div className={`bg-gray-100 dark:bg-dark-bg ${isFullWidth ? 'w-full px-4' : 'container mx-auto px-4 sm:px-6 lg:px-8'} flex-grow flex flex-col py-6 transition-all duration-300`}>
             <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 w-full max-w-[1920px] mx-auto ${
                 isFullWidth 
                 ? 'lg:h-[calc(100vh-100px)] h-auto min-h-[calc(100vh-100px)]' 
