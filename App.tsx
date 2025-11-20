@@ -19,6 +19,17 @@ import SupportPanel from './components/SupportModal';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support';
 
+// Helper to update or create a meta tag
+const updateMetaTag = (attribute: 'name' | 'property', key: string, content: string) => {
+    let element = document.querySelector(`meta[${attribute}='${key}']`);
+    if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+};
+
 const App: React.FC = () => {
   const { currentUser, loading: authLoading } = useAuth();
   const { t, language, dir } = useLanguage();
@@ -29,39 +40,48 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (settings) {
-      document.title = settings.siteName[language] || 'المساعد الذكي';
+      const siteTitle = settings.siteName[language] || 'المساعد الذكي';
+      const siteDescription = settings.metaDescription[language] || 'منصة مدعومة بالذكاء الاصطناعي تقدم خدمات متخصصة للمحامين والمستشارين القانونيين، مع ميزات لتحليل القضايا، وتلخيص المستندات، والبحث القانوني.';
+      const siteKeywords = settings.seoKeywords[language] || '';
 
-      // Update or create meta description
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.setAttribute('name', 'description');
-        document.head.appendChild(metaDesc);
-      }
-      metaDesc.setAttribute('content', settings.metaDescription[language] || '');
+      const getAbsoluteUrl = (url: string) => {
+          try {
+              return new URL(url, window.location.origin).href;
+          } catch (e) {
+              return new URL('/vite.svg', window.location.origin).href;
+          }
+      };
+      
+      const imageUrl = settings.logoUrl ? getAbsoluteUrl(settings.logoUrl) : getAbsoluteUrl('/vite.svg');
+      const faviconUrl = settings.faviconUrl ? getAbsoluteUrl(settings.faviconUrl) : getAbsoluteUrl('/vite.svg');
 
-      // Update or create meta keywords
-      let metaKeywords = document.querySelector('meta[name="keywords"]');
-      if (!metaKeywords) {
-        metaKeywords = document.createElement('meta');
-        metaKeywords.setAttribute('name', 'keywords');
-        document.head.appendChild(metaKeywords);
-      }
-      metaKeywords.setAttribute('content', settings.seoKeywords[language] || '');
+      document.title = siteTitle;
 
+      // Standard Meta Tags
+      updateMetaTag('name', 'description', siteDescription);
+      updateMetaTag('name', 'keywords', siteKeywords);
 
-      // Update or create favicon
+      // Open Graph Tags for social sharing
+      updateMetaTag('property', 'og:title', siteTitle);
+      updateMetaTag('property', 'og:description', siteDescription);
+      updateMetaTag('property', 'og:image', imageUrl);
+      updateMetaTag('property', 'og:type', 'website');
+      updateMetaTag('property', 'og:url', window.location.origin);
+
+      // Twitter Card Tags
+      updateMetaTag('name', 'twitter:card', 'summary_large_image');
+      updateMetaTag('name', 'twitter:title', siteTitle);
+      updateMetaTag('name', 'twitter:description', siteDescription);
+      updateMetaTag('name', 'twitter:image', imageUrl);
+
+      // Update favicon
       let favicon = document.querySelector('link[rel="icon"]');
       if (!favicon) {
         favicon = document.createElement('link');
         favicon.setAttribute('rel', 'icon');
         document.head.appendChild(favicon);
       }
-      if (settings.faviconUrl) {
-          favicon.setAttribute('href', settings.faviconUrl);
-      } else {
-          favicon.setAttribute('href', '/vite.svg'); // Default
-      }
+      favicon.setAttribute('href', faviconUrl);
     }
   }, [settings, language]);
 
