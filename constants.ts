@@ -79,7 +79,7 @@ export const translations: Translations = {
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    heroTitleHighlight: { en: 'For Law Practice', ar: 'للمحاماة' },
+    heroTitleHighlight: { en: 'For Law Practice', ar: 'للمحاماه' },
     heroSubtitle: { en: 'Simplify your legal research, edit documents in seconds, and manage your cases with unparalleled efficiency. Dedicate more time to your clients and strategies, and let artificial intelligence handle the rest.', ar: 'بسّط أبحاثك القانونية، وحرّر المستندات في ثوانٍ، وأدر قضاياك بكفاءة لا مثيل لها. خصص المزيد من الوقت لعملائك واستراتيجياتك، ودع الذكاء الاصطناعي يتولى الباقي.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
     goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },
@@ -97,7 +97,6 @@ export const translations: Translations = {
     feature1Desc: { en: 'Upload your legal documents and get summaries, key point extractions, and risk assessments in seconds.', ar: 'ارفع مستنداتك القانونية واحصل على ملخصات واستخراج النقاط الرئيسية وتقييمات المخاطر في ثوانٍ.' },
     feature2Title: { en: 'Smart Legal Research', ar: 'بحث قانوني ذكي' },
     feature2Desc: { en: 'Ask complex legal questions in natural language and receive well-reasoned, cited answers based on current laws.', ar: 'اطرح أسئلة قانونية معقدة بلغة طبيعية واحصل على إجابات مدعومة بالأدلة ومبنية على القوانين الحالية.' },
-    // FIX: The translations object was truncated and had syntax errors. Completed the missing feature translations and added missing category translations.
     feature3Title: { en: 'Automated Drafting', ar: 'صياغة آلية' },
     feature3Desc: { en: 'Generate first drafts of memos, contracts, and legal correspondence with AI assistance.', ar: 'أنشئ مسودات أولية للمذكرات والعقود والمراسلات القانونية بمساعدة الذكاء الاصطناعي.' },
     feature4Title: { en: 'Legal Risk Assessment', ar: 'تقييم المخاطر القانونية' },
@@ -114,11 +113,6 @@ export const translations: Translations = {
     feature9Desc: { en: 'Organize and search your legal knowledge base, case files, and documents efficiently.', ar: 'نظم وابحث في قاعدة معارفك القانونية وملفات القضايا والمستندات بكفاءة.' },
 
     // Service Categories
-    litigationAndPleadings: { en: 'Litigation and Pleadings', ar: 'الدعاوى والمرافعات' },
-    specializedConsultations: { en: 'Specialized Consultations', ar: 'الاستشارات المتخصصة' },
-    investigationsAndCriminal: { en: 'Investigations and Criminal', ar: 'التحقيقات والجنائي' },
-    creativeServices: { en: 'Creative Services', ar: 'الخدمات الإبداعية' },
-    corporateAndCompliance: { en: 'Corporate & Compliance', ar: 'الشركات والامتثال' },
     allCategories: { en: 'All Categories', ar: 'جميع الأقسام' },
     favorites: { en: 'Favorites', ar: 'المفضلة' },
 
@@ -131,6 +125,7 @@ export const translations: Translations = {
     adminPanel: { en: 'Admin Panel', ar: 'لوحة التحكم' },
     userManagement: { en: 'User Management', ar: 'إدارة المستخدمين' },
     manageServices: { en: 'Manage Services', ar: 'إدارة الخدمات' },
+    manageCategories: { en: 'Manage Categories', ar: 'إدارة الأقسام' },
     subscriptionManagement: { en: 'Subscription Management', ar: 'إدارة الاشتراكات' },
     planManagement: { en: 'Plan Management', ar: 'إدارة الخطط' },
     siteSettings: { en: 'Site Settings', ar: 'إعدادات الموقع' },
@@ -210,12 +205,26 @@ export const translations: Translations = {
     existingServices: { en: 'Existing Services', ar: 'الخدمات الحالية' },
     deleteSelected: { en: 'Delete Selected', ar: 'حذف المحدد' },
     serviceName: { en: 'Service Name', ar: 'اسم الخدمة' },
+    category: { en: 'Category', ar: 'القسم' },
     subCategory: { en: 'Sub-Category', ar: 'الفئة الفرعية' },
     usage: { en: 'Usage', ar: 'الاستخدام' },
     run: { en: 'Run', ar: 'تشغيل' },
     noServicesFound: { en: 'No services found for this category.', ar: 'لم يتم العثور على خدمات في هذه الفئة.' },
     fetchServicesError: { en: 'Failed to load services.', ar: 'فشل تحميل الخدمات.' },
     deleteSelectedConfirm: { en: 'Are you sure you want to delete the {count} selected services?', ar: 'هل أنت متأكد من رغبتك في حذف {count} من الخدمات المحددة؟' },
+
+    // Admin - Category Management
+    categoryId: { en: 'Category ID (auto-generated, e.g., category-name)', ar: 'معرف القسم (يتم إنشاؤه تلقائياً، مثال: category-name)' },
+    order: { en: 'Order', ar: 'الترتيب' },
+    addNewCategory: { en: 'Add New Category', ar: 'إضافة قسم جديد' },
+    editCategory: { en: 'Edit Category', ar: 'تعديل القسم' },
+    categoryName: { en: 'Category Name', ar: 'اسم القسم' },
+    categorySavedSuccess: { en: 'Category saved successfully.', ar: 'تم حفظ القسم بنجاح.' },
+    categorySavedError: { en: 'Failed to save category.', ar: 'فشل حفظ القسم.' },
+    deleteCategoryConfirm: { en: 'Are you sure you want to delete this category? Services under this category will NOT be deleted but will become uncategorized.', ar: 'هل أنت متأكد من حذف هذا القسم؟ الخدمات الموجودة تحته لن تُحذف ولكنها ستصبح بدون قسم.' },
+    categoryDeletedSuccess: { en: 'Category deleted successfully.', ar: 'تم حذف القسم بنجاح.' },
+    categoryDeletedError: { en: 'Failed to delete category.', ar: 'فشل حذف القسم.' },
+    fetchCategoriesError: { en: 'Failed to load categories.', ar: 'فشل تحميل الأقسام.' },
 
     // Admin - Subscription Management
     plan: { en: 'Plan', ar: 'الخطة' },
@@ -348,6 +357,7 @@ export const translations: Translations = {
     updateEmail: { en: 'Update Email', ar: 'تحديث البريد' },
     changePassword: { en: 'Change Password', ar: 'تغيير كلمة المرور' },
     newPassword: { en: 'New Password', ar: 'كلمة المرور الجديدة' },
+    confirmNewPassword: { en: 'Confirm New Password', ar: 'تأكيد كلمة المرور الجديدة' },
     updatePassword: { en: 'Update Password', ar: 'تحديث كلمة المرور' },
     reAuthRequired: { en: 'Authentication Required', ar: 'المصادقة مطلوبة' },
     reAuthMessage: { en: 'For your security, please enter your current password to continue.', ar: 'لأمانك، يرجى إدخال كلمة المرور الحالية للمتابعة.' },

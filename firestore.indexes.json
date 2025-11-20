@@ -1,4 +1,3 @@
-
 {
   "indexes": [
     {
@@ -31,6 +30,16 @@
       "fields": [
         {
           "fieldPath": "title.en",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "service_categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "order",
           "order": "ASCENDING"
         }
       ]

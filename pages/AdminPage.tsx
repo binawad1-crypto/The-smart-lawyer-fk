@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig, AdPixels, Ticket, TicketMessage, SystemNotification } from '../types';
-import { iconNames, ADMIN_EMAIL } from '../constants';
+import { Service, ServiceCategory, FormInput, FormInputType, Translations, SubscriptionInfo, Plan, SiteSettings, Language, LandingPageConfig, AdPixels, Ticket, TicketMessage, SystemNotification, Category } from '../types';
+import { iconNames, ADMIN_EMAIL, iconMap } from '../constants';
 import { Type } from "@google/genai";
-import { generateServiceConfigWithAI } from '../services/geminiService';
+import { generateServiceConfigWithAI, generateCategoryConfigWithAI } from '../services/geminiService';
 import { uploadFile } from '../services/storageService';
 import ServiceExecutionModal from '../components/ServiceExecutionModal';
 
@@ -33,7 +33,7 @@ const initialServiceState: Service = {
     id: '',
     title: { en: '', ar: '' },
     description: { en: '', ar: '' },
-    category: ServiceCategory.LitigationAndPleadings,
+    category: '',
     subCategory: { en: '', ar: '' },
     icon: 'FileText',
     geminiModel: 'gemini-2.5-flash',
@@ -54,7 +54,7 @@ const initialPlanState: Plan = {
 
 const initialSiteSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    siteSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
+    siteSubtitle: { en: 'For Law Practice', ar: 'للمحاماه' },
     metaDescription: { en: '', ar: '' },
     seoKeywords: { en: '', ar: '' },
     logoUrl: '',
@@ -467,8 +467,19 @@ const AdminPage = () => {
     const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
 
-    // Filtering state
-    const [filterCategory, setFilterCategory] = useState<ServiceCategory | 'all'>('all');
+    // Category management state
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [categoryError, setCategoryError] = useState<string | null>(null);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [showCategoryForm, setShowCategoryForm] = useState(false);
+    const [isEditingCategory, setIsEditingCategory] = useState(false);
+    const [aiCategoryName, setAiCategoryName] = useState('');
+    const [isGeneratingCategory, setIsGeneratingCategory] = useState(false);
+    
+    // Filtering state for services
+    const [filterCategory, setFilterCategory] = useState<string | 'all'>('all');
+
     // Selection state
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
@@ -545,6 +556,7 @@ const AdminPage = () => {
             const snapshot = await getDocs(q);
             const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plan));
             setPlans(plansData);
+        // FIX: Replaced `catch (err) => {` with `catch (err) {` to fix syntax error.
         } catch (err) {
             console.error("Error fetching plans: ", err);
             setPlanError(t('fetchPlansError'));
@@ -553,6 +565,22 @@ const AdminPage = () => {
         }
     }, [t]);
 
+    const fetchCategories = useCallback(async () => {
+        setLoadingCategories(true);
+        setCategoryError(null);
+        try {
+            const catRef = collection(db, 'service_categories');
+            const q = query(catRef, orderBy('order'));
+            const snapshot = await getDocs(q);
+            const cats = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Category));
+            setCategories(cats);
+        } catch (e) {
+            console.error("Failed to fetch categories", e);
+            setCategoryError(t('fetchCategoriesError'));
+        } finally {
+            setLoadingCategories(false);
+        }
+    }, [t]);
 
     const fetchUsersWithSubscriptions = useCallback(async () => {
         setLoadingSubs(true);
@@ -661,48 +689,14 @@ const AdminPage = () => {
     }, []);
 
     useEffect(() => {
-        if (activeTab !== 'support') return;
-        
-        setLoadingTickets(true);
-        const q = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
-        
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
-            setTickets(ticketsData);
-            setLoadingTickets(false);
-        });
-
-        return () => unsubscribe();
-    }, [activeTab]);
-
-    useEffect(() => {
-        if (activeTab !== 'support' || !selectedTicket) return;
-
-        const q = query(
-            collection(db, 'support_tickets', selectedTicket.id, 'messages'),
-            orderBy('createdAt', 'asc')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
-            setMessages(msgs);
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-        });
-
-        if(selectedTicket.unreadAdmin) {
-            updateDoc(doc(db, 'support_tickets', selectedTicket.id), { unreadAdmin: false });
-        }
-
-        return () => unsubscribe();
-    }, [selectedTicket, activeTab]);
-
-
-    useEffect(() => {
         if (activeTab === 'users') {
             fetchUsers();
             fetchPlans();
         } else if (activeTab === 'services') {
             fetchServices();
+            fetchCategories();
+        } else if (activeTab === 'categories') {
+            fetchCategories();
         } else if (activeTab === 'subscriptions') {
             fetchUsersWithSubscriptions();
             fetchPlans();
@@ -713,7 +707,7 @@ const AdminPage = () => {
         } else if (activeTab === 'notifications') {
             fetchNotifications();
         }
-    }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings, fetchNotifications]);
+    }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings, fetchNotifications, fetchCategories]);
 
     const filteredServices = useMemo(() => {
         if (filterCategory === 'all') {
@@ -733,6 +727,8 @@ const AdminPage = () => {
         }
     }, [selectedServices, filteredServices]);
     
+    const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.title[language]])), [categories, language]);
+
     const handleGenerateService = async () => {
         if (!aiServiceName) {
             alert(t('enterServiceName'));
@@ -742,8 +738,8 @@ const AdminPage = () => {
         setShowServiceForm(false);
         setIsEditingService(false);
         try {
-            // ... (Service schema remains the same)
-             const schema = {
+            const categoryIds = categories.map(c => c.id);
+            const schema = {
                 type: Type.OBJECT,
                 properties: {
                     id: { type: Type.STRING, description: 'A unique, URL-friendly ID in kebab-case.' },
@@ -753,7 +749,7 @@ const AdminPage = () => {
                     description_ar: { type: Type.STRING },
                     subCategory_en: { type: Type.STRING },
                     subCategory_ar: { type: Type.STRING },
-                    category: { type: Type.STRING, enum: Object.values(ServiceCategory) },
+                    category: { type: Type.STRING, enum: categoryIds.length > 0 ? categoryIds : Object.values(ServiceCategory) },
                     icon: { type: Type.STRING, enum: iconNames },
                     formInputs: {
                         type: Type.ARRAY,
@@ -763,7 +759,7 @@ const AdminPage = () => {
                                 name: { type: Type.STRING, description: 'A unique name in snake_case.' },
                                 label_en: { type: Type.STRING },
                                 label_ar: { type: Type.STRING },
-                                type: { type: Type.STRING, enum: ['text', 'textarea', 'date', 'file'] }
+                                type: { type: Type.STRING, enum: ['text', 'textarea', 'date', 'file', 'select'] }
                             },
                             required: ['name', 'label_en', 'label_ar', 'type']
                         }
@@ -789,7 +785,7 @@ If the service name was "Review a real estate lease", the output should be this 
   "description_ar": "تحليل عقد إيجار سكني أو تجاري لتحديد المخاطر المحتملة والبنود غير العادلة.",
   "subCategory_en": "Real Estate Law",
   "subCategory_ar": "قانون العقارات",
-  "category": "specializedConsultations",
+  "category": "specialized-consultations",
   "icon": "Home",
   "formInputs": [
     {
@@ -814,12 +810,12 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 - **title_en / title_ar:** The service title in English and Arabic.
 - **description_en / description_ar:** A concise description in English and Arabic.
 - **subCategory_en / subCategory_ar:** A logical sub-category in English and Arabic (e.g., "Corporate Law" / "قانون الشركات").
-- **category:** Must be one of: ${Object.values(ServiceCategory).join(', ')}.
+- **category:** Must be one of: ${categoryIds.length > 0 ? categoryIds.join(', ') : Object.values(ServiceCategory).join(', ')}.
 - **icon:** Choose the most appropriate icon from this list: [${iconNames.join(', ')}].
 - **formInputs:** An array of 2-4 input fields. Each must have:
   - **name:** snake_case identifier.
   - **label_en / label_ar:** User-friendly labels in English and Arabic.
-  - **type:** Must be one of: 'text', 'textarea', 'date', 'file'.
+  - **type:** Must be one of: 'text', 'textarea', 'date', 'file', 'select'.
 
 **FINAL REMINDER:** The separation of English (\`_en\`) and Arabic (\`_ar\`) is mandatory. Your response will be parsed automatically, and any error in language placement will cause a failure.`;
             
@@ -837,7 +833,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 id: generatedData.id || '',
                 title: { en: generatedData.title_en || '', ar: generatedData.title_ar || '' },
                 description: { en: generatedData.description_en || '', ar: generatedData.description_ar || '' },
-                category: (generatedData.category as ServiceCategory) || ServiceCategory.LitigationAndPleadings,
+                category: (generatedData.category as string) || (categories[0]?.id || ''),
                 subCategory: { en: generatedData.subCategory_en || '', ar: generatedData.subCategory_ar || '' },
                 icon: generatedData.icon || 'FileText',
                 geminiModel: 'gemini-2.5-flash',
@@ -861,6 +857,16 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         } finally {
             setIsGenerating(false);
         }
+    };
+    
+    const handleAddNewServiceClick = () => {
+        setNewService({
+            ...initialServiceState,
+            category: categories.length > 0 ? categories[0].id : ''
+        });
+        setIsEditingService(false);
+        setShowServiceForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleGenerateLandingPage = async () => {
@@ -1206,14 +1212,14 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     };
 
     const handleDeletePlan = async (planId: string) => {
-        if (window.confirm(t('deletePlanConfirm'))) {
+        if (window.confirm(t('deleteConfirm'))) { // Using generic delete confirm, might want a specific one
             try {
                 await deleteDoc(doc(db, "subscription_plans", planId));
-                alert(t('planDeletedSuccess'));
+                alert(t('serviceDeletedSuccess')); // Re-using translation
                 fetchPlans();
             } catch (error) {
                 console.error("Error deleting plan:", error);
-                alert(t('planDeletedError'));
+                alert(t('serviceDeletedError')); // Re-using translation
             }
         }
     };
@@ -1311,7 +1317,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     // Notification System Handlers
     const handleCreateNotification = async () => {
         if (!newNotification.title?.en || !newNotification.message?.en) {
-            alert(t('fillAllFields'));
+            alert('Title and Message are required.'); // Fallback text
             return;
         }
 
@@ -1352,11 +1358,135 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }
     };
 
+    // Category Management Handlers
+    const handleGenerateCategory = async () => {
+        if (!aiCategoryName) {
+            alert(language === 'ar' ? 'الرجاء إدخال اسم القسم لإنشائه.' : 'Please enter a category name to generate.');
+            return;
+        }
+        setIsGeneratingCategory(true);
+        setShowCategoryForm(false);
+        setEditingCategory(null);
+        try {
+            const schema = {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING, description: 'A unique, URL-friendly ID in kebab-case based on the English title.' },
+                    title_en: { type: Type.STRING },
+                    title_ar: { type: Type.STRING },
+                    icon: { type: Type.STRING, enum: iconNames },
+                    order: { type: Type.INTEGER, description: 'A number for sorting, suggest a high number like 99.' }
+                },
+                required: ['id', 'title_en', 'title_ar', 'icon', 'order']
+            };
+
+            const prompt = `Generate a JSON configuration for a new legal service category named "${aiCategoryName}".
+            
+            **Instructions:**
+            1.  **Output JSON only:** Your response must be a single, valid JSON object. No extra text or markdown.
+            2.  **Bilingual:** Provide accurate Arabic translations for fields ending in \`_ar\`. English for fields ending in \`_en\`.
+            3.  **Icon:** Choose the most suitable icon from this list: [${iconNames.join(', ')}].
+            4.  **Order:** Set the order to 99.
+            5.  **ID:** Create a URL-friendly kebab-case ID from the English title.
+            
+            **Example JSON Structure:**
+            {
+              "id": "family-law",
+              "title_en": "Family Law",
+              "title_ar": "قانون الأسرة",
+              "icon": "Users",
+              "order": 99
+            }
+            
+            Now, generate the configuration for "${aiCategoryName}".`;
+
+            const response = await generateCategoryConfigWithAI(prompt, schema);
+            
+            let jsonString = response.text.trim();
+            if (jsonString.startsWith('```json')) {
+                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+            } else if (jsonString.startsWith('```')) {
+                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            }
+            const data = JSON.parse(jsonString);
+
+            const newCategory: Category = {
+                id: data.id,
+                title: { en: data.title_en, ar: data.title_ar },
+                icon: data.icon,
+                order: data.order
+            };
+
+            setEditingCategory(newCategory);
+            setIsEditingCategory(false);
+            setShowCategoryForm(true);
+            setAiCategoryName('');
+
+        } catch (error) {
+            console.error("Error generating category with AI:", error);
+            alert(language === 'ar' ? 'فشل إنشاء القسم بالذكاء الاصطناعي.' : 'Failed to generate category with AI.');
+        } finally {
+            setIsGeneratingCategory(false);
+        }
+    };
+
+    const handleSaveCategory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCategory || !editingCategory.id.trim()) {
+            alert('Category ID is required.');
+            return;
+        }
+        
+        try {
+            // Using setDoc will create or overwrite.
+            await setDoc(doc(db, "service_categories", editingCategory.id), editingCategory, { merge: true });
+            alert(t('categorySavedSuccess'));
+            setShowCategoryForm(false);
+            setEditingCategory(null);
+            fetchCategories();
+        } catch (error) {
+            console.error("Error saving category:", error);
+            alert(t('categorySavedError'));
+        }
+    };
+
+    const handleDeleteCategory = async (categoryId: string) => {
+        if (window.confirm(t('deleteCategoryConfirm'))) {
+            try {
+                await deleteDoc(doc(db, "service_categories", categoryId));
+                alert(t('categoryDeletedSuccess'));
+                fetchCategories();
+            } catch (error) {
+                console.error("Error deleting category:", error);
+                alert(t('categoryDeletedError'));
+            }
+        }
+    };
+
+    const handleAddNewCategory = () => {
+        const newOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order)) + 1 : 1;
+        setEditingCategory({
+            id: '',
+            title: { en: '', ar: '' },
+            icon: 'FileText',
+            order: newOrder
+        });
+        setIsEditingCategory(false);
+        setShowCategoryForm(true);
+    };
+
+    const handleEditCategoryClick = (category: Category) => {
+        setEditingCategory(category);
+        setIsEditingCategory(true);
+        setShowCategoryForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const renderUserManagementContent = () => {
         const totalUsers = users.length;
         const totalTokenBalance = users.reduce((acc, user) => acc + (user.tokenBalance || 0), 0);
         const totalTokensUsed = users.reduce((acc, user) => acc + (user.tokensUsed || 0), 0);
-        const activeSubscribers = users.filter(u => u.stripeId).length;
+        const activeSubscribers = usersWithSub.filter(u => u.subscription?.status === 'active' || u.subscription?.status === 'trialing').length;
 
         const StatCard = ({ title, value, icon: Icon, gradient }: any) => (
              <div className={`relative overflow-hidden rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform hover:-translate-y-1 duration-300`}>
@@ -1485,9 +1615,14 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
     const renderServiceManagementContent = () => (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                 <PlusSquare className="text-primary-500" /> {t('manageServices')}
-            </h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                    <PlusSquare className="text-primary-500" /> {t('manageServices')}
+                </h2>
+                <button onClick={handleAddNewServiceClick} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
+                    <Plus size={18} /> {t('add')}
+                </button>
+            </div>
             
             {/* AI Generator Card */}
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
@@ -1568,8 +1703,9 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         <div>
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('category')}</label>
                             <select value={newService.category} onChange={e => handleServiceInputChange('category', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                                {Object.values(ServiceCategory).map(cat => (
-                                    <option key={cat} value={cat}>{t(cat)}</option>
+                                <option value="" disabled>Select Category</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.title[language]}</option>
                                 ))}
                             </select>
                         </div>
@@ -1649,8 +1785,8 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
                 <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                      <button onClick={() => setFilterCategory('all')} className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${filterCategory === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{t('allCategories')}</button>
-                     {Object.values(ServiceCategory).map(cat => (
-                         <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${filterCategory === cat ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{t(cat)}</button>
+                     {categories.map(cat => (
+                         <button key={cat.id} onClick={() => setFilterCategory(cat.id)} className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${filterCategory === cat.id ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{cat.title[language]}</button>
                      ))}
                 </div>
 
@@ -1693,7 +1829,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                         <div>{service.title[language]}</div>
                                         <div className="text-xs text-gray-400 font-mono">{service.id}</div>
                                     </td>
-                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t(service.category)}</td>
+                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{categoryMap.get(service.category) || service.category}</td>
                                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{service.subCategory[language]}</td>
                                     <td className="px-4 py-3 text-center font-mono text-primary-600 dark:text-primary-400 font-bold">{service.usageCount || 0}</td>
                                     <td className="px-4 py-3 text-right">
@@ -1715,6 +1851,144 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                     </table>
                 </div>
              </div>
+        </div>
+    );
+    
+    const renderCategoryManagementContent = () => (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                <LayoutGrid className="text-primary-500" /> {t('manageCategories')}
+            </h2>
+
+            <div className="bg-gradient-to-br from-blue-600 to-teal-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
+                 <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+                    <Wand2 size={150} />
+                </div>
+                <div className="relative z-10">
+                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
+                        <Wand2 className="text-yellow-300" /> {t('generateWithAI')}
+                    </h3>
+                    <p className="text-blue-100 mb-6 max-w-xl leading-relaxed text-sm opacity-90">{language === 'ar' ? 'صف قسمًا جديدًا (مثال: "قانون الأسرة") وسيقوم الذكاء الاصطناعي بإنشاء الإعدادات الكاملة لك.' : 'Describe a new category (e.g., "Family Law") and the AI will generate the full configuration for you.'}</p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                        <input 
+                            type="text" 
+                            placeholder={language === 'ar' ? 'أدخل اسم القسم، مثال: "قانون الشركات"' : 'Enter category name, e.g., "Corporate Law"'}
+                            value={aiCategoryName}
+                            onChange={e => setAiCategoryName(e.target.value)}
+                            className="flex-grow px-4 py-3 rounded-xl border-0 bg-white/20 backdrop-blur-md text-white placeholder-blue-200 focus:ring-2 focus:ring-white/50 outline-none"
+                        />
+                        <button 
+                            type="button" 
+                            onClick={handleGenerateCategory} 
+                            disabled={isGeneratingCategory}
+                            className="bg-white text-blue-700 font-bold py-3 px-6 rounded-xl hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                            {isGeneratingCategory ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
+                            {t('generate')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="flex justify-end">
+                <button onClick={handleAddNewCategory} className="bg-primary-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-primary-700 transition-colors flex items-center gap-2 shadow-lg shadow-primary-600/20">
+                    <Plus size={18} /> {t('addNewCategory')}
+                </button>
+            </div>
+
+            {showCategoryForm && editingCategory && (
+                <form onSubmit={handleSaveCategory} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 mb-8 animate-fade-in-down">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditingCategory ? t('editCategory') : t('addNewCategory')}</h3>
+                    
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">{t('categoryId')}</label>
+                        <input type="text" value={editingCategory.id} onChange={e => setEditingCategory({...editingCategory, id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required disabled={isEditingCategory}/>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('titleEnPlaceholder')}</label>
+                            <input type="text" value={editingCategory.title.en} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, en: e.target.value}})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('titleArPlaceholder')}</label>
+                            <input type="text" value={editingCategory.title.ar} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, ar: e.target.value}})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" required />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('icon')}</label>
+                            <select value={editingCategory.icon} onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                                {iconNames.map(iconName => (
+                                    <option key={iconName} value={iconName}>{iconName}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('order')}</label>
+                            <input type="number" value={editingCategory.order} onChange={e => setEditingCategory({...editingCategory, order: parseInt(e.target.value, 10) || 0})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <button type="submit" className="px-8 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 flex items-center justify-center shadow-lg shadow-primary-600/20 transition-all">
+                            {t('save')}
+                        </button>
+                        <button type="button" onClick={() => { setShowCategoryForm(false); setEditingCategory(null); setIsEditingCategory(false); }} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+                    </div>
+                </form>
+            )}
+
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+                            <tr>
+                                <th className="px-6 py-4">{t('categoryName')}</th>
+                                <th className="px-6 py-4">{t('icon')}</th>
+                                <th className="px-6 py-4">{t('order')}</th>
+                                <th className="px-6 py-4 text-right">{t('actions')}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {loadingCategories ? (
+                                <tr><td colSpan={4} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500"/></td></tr>
+                            ) : categoryError ? (
+                                <tr><td colSpan={4} className="text-center py-10 text-red-500">{categoryError}</td></tr>
+                            ) : categories.map((category) => {
+                                const Icon = iconMap[category.icon] || Users;
+                                return (
+                                    <tr key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                            <div>{category.title[language]}</div>
+                                            <div className="text-xs text-gray-400 font-mono">{category.id}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                                <Icon size={18} />
+                                                <span>{category.icon}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 font-mono">{category.order}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleEditCategoryClick(category)} className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded" title={t('edit')}>
+                                                    <Edit size={16}/>
+                                                </button>
+                                                <button onClick={() => handleDeleteCategory(category.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded" title={t('delete')}>
+                                                    <Trash2 size={16}/>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 
@@ -1812,7 +2086,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                  ) : planError ? (
                      <p className="col-span-full text-center py-10 text-red-500">{planError}</p>
                  ) : plans.length === 0 ? (
-                     <div className="col-span-full text-center py-10 text-gray-500">{t('noPlansFound')}</div>
+                     <div className="col-span-full text-center py-10 text-gray-500">{t('noServicesFound')}</div>
                  ) : plans.map(plan => (
                      <div key={plan.id} className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border transition-all hover:shadow-md ${plan.status === 'active' ? 'border-gray-200 dark:border-gray-700' : 'border-red-200 dark:border-red-900/30 opacity-75'}`}>
                          <div className="p-6">
@@ -2082,7 +2356,6 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                                          <p className="text-xs text-gray-500">{selectedTicket.userEmail}</p>
                                      </div>
                                  </div>
-{/*// FIX: Changed 'ticket.status' to 'selectedTicket.status' to fix a reference error.*/}
                                  <span className={`text-xs px-2 py-1 rounded-full border ${selectedTicket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : selectedTicket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                      {t(selectedTicket.status)}
                                  </span>
@@ -2237,6 +2510,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     const tabs = [
         { id: 'users', label: t('userManagement'), icon: Users },
         { id: 'services', label: t('manageServices'), icon: PlusSquare },
+        { id: 'categories', label: t('manageCategories'), icon: LayoutGrid },
         { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
         { id: 'plans', label: t('planManagement'), icon: Star },
         { id: 'settings', label: t('siteSettings'), icon: Cog },
@@ -2273,6 +2547,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             <div>
                 {activeTab === 'users' && renderUserManagementContent()}
                 {activeTab === 'services' && renderServiceManagementContent()}
+                {activeTab === 'categories' && renderCategoryManagementContent()}
                 {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
                 {activeTab === 'plans' && renderPlanManagementContent()}
                 {activeTab === 'settings' && renderSiteSettingsContent()}

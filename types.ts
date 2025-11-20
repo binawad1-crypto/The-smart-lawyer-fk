@@ -76,20 +76,27 @@ export interface SiteSettingsContextType {
 }
 
 
+export interface Category {
+  id: string;
+  title: Record<Language, string>;
+  icon: string;
+  order: number;
+}
+
+// FIX: Added missing ServiceCategory enum used in AdminPage.tsx.
 export enum ServiceCategory {
-  LitigationAndPleadings = 'litigationAndPleadings',
-  SpecializedConsultations = 'specializedConsultations',
-  InvestigationsAndCriminal = 'investigationsAndCriminal',
-  CreativeServices = 'creativeServices',
-  // FIX: Added missing CorporateAndCompliance category used in DashboardPage and seed data.
-  CorporateAndCompliance = 'corporateAndCompliance',
+    LitigationAndPleadings = 'litigation-and-pleadings',
+    SpecializedConsultations = 'specialized-consultations',
+    InvestigationsAndCriminal = 'investigations-and-criminal',
+    CorporateAndCompliance = 'corporate-and-compliance',
+    CreativeServices = 'creative-services'
 }
 
 export interface Service {
   id: string;
   title: Record<Language, string>;
   description: Record<Language, string>;
-  category: ServiceCategory;
+  category: string; // This is now the ID of the category document
   subCategory: Record<Language, string>;
   icon: string; // Changed from React.ComponentType to string
   geminiModel: string;

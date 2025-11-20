@@ -1,6 +1,7 @@
 
 
 
+
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 // Ensure the API key is available in the environment variables
@@ -120,6 +121,23 @@ export const generateServiceConfigWithAI = async (prompt: string, schema: any): 
             // FIX: Updated deprecated 'gemini-2.5-pro' to 'gemini-3-pro-preview' for complex text tasks.
             model: 'gemini-3-pro-preview',
             // FIX: The new API expects contents to be a structured object.
+            contents: { parts: [{ text: prompt }] },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            },
+        })
+    );
+};
+
+export const generateCategoryConfigWithAI = async (prompt: string, schema: any): Promise<GenerateContentResponse> => {
+    if (!API_KEY) {
+        throw new Error("API_KEY for Gemini is not set.");
+    }
+
+    return withRetry(() => 
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] },
             config: {
                 responseMimeType: "application/json",
