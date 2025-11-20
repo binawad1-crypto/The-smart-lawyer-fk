@@ -14,8 +14,9 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import MobileBottomNav from './components/MobileBottomNav';
 import PixelTracker from './components/PixelTracker';
 import { Loader2, ShieldAlert } from 'lucide-react';
+import SupportPanel from './components/SupportModal';
 
-export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions';
+export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support';
 
 const App: React.FC = () => {
   const { currentUser, loading: authLoading } = useAuth();
@@ -111,6 +112,12 @@ const App: React.FC = () => {
             return <ProfilePage onNavigate={handleNavigate} />;
         case 'subscriptions':
             return <SubscriptionPage />;
+        case 'support':
+            return (
+                <div className="flex flex-col flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6 h-[calc(100vh-64px)]">
+                     <SupportPanel className="h-full shadow-lg border-0" />
+                </div>
+            );
         case 'dashboard':
         default:
             return <DashboardPage onNavigate={handleNavigate} />;
@@ -128,6 +135,7 @@ const App: React.FC = () => {
         onAdminClick={() => handleNavigate(view === 'admin' ? 'dashboard' : 'admin')} 
         onLogoClick={handleLogoClick}
         onProfileClick={() => handleNavigate('profile')}
+        onSupportClick={() => handleNavigate('support')}
         onHomeClick={() => setView('landing')}
         onServicesClick={() => setView('dashboard')}
         view={view}

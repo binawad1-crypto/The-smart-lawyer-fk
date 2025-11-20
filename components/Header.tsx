@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle, LifeBuoy } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { useTheme } from '../hooks/useTheme';
@@ -16,12 +16,13 @@ interface HeaderProps {
     onAdminClick: () => void;
     onLogoClick: () => void;
     onProfileClick: () => void;
+    onSupportClick: () => void;
     onHomeClick: () => void;
     onServicesClick?: () => void;
     view?: View;
 }
 
-const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = ({ onProfileClick, onLogout }) => {
+const UserMenu: React.FC<{onProfileClick: () => void, onSupportClick: () => void, onLogout: () => void}> = ({ onProfileClick, onSupportClick, onLogout }) => {
     const { t } = useLanguage();
     const { currentUser } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
@@ -56,6 +57,12 @@ const UserMenu: React.FC<{onProfileClick: () => void, onLogout: () => void}> = (
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
                     >
                         <UserIcon size={16} /> {t('myProfile')}
+                    </button>
+                    <button 
+                        onClick={() => { onSupportClick(); setIsOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                    >
+                        <LifeBuoy size={16} /> {t('support')}
                     </button>
                     <button 
                         onClick={() => { onLogout(); setIsOpen(false); }}
@@ -168,7 +175,7 @@ const NotificationsMenu: React.FC = () => {
 };
 
 
-const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onHomeClick, onServicesClick, view }) => {
+const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onSupportClick, onHomeClick, onServicesClick, view }) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { currentUser } = useAuth();
@@ -244,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
             )}
              {currentUser ? (
                  <div className="hidden md:block">
-                    <UserMenu onProfileClick={onProfileClick} onLogout={handleLogout} />
+                    <UserMenu onProfileClick={onProfileClick} onSupportClick={onSupportClick} onLogout={handleLogout} />
                  </div>
              ) : (
                 <button onClick={onLoginClick} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">

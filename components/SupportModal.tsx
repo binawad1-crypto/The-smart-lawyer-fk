@@ -174,7 +174,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
 
   return (
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-[600px] w-full ${className}`}
+        className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden w-full ${className}`}
       >
         {/* Header */}
         <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">

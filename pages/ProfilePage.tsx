@@ -565,7 +565,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             
             {/* Support Panel - Full Width */}
             <div className="lg:col-span-3">
-               <SupportPanel />
+               <SupportPanel className="h-[600px]" />
             </div>
         </div>
 
