@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, ZoomIn, ZoomOut, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Maximize2, Minimize2, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { Service, ServiceCategory, Translations, Language } from '../types';
@@ -404,6 +404,60 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
         </div>
     );
+    
+    // Helper function to determine card color theme based on category
+    const getServiceColorTheme = (category: ServiceCategory) => {
+        switch (category) {
+            case ServiceCategory.LitigationAndPleadings:
+                return { 
+                    border: 'bg-blue-500', 
+                    iconBg: 'bg-blue-50', 
+                    iconColor: 'text-blue-600',
+                    darkIconBg: 'dark:bg-blue-900/20',
+                    darkIconColor: 'dark:text-blue-400'
+                };
+            case ServiceCategory.SpecializedConsultations:
+                return { 
+                    border: 'bg-purple-500', 
+                    iconBg: 'bg-purple-50', 
+                    iconColor: 'text-purple-600',
+                    darkIconBg: 'dark:bg-purple-900/20',
+                    darkIconColor: 'dark:text-purple-400'
+                };
+            case ServiceCategory.InvestigationsAndCriminal:
+                return { 
+                    border: 'bg-red-500', 
+                    iconBg: 'bg-red-50', 
+                    iconColor: 'text-red-600',
+                    darkIconBg: 'dark:bg-red-900/20',
+                    darkIconColor: 'dark:text-red-400'
+                };
+            case ServiceCategory.CorporateAndCompliance:
+                return { 
+                    border: 'bg-emerald-500', 
+                    iconBg: 'bg-emerald-50', 
+                    iconColor: 'text-emerald-600',
+                    darkIconBg: 'dark:bg-emerald-900/20',
+                    darkIconColor: 'dark:text-emerald-400'
+                };
+             case ServiceCategory.CreativeServices:
+                return { 
+                    border: 'bg-pink-500', 
+                    iconBg: 'bg-pink-50', 
+                    iconColor: 'text-pink-600',
+                    darkIconBg: 'dark:bg-pink-900/20',
+                    darkIconColor: 'dark:text-pink-400'
+                };
+            default:
+                return { 
+                    border: 'bg-gray-500', 
+                    iconBg: 'bg-gray-50', 
+                    iconColor: 'text-gray-600',
+                    darkIconBg: 'dark:bg-gray-800',
+                    darkIconColor: 'dark:text-gray-400'
+                };
+        }
+    };
 
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => (
@@ -467,18 +521,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const renderMainContent = () => (
         <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
              {/* Header for Main Content */}
-             <div className="h-16 flex items-center px-6 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-800 shrink-0 justify-between">
+             <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
                 {selectedService ? (
                     <div className="flex items-center gap-3 w-full">
-                         <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500">
+                         <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
                             {language === 'ar' ? <ArrowRight size={20}/> : <ArrowLeft size={20}/>}
                         </button>
                         <div>
-                             <h3 className="font-bold text-gray-800 dark:text-white text-sm leading-tight">{selectedService.title[language]}</h3>
+                             <h3 className="font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
                         </div>
                     </div>
                 ) : (
-                    <h3 className="font-bold text-gray-800 dark:text-white text-lg">
+                    <h3 className="font-bold text-white text-lg">
                         {categories.find(c => c.id === selectedCategory)?.label}
                     </h3>
                 )}
@@ -544,47 +598,42 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 <p className="text-gray-500 font-medium">{t('noServicesFound')}</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-4">
                                 {filteredServices.map(service => {
                                     const Icon = iconMap[service.icon] || FileText;
                                     const isFav = favorites.includes(service.id);
-                                    // Distinct color frame logic
-                                    const categoryColor = categories.find(c => c.id === service.category)?.color || 'text-gray-500';
-                                    const borderColor = categoryColor.replace('text-', 'border-'); // crude mapping, ideally separate
+                                    const colors = getServiceColorTheme(service.category);
                                     
                                     return (
                                         <button
                                             key={service.id}
                                             onClick={() => handleServiceClick(service)}
-                                            className={`group flex flex-col text-right rtl:text-right ltr:text-left p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md border-l-4 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden ${
-                                                // Dynamic left border color based on category
-                                                service.category === ServiceCategory.LitigationAndPleadings ? 'border-l-blue-500' :
-                                                service.category === ServiceCategory.SpecializedConsultations ? 'border-l-purple-500' :
-                                                service.category === ServiceCategory.InvestigationsAndCriminal ? 'border-l-red-500' :
-                                                service.category === ServiceCategory.CorporateAndCompliance ? 'border-l-emerald-500' :
-                                                'border-l-pink-500'
-                                            } border-t border-r border-b border-gray-100 dark:border-gray-700`}
+                                            className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left"
                                         >
-                                            <div className="flex items-start justify-between w-full mb-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 bg-gray-50 dark:bg-slate-700 ${categoryColor}`}>
-                                                    <Icon size={20} strokeWidth={2} />
+                                            {/* Colored Side Border/Strip */}
+                                            <div className={`absolute top-3 bottom-3 right-0 rtl:right-0 ltr:left-0 w-1.5 rounded-l-full rtl:rounded-l-full ltr:rounded-r-full ${colors.border}`}></div>
+                                            
+                                            <div className="flex items-start justify-between w-full mb-4 pl-3 rtl:pr-3 ltr:pl-3">
+                                                <div className="p-1 text-gray-300 hover:text-yellow-400 transition-colors" 
+                                                     onClick={(e) => toggleFavorite(e, service.id)}>
+                                                    <Star size={18} fill={isFav ? "#FACC15" : "none"} className={isFav ? "text-yellow-400" : "text-gray-300"} />
                                                 </div>
-                                                <div 
-                                                    role="button"
-                                                    onClick={(e) => toggleFavorite(e, service.id)}
-                                                    className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                                                >
-                                                    <Star size={14} fill={isFav ? "currentColor" : "none"} />
+                                                
+                                                <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${colors.iconBg} ${colors.iconColor} ${colors.darkIconBg} ${colors.darkIconColor}`}>
+                                                    <Icon size={24} strokeWidth={1.5} />
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1 line-clamp-2 leading-snug w-full">
-                                                {service.title[language] || service.title['en']}
-                                            </h3>
-                                            
-                                            <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 w-full opacity-80">
-                                                {service.description[language] || service.description['en']}
-                                            </p>
+                                            <div className="flex flex-col justify-between flex-grow w-full pl-3 rtl:pr-3 ltr:pl-3">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
+                                                        {service.title[language] || service.title['en']}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80">
+                                                        {service.description[language] || service.description['en']}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </button>
                                     );
                                 })}
@@ -599,21 +648,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
         <div className="flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
-             <div className="h-16 flex items-center px-4 bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-gray-800 shrink-0 justify-between">
-                <h3 className="font-bold text-sm text-gray-800 dark:text-white flex items-center gap-2">
-                    <Sparkles size={16} className="text-yellow-500"/>
+             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-800 to-teal-700 dark:from-slate-900 dark:to-slate-800 border-b border-teal-700 dark:border-slate-700 shrink-0 justify-between shadow-sm relative z-10">
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <Sparkles size={16} className="text-yellow-300"/>
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
                     {/* Tools */}
-                    <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1 mr-2">
-                         <button onClick={handleIncreaseFont} className="hover:bg-white dark:hover:bg-slate-600 rounded p-1 transition-colors text-gray-600 dark:text-gray-300"><ZoomIn size={14} /></button>
-                         <button onClick={handleDecreaseFont} className="hover:bg-white dark:hover:bg-slate-600 rounded p-1 transition-colors text-gray-600 dark:text-gray-300"><ZoomOut size={14} /></button>
+                    <div className="flex bg-white/10 rounded-lg p-1 mr-2">
+                         <button onClick={handleIncreaseFont} className="hover:bg-white/20 rounded p-1 transition-colors text-teal-100 hover:text-white"><ZoomIn size={14} /></button>
+                         <button onClick={handleDecreaseFont} className="hover:bg-white/20 rounded p-1 transition-colors text-teal-100 hover:text-white"><ZoomOut size={14} /></button>
                     </div>
-                    <button onClick={handleListen} className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 ${isSpeaking ? 'text-green-500' : 'text-gray-400'}`}><Volume2 size={16} /></button>
-                    <button onClick={copyToClipboard} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400">{isCopied ? <Check size={16} className="text-green-500"/> : <Copy size={16} />}</button>
-                    <button onClick={handlePrint} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400"><Printer size={16} /></button>
-                    <button onClick={handleClear} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500"><X size={16} /></button>
+                    <button onClick={handleListen} className={`p-1.5 rounded hover:bg-white/20 transition-colors ${isSpeaking ? 'text-green-300' : 'text-teal-100 hover:text-white'}`}><Volume2 size={16} /></button>
+                    <button onClick={copyToClipboard} className="p-1.5 rounded hover:bg-white/20 transition-colors text-teal-100 hover:text-white">{isCopied ? <Check size={16} className="text-green-300"/> : <Copy size={16} />}</button>
+                    <button onClick={handlePrint} className="p-1.5 rounded hover:bg-white/20 transition-colors text-teal-100 hover:text-white"><Printer size={16} /></button>
+                    <button onClick={handleClear} className="p-1.5 rounded hover:bg-red-500/30 text-teal-100 hover:text-red-200 transition-colors"><X size={16} /></button>
                 </div>
              </div>
 
@@ -646,28 +695,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 )}
              </div>
 
-             {/* Prompt Input */}
-             <div className="p-4 bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-gray-700">
+             {/* Prompt Input - "Night Color" / Dark Theme */}
+             <div className="p-4 bg-slate-900 border-t border-slate-800">
                 <div className="relative">
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder={t('typeYourRequest')}
-                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-400 text-right text-sm shadow-sm"
+                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-slate-700 rounded-xl bg-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-slate-500 text-right text-sm shadow-inner"
                     />
                     <button
                         onClick={handleExecutePrompt}
                         disabled={isGenerating || !prompt.trim()}
-                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all shadow-md"
+                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center hover:bg-teal-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all shadow-md"
                     >
                         {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="ltr:-scale-x-100" />}
                     </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                     <span className="text-[10px] text-gray-400 font-medium">{t('poweredByAI')}</span>
+                     <span className="text-[10px] text-slate-500 font-medium">{t('poweredByAI')}</span>
                      <button
                         onClick={() => setIsFullWidth(!isFullWidth)}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 transition-colors"
+                        className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
                     >
                         {isFullWidth ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </button>

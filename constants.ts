@@ -28,7 +28,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
   // General
   appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-  appSubtitle: { en: 'For Lawyers and Legal Consultants', ar: 'للمحامين والمستشارين القانونيين' },
+  appSubtitle: { en: 'For Law and Legal Consultations', ar: 'للمحاماة والاستشارات القانونية' },
   startWithUs: { en: 'Start With Us', ar: 'ابدأ معنا' },
   login: { en: 'Login', ar: 'تسجيل الدخول' },
   signup: { en: 'Sign Up', ar: 'تسجيل جديد' },
