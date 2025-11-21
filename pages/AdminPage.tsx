@@ -710,6 +710,51 @@ const AdminPage = () => {
         }
     }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings, fetchNotifications, fetchCategories]);
 
+    // Listener for Support Tickets
+    useEffect(() => {
+        if (activeTab !== 'support') return;
+        
+        setLoadingTickets(true);
+        const ticketsQuery = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
+        
+        const unsubscribe = onSnapshot(ticketsQuery, (snapshot) => {
+            const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
+            setTickets(ticketsData);
+            setLoadingTickets(false);
+        }, (error) => {
+            console.error("Error fetching tickets:", error);
+            setLoadingTickets(false);
+        });
+
+        return () => unsubscribe();
+    }, [activeTab]);
+
+    // Listener for Messages in a selected ticket
+    useEffect(() => {
+        if (!selectedTicket) {
+            setMessages([]);
+            return;
+        }
+
+        const messagesQuery = query(
+            collection(db, 'support_tickets', selectedTicket.id, 'messages'),
+            orderBy('createdAt', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+            const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
+            setMessages(fetchedMessages);
+        });
+
+        // Mark ticket as read by admin if it was unread
+        if (selectedTicket.unreadAdmin) {
+            const ticketRef = doc(db, 'support_tickets', selectedTicket.id);
+            updateDoc(ticketRef, { unreadAdmin: false }).catch(console.error);
+        }
+
+        return () => unsubscribe();
+    }, [selectedTicket]);
+
     const filteredServices = useMemo(() => {
         if (filterCategory === 'all') {
             return services;
@@ -814,7 +859,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 **DETAILS TO GENERATE:**
 - **systemInstruction_en / systemInstruction_ar:** A detailed instruction telling the AI its role for this specific service.
 - **category:** Must be one of: ${categoryIds.length > 0 ? categoryIds.join(', ') : Object.values(ServiceCategory).join(', ')}.
-- **icon:** Choose the most appropriate icon. The value must be a valid icon name provided in the schema definition.
+- **icon:** Choose the most appropriate icon name. The value must be a valid icon name provided in the schema definition.
 
 **FINAL REMINDER:** The separation of English (\`_en\`) and Arabic (\`_ar\`) and the quality of the system instruction are mandatory.`;
             
