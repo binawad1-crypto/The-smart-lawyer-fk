@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileSignature } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -47,20 +48,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [prompt, setPrompt] = useState('');
     const [result, setResult] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [isFormatting, setIsFormatting] = useState(false);
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(false);
     const [fontSize, setFontSize] = useState(14);
     
-    // Voice Settings
-    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-    const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-    const [speechRate, setSpeechRate] = useState(1);
-    const [speechPitch, setSpeechPitch] = useState(1);
-    const [showVoiceSettings, setShowVoiceSettings] = useState(false);
-    const settingsRef = useRef<HTMLDivElement>(null);
-
     // Search and Filter States
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -114,37 +105,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         }
     }, []);
 
-    // Load Voices
-    useEffect(() => {
-        const loadVoices = () => {
-            const availableVoices = window.speechSynthesis.getVoices();
-            setVoices(availableVoices);
-        };
-
-        loadVoices();
-        if (window.speechSynthesis.onvoiceschanged !== undefined) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
-    }, []);
-
-    useEffect(() => {
-        // Reset selected voice when language changes if it doesn't match
-        if (selectedVoice && !selectedVoice.lang.startsWith(outputLanguage === Language.AR ? 'ar' : 'en')) {
-            setSelectedVoice(null);
-        }
-    }, [outputLanguage]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-                setShowVoiceSettings(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     useEffect(() => {
         const fetchServices = async () => {
             setLoadingServices(true);
@@ -173,7 +133,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const catRef = collection(db, 'service_categories');
                 const q = query(catRef, orderBy('order'));
                 const snapshot = await getDocs(q);
-                const cats = snapshot.docs.map(doc => doc.data() as Category);
+                // FIX: Spread doc.id to ensure the ID is available
+                const cats = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Category));
                 setCategories(cats);
             } catch (e) {
                 console.error("Failed to fetch categories", e);
@@ -184,15 +145,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         fetchServices();
         fetchCategories();
     }, [t, language]);
-
-    useEffect(() => {
-        // Cleanup speech synthesis on component unmount
-        return () => {
-            if (speechSynthesis.speaking) {
-                speechSynthesis.cancel();
-            }
-        };
-    }, []);
 
     // Helper function to determine card color theme based on category
     const getServiceColorTheme = (categoryId: string) => {
@@ -313,10 +265,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsGenerating(true);
         setResult('');
         setRetryMessage('');
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-            setIsSpeaking(false);
-        }
 
         const handleRetry = (attempt: number, maxRetries: number) => {
             const message = t('modelIsBusyRetrying').replace('${attempt}', String(attempt)).replace('${maxRetries}', String(maxRetries));
@@ -404,10 +352,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsGenerating(true);
         setResult('');
         setRetryMessage('');
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-            setIsSpeaking(false);
-        }
     
         const constructPromptForService = () => {
             if (!selectedService) return '';
@@ -532,88 +476,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         }
     };
 
-    const handleListen = () => {
-        if (!result) return;
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-            setIsSpeaking(false);
-        } else {
-            const utterance = new SpeechSynthesisUtterance(stripHtml(result));
-            utterance.lang = outputLanguage === Language.AR ? 'ar-SA' : 'en-US';
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-            utterance.rate = speechRate;
-            utterance.pitch = speechPitch;
-            utterance.onend = () => setIsSpeaking(false);
-            speechSynthesis.speak(utterance);
-            setIsSpeaking(true);
-        }
-    };
-
-    const handleFormatAsLetter = async () => {
-        if (!result) return;
-        setIsFormatting(true);
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-            setIsSpeaking(false);
-        }
-    
-        const letterFormattingSystemInstructionAR = `أنت مساعد خبير في تنسيق المستندات القانونية. مهمتك هي أخذ النص المقدم وتحويله إلى مستند احترافي جاهز للطباعة على ورق الشركة الرسمي.
-    يجب عليك **دائمًا** استخدام قالب HTML التالي فقط. لا تضف أي نص خارج القالب. لا تضف أي معلومات ترويسة أو خاتمة (مثل اسم المرسل أو المستلم).
-    
-    <section style="font-family: 'Calibri', 'Noto Naskh Arabic', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: rtl; text-align: right;">
-      <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">الموضوع: [ضع عنواناً مناسباً للمحتوى هنا]</h2>
-      <div style="font-size: 1.1rem; color: #333;">
-        ${stripHtml(result)}
-      </div>
-    </section>
-    
-    مهمتك هي فقط وضع عنوان مناسب ودمج النص المقدم في القالب.`;
-    
-        const letterFormattingSystemInstructionEN = `You are an expert legal document formatter. Your task is to take the provided text and format it into a professional document ready for printing on official company letterhead.
-    You **must always** use the following HTML template only. Do not add any text outside the template. Do not add any letterhead or signature information (like sender or recipient names).
-    
-    <section style="font-family: 'Calibri', 'Arial', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: ltr; text-align: left;">
-      <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">Subject: [Insert a suitable subject for the content here]</h2>
-      <div style="font-size: 1.1rem; color: #333;">
-        ${stripHtml(result)}
-      </div>
-    </section>
-    
-    Your only job is to provide a suitable subject line and integrate the provided text into the template.`;
-    
-        const prompt = `Please format the following text professionally within the provided HTML structure. Add a suitable subject line. Original text is enclosed in triple quotes. """${stripHtml(result)}"""`;
-    
-        try {
-            const response = await runGemini(
-                'gemini-2.5-flash',
-                prompt,
-                undefined,
-                undefined,
-                {
-                    systemInstruction: outputLanguage === Language.AR ? letterFormattingSystemInstructionAR : letterFormattingSystemInstructionEN,
-                }
-            );
-            setResult(response.text);
-        } catch (error) {
-            console.error("Error formatting as letter:", error);
-            let errorMessage = (error as Error).message;
-            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
-                 errorMessage = t('quotaExhaustedMessage');
-            }
-            setResult(`${t('serviceSavedError')}: ${errorMessage}`);
-        } finally {
-            setIsFormatting(false);
-        }
-    };
-
     const handleClear = () => {
         setResult('');
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-            setIsSpeaking(false);
-        }
     };
 
     const handleZoomIn = () => setFontSize(s => Math.min(s + 1, 32));
@@ -676,25 +540,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const renderSidebar = () => (
         <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
-            <div className="h-16 flex flex-col justify-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 shadow-sm">
-                 <h2 className="text-xl font-black tracking-tight leading-tight text-white">
-                    {settings?.siteName[language] || t('appName')}
+            <div className="h-auto py-6 min-h-[5rem] flex flex-col justify-center px-6 bg-teal-700 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 shadow-sm text-center">
+                 <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo">
+                    {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
                 </h2>
-                <p className="text-xs text-teal-100 font-medium">
-                    {settings?.siteSubtitle?.[language] || t('appSubtitle')}
+                <p className="text-xs text-teal-100 font-bold tracking-wide opacity-90 font-cairo">
+                    {language === 'ar' ? 'للمحاماه والاستشارات القانونية' : 'For Law and Legal Consulting'}
                 </p>
             </div>
 
             {/* Search */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-800">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
                     <input
                         type="text"
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-none focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-gray-400 dark:placeholder-slate-500"
+                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-gray-400 dark:placeholder-slate-500"
                     />
                 </div>
             </div>
@@ -720,7 +584,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         if (isActive) {
                             buttonClasses += ' bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm';
                         } else {
-                            buttonClasses += ' text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60';
+                            buttonClasses += ' text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60';
                         }
                     }
 
@@ -825,18 +689,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                              <div className="space-y-4">
                                  {selectedService.formInputs.map(input => (
                                      <div key={input.name}>
-                                         <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
-                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
+                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
                                          {input.type === 'select' && (
-                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm">
+                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm">
                                                  <option value="">{`Select ${input.label[language]}`}</option>
                                                  {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                              </select>
                                          )}
                                          {input.type === 'file' && (
-                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer relative">
+                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors group cursor-pointer relative">
                                                  <input id={input.name} name={input.name} type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleInputChange} />
                                                  <div className="space-y-1 text-center">
                                                      <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-teal-500 transition-colors"/>
@@ -869,6 +733,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                          <>
                             {loadingServices ? (
                                 <div className="text-center p-12"><Loader2 className="animate-spin inline-block text-teal-500" size={32} /></div>
+                            ) : errorServices ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
+                                        <AlertTriangle size={32} className="text-red-500" />
+                                    </div>
+                                    <p className="text-red-500 font-medium mb-2">{errorServices}</p>
+                                    <button onClick={() => window.location.reload()} className="text-sm text-gray-500 underline hover:text-gray-700">Retry</button>
+                                </div>
                             ) : filteredServices.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
                                     <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-full mb-4">
@@ -920,7 +792,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                                                 disabled={currentPage === 0}
-                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-500 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
+                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                                                 aria-label={language === 'ar' ? 'الصفحة السابقة' : 'Previous Page'}
                                             >
                                                 {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
@@ -931,7 +803,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                                                 disabled={currentPage >= totalPages - 1}
-                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-500 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
+                                                className="p-2 rounded-full bg-gray-400 dark:bg-gray-600 text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                                                 aria-label={language === 'ar' ? 'الصفحة التالية' : 'Next Page'}
                                             >
                                                 {language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
@@ -968,12 +840,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         )}
                     </button>
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
-                    <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-400 bg-white/10' : 'text-teal-100 hover:bg-white/10'}`}><Volume2 size={16} /></button>
                     <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
                     <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
-                    <button onClick={handleFormatAsLetter} disabled={isFormatting || isGenerating || !result} title={t('formatAsLetter')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isFormatting ? <Loader2 className="animate-spin" size={16}/> : <FileSignature size={16} />}
-                    </button>
                     
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
                     
@@ -1028,7 +896,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder={t('typeYourRequest')}
-                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 dark:placeholder-slate-500 text-sm shadow-inner"
+                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 dark:placeholder-slate-500 text-sm shadow-inner"
                         dir={dir}
                     />
                     <button
@@ -1055,17 +923,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {t('results')}
                     </h3>
                     <div className="flex items-center gap-1">
-                        <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-400 bg-white/10' : 'text-teal-100 hover:bg-white/10'}`}><Volume2 size={16} /></button>
                         <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
                         <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
-                        <button onClick={handleFormatAsLetter} disabled={isFormatting || isGenerating || !result} title={t('formatAsLetter')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            {isFormatting ? <Loader2 className="animate-spin" size={16}/> : <FileSignature size={16} />}
-                        </button>
                         <div className="w-px h-4 bg-white/20 mx-1"></div>
                         <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
                         <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
                         <div className="w-px h-4 bg-white/20 mx-1"></div>
-                        <button onClick={() => { setIsResultModalOpen(false); if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); } }} title={t('cancel')} className="p-1.5 rounded text-red-300 hover:bg-white/10 hover:text-red-400 transition-colors"><X size={16} /></button>
+                        <button onClick={() => { setIsResultModalOpen(false); }} title={t('cancel')} className="p-1.5 rounded text-red-300 hover:bg-white/10 hover:text-red-400 transition-colors"><X size={16} /></button>
                     </div>
                 </div>
 
@@ -1129,5 +993,5 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
     );
 };
-// FIX: Added default export to make the component available for import in App.tsx.
+
 export default DashboardPage;

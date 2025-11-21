@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle, LifeBuoy } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -43,7 +44,7 @@ const UserMenu: React.FC<{onProfileClick: () => void, onSupportClick: () => void
         <div className="relative" ref={menuRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+                className="flex items-center gap-2 p-2 rounded-full text-slate-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
             >
                 <UserIcon size={20} />
                 <span className="hidden sm:inline text-sm font-medium">{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
@@ -126,7 +127,7 @@ const NotificationsMenu: React.FC = () => {
         <div className="relative" ref={menuRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+                className="p-2 rounded-full text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative"
             >
                 <Bell size={20} />
                 {notifications.length > 0 && (
@@ -192,18 +193,18 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
   const siteSubtitle = settings?.siteSubtitle?.[language] || t('appSubtitle');
   
   return (
-    <header className="bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700/50">
+    <header className="bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700/50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button onClick={onLogoClick} className="flex-shrink flex items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1 min-w-0 max-w-[60%] sm:max-w-none">
+          <button onClick={onLogoClick} className="flex-shrink flex items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1 min-w-0 max-w-[60%] sm:max-w-none group">
              {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto object-contain max-w-full" />
              ) : (
                 <div className="flex flex-col items-start min-w-0 overflow-hidden">
-                  <h1 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight truncate w-full">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none truncate w-full group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
                     {siteName}
                   </h1>
-                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold truncate w-full">
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-primary-400 font-bold tracking-wide truncate w-full mt-0.5">
                     {siteSubtitle}
                   </p>
                 </div>
@@ -212,7 +213,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
           <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
             {currentUser && onServicesClick && (
                 <div className="hidden md:block">
-                    <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
+                    <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
                         <LayoutDashboard size={20} />
                         <span className="text-sm font-semibold">{t('services')}</span>
                     </button>
@@ -230,15 +231,15 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              {/* Notification Bell */}
              {currentUser && <NotificationsMenu />}
 
-             <button onClick={toggleTheme} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+             <button onClick={toggleTheme} className="p-2 rounded-full text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
              </button>
-             <button onClick={() => setLanguage(language === Language.EN ? Language.AR : Language.EN)} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+             <button onClick={() => setLanguage(language === Language.EN ? Language.AR : Language.EN)} className="p-2 rounded-full text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                 <Globe size={20} />
                 <span className="ml-2 font-semibold hidden sm:inline">{language === Language.EN ? 'AR' : 'EN'}</span>
              </button>
             {currentUser?.isAdmin && (
-                <button onClick={onAdminClick} className="hidden md:block p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button onClick={onAdminClick} className="hidden md:block p-2 rounded-full text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     <Shield size={20} />
                 </button>
             )}

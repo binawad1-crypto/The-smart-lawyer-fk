@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Database, Upload, Monitor } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -11,6 +11,7 @@ import { Type } from "@google/genai";
 import { generateServiceConfigWithAI, generateCategoryConfigWithAI } from '../services/geminiService';
 import { uploadFile } from '../services/storageService';
 import ServiceExecutionModal from '../components/ServiceExecutionModal';
+import { litigationSeedServices, specializedConsultationsSeedServices, investigationsAndCriminalSeedServices, corporateAndComplianceSeedServices, seedCategories } from '../services/seedData';
 
 interface UserData {
     id: string;
@@ -56,7 +57,7 @@ const initialPlanState: Plan = {
 
 const initialSiteSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    siteSubtitle: { en: 'For Law Practice', ar: 'للمحاماه' },
+    siteSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
     metaDescription: { en: '', ar: '' },
     seoKeywords: { en: '', ar: '' },
     logoUrl: '',
@@ -363,7 +364,7 @@ const PlanForm: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planId')}</label>
-                    <input type="text" value={formData.id} onChange={e => handleInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 read-only:bg-gray-100 dark:read-only:bg-gray-600" required readOnly={isEditing} />
+                    <input type="text" value={formData.id} onChange={e => handleInputChange('id', e.target.value.toLowerCase().replace(/\s+/g, '-'))} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 read-only:bg-gray-100 dark:read-only:bg-gray-600" required readOnly={isEditing} />
                 </div>
                 
                 <div className="space-y-1">
@@ -372,7 +373,7 @@ const PlanForm: React.FC<{
                         type="text" 
                         value={formData.priceId} 
                         onChange={e => handleInputChange('priceId', e.target.value.trim())} 
-                        className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" 
+                        className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" 
                         required 
                     />
                 </div>
@@ -381,31 +382,31 @@ const PlanForm: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planTitleEn')}</label>
-                    <input type="text" value={formData.title.en} onChange={e => handleNestedChange('title', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                    <input type="text" value={formData.title.en} onChange={e => handleNestedChange('title', 'en', e.target.value)} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planTitleAr')}</label>
-                    <input type="text" value={formData.title.ar} onChange={e => handleNestedChange('title', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                    <input type="text" value={formData.title.ar} onChange={e => handleNestedChange('title', 'ar', e.target.value)} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
                 </div>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1">
                      <label className="text-xs font-bold text-gray-500 uppercase">{t('planPriceEn')}</label>
-                     <input type="text" value={formData.price.en} onChange={e => handleNestedChange('price', 'en', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
+                     <input type="text" value={formData.price.en} onChange={e => handleNestedChange('price', 'en', e.target.value)} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planPriceAr')}</label>
-                    <input type="text" value={formData.price.ar} onChange={e => handleNestedChange('price', 'ar', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
+                    <input type="text" value={formData.price.ar} onChange={e => handleNestedChange('price', 'ar', e.target.value)} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" />
                 </div>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('planTokens')}</label>
-                    <input type="number" value={formData.tokens} onChange={e => handleInputChange('tokens', Number(e.target.value))} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
+                    <input type="number" value={formData.tokens} onChange={e => handleInputChange('tokens', Number(e.target.value))} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('status')}</label>
-                    <select value={formData.status} onChange={e => handleInputChange('status', e.target.value as 'active' | 'inactive')} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500">
+                    <select value={formData.status} onChange={e => handleInputChange('status', e.target.value as 'active' | 'inactive')} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500">
                         <option value="active">{t('active')}</option>
                         <option value="inactive">{t('inactive')}</option>
                     </select>
@@ -423,8 +424,8 @@ const PlanForm: React.FC<{
                 {formData.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3 my-3">
                         <span className="text-sm font-bold text-gray-400 w-6 text-center">{index + 1}</span>
-                        <input type="text" placeholder={t('featureEn')} value={feature.en} onChange={e => handleFeatureChange(index, 'en', e.target.value)} className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm" />
-                        <input type="text" placeholder={t('featureAr')} value={feature.ar} onChange={e => handleFeatureChange(index, 'ar', e.target.value)} className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm text-right" />
+                        <input type="text" placeholder={t('featureEn')} value={feature.en} onChange={e => handleFeatureChange(index, 'en', e.target.value)} className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm" />
+                        <input type="text" placeholder={t('featureAr')} value={feature.ar} onChange={e => handleFeatureChange(index, 'ar', e.target.value)} className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 outline-none focus:ring-1 focus:ring-primary-500 text-sm text-right" />
                         <button type="button" onClick={() => removeFeature(index)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 size={18}/></button>
                     </div>
                 ))}
@@ -445,7 +446,7 @@ const PlanForm: React.FC<{
 };
 
 
-export default function AdminPage() {
+const AdminPage = () => {
     const { t, language } = useLanguage();
     const { currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
@@ -586,7 +587,12 @@ export default function AdminPage() {
         setSubError(null);
         try {
             const usersData = await fetchUsers();
-            if (!usersData) throw new Error("Could not fetch base user data.");
+            
+            if (!usersData || usersData.length === 0) {
+                setUsersWithSub([]);
+                setLoadingSubs(false);
+                return;
+            }
 
             const usersWithSubscriptionsPromises = usersData.map(async (user) => {
                 try {
@@ -600,17 +606,21 @@ export default function AdminPage() {
                         const subDoc = subSnapshot.docs[0];
                         const subData = subDoc.data();
                         
-                        const planId = subData.isManual
-                            ? subData.planId
-                            : subData.items[0]?.price.product.metadata.planId || 'unknown';
+                        let planId = 'unknown';
+                        if (subData.isManual && subData.planId) {
+                            planId = subData.planId;
+                        } else {
+                            const item = subData.items?.[0];
+                            planId = item?.price?.product?.metadata?.planId || 'unknown';
+                        }
 
                         const subscription: SubscriptionInfo = {
                             id: subDoc.id,
                             planId: planId,
                             stripeSubscriptionId: subData.isManual ? undefined : subDoc.id,
                             status: subData.status,
-                            current_period_end: subData.current_period_end.seconds,
-                            priceId: subData.isManual ? 'manual' : subData.items[0]?.price.id,
+                            current_period_end: subData.current_period_end?.seconds || Date.now() / 1000,
+                            priceId: subData.isManual ? 'manual' : (subData.items?.[0]?.price?.id || 'unknown'),
                             isManual: subData.isManual || false,
                         };
                         return { ...user, subscription };
@@ -679,7 +689,8 @@ export default function AdminPage() {
         try {
             const q = query(collection(db, 'system_notifications'), orderBy('createdAt', 'desc'));
             const snapshot = await getDocs(q);
-            setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SystemNotification)));
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SystemNotification));
+            setNotifications(data);
         } catch (error) {
             console.error("Error fetching notifications:", error);
         } finally {
@@ -687,446 +698,74 @@ export default function AdminPage() {
         }
     }, []);
 
-    useEffect(() => {
-        if (activeTab === 'users') {
-            fetchUsers();
-            fetchPlans();
-        } else if (activeTab === 'services') {
-            fetchServices();
-            fetchCategories();
-        } else if (activeTab === 'categories') {
-            fetchCategories();
-        } else if (activeTab === 'subscriptions') {
-            fetchUsersWithSubscriptions();
-            fetchPlans();
-        } else if (activeTab === 'plans') {
-            fetchPlans();
-        } else if (activeTab === 'settings' || activeTab === 'marketing' || activeTab === 'support') {
-            fetchSiteSettings();
-        } else if (activeTab === 'notifications') {
-            fetchNotifications();
-        }
-    }, [activeTab, fetchUsers, fetchServices, fetchUsersWithSubscriptions, fetchPlans, fetchSiteSettings, fetchNotifications, fetchCategories]);
-
-    // Listener for Support Tickets
-    useEffect(() => {
-        if (activeTab !== 'support') return;
-        
+    const fetchTickets = useCallback(async () => {
         setLoadingTickets(true);
-        const ticketsQuery = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
-        
-        const unsubscribe = onSnapshot(ticketsQuery, (snapshot) => {
-            const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
-            setTickets(ticketsData);
+        try {
+            // Note: requires index on lastUpdate DESC
+            const q = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
+            const snapshot = await getDocs(q);
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
+            setTickets(data);
+        } catch (error) {
+            console.error("Error fetching tickets", error);
+        } finally {
             setLoadingTickets(false);
-        }, (error) => {
-            console.error("Error fetching tickets:", error);
-            setLoadingTickets(false);
-        });
-
-        return () => unsubscribe();
-    }, [activeTab]);
-
-    // Listener for Messages in a selected ticket
-    useEffect(() => {
-        if (!selectedTicket) {
-            setMessages([]);
-            return;
         }
+    }, []);
 
-        const messagesQuery = query(
+    // Auto-fetch based on active tab
+    useEffect(() => {
+        if (activeTab === 'subscriptions') {
+            fetchUsersWithSubscriptions();
+        } else if (activeTab === 'support') {
+            fetchTickets();
+        }
+    }, [activeTab, fetchUsersWithSubscriptions, fetchTickets]);
+
+    // Initial Fetch for core data
+    useEffect(() => {
+        fetchUsers();
+        fetchServices();
+        fetchCategories();
+        fetchPlans();
+        fetchSiteSettings();
+        fetchNotifications();
+    }, [fetchUsers, fetchServices, fetchCategories, fetchPlans, fetchSiteSettings, fetchNotifications]);
+
+    // Fetch messages when ticket selected
+    useEffect(() => {
+        if (!selectedTicket) return;
+        const q = query(
             collection(db, 'support_tickets', selectedTicket.id, 'messages'),
             orderBy('createdAt', 'asc')
         );
-
-        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-            const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
-            setMessages(fetchedMessages);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
+            setMessages(msgs);
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         });
-
-        // Mark ticket as read by admin if it was unread
-        if (selectedTicket.unreadAdmin) {
-            const ticketRef = doc(db, 'support_tickets', selectedTicket.id);
-            updateDoc(ticketRef, { unreadAdmin: false }).catch(console.error);
+        
+        // Mark as read by admin
+        if(selectedTicket.unreadAdmin) {
+             updateDoc(doc(db, 'support_tickets', selectedTicket.id), { unreadAdmin: false });
         }
 
         return () => unsubscribe();
     }, [selectedTicket]);
 
-    const filteredServices = useMemo(() => {
-        if (filterCategory === 'all') {
-            return services;
-        }
-        return services.filter(service => service.category === filterCategory);
-    }, [services, filterCategory]);
-    
-    useEffect(() => {
-        if (selectAllCheckboxRef.current) {
-            const numSelectedInFilter = filteredServices.filter(s => selectedServices.includes(s.id)).length;
-            const allInFilterSelected = numSelectedInFilter === filteredServices.length && filteredServices.length > 0;
-            const someInFilterSelected = numSelectedInFilter > 0 && numSelectedInFilter < filteredServices.length;
-    
-            selectAllCheckboxRef.current.checked = allInFilterSelected;
-            selectAllCheckboxRef.current.indeterminate = someInFilterSelected;
-        }
-    }, [selectedServices, filteredServices]);
-    
-    const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.title[language]])), [categories, language]);
-
-    const handleGenerateService = async () => {
-        if (!aiServiceName) {
-            alert(t('enterServiceName'));
-            return;
-        }
-        setIsGenerating(true);
-        setShowServiceForm(false);
-        setIsEditingService(false);
-        try {
-            const categoryIds = categories.map(c => c.id);
-            const schema = {
-                type: Type.OBJECT,
-                properties: {
-                    id: { type: Type.STRING, description: 'A unique, URL-friendly ID in kebab-case.' },
-                    title_en: { type: Type.STRING },
-                    title_ar: { type: Type.STRING },
-                    description_en: { type: Type.STRING },
-                    description_ar: { type: Type.STRING },
-                    subCategory_en: { type: Type.STRING },
-                    subCategory_ar: { type: Type.STRING },
-                    category: { type: Type.STRING, enum: categoryIds.length > 0 ? categoryIds : Object.values(ServiceCategory) },
-                    icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
-                    systemInstruction_en: { type: Type.STRING, description: "A detailed system instruction for the AI model in English. It should define the AI's role and task, e.g., 'You are a legal expert specializing in drafting commercial contracts...'" },
-                    systemInstruction_ar: { type: Type.STRING, description: "The Arabic translation of the system instruction." },
-                    formInputs: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                name: { type: Type.STRING, description: 'A unique name in snake_case.' },
-                                label_en: { type: Type.STRING },
-                                label_ar: { type: Type.STRING },
-                                type: { type: Type.STRING, enum: ['text', 'textarea', 'date', 'file', 'select'] }
-                            },
-                            required: ['name', 'label_en', 'label_ar', 'type']
-                        }
-                    }
-                },
-                required: ['id', 'title_en', 'title_ar', 'description_en', 'description_ar', 'subCategory_en', 'subCategory_ar', 'category', 'icon', 'systemInstruction_en', 'systemInstruction_ar', 'formInputs']
-            };
-            const prompt = `You are a meticulous AI assistant specializing in creating structured JSON configurations for a legal tech platform. Your task is to generate a complete service configuration based on the provided service name.
-
-**Service Name:** "${aiServiceName}"
-
-**CRITICAL INSTRUCTIONS:**
-1.  **Output Format:** Your entire response MUST be a single, valid JSON object. Do NOT include any text, explanations, or markdown formatting (like \`\`\`json) outside of the JSON object itself.
-2.  **Language Separation:** This is the most important rule. You MUST provide accurate Arabic translations for all fields ending in \`_ar\`. Fields ending in \`_en\` must contain English text. DO NOT use English text in an \`_ar\` field under any circumstances.
-3.  **System Instruction:** Create a detailed, professional system instruction for the AI. This instruction defines the AI's persona and primary goal for this specific task. It must be specific and helpful.
-
-**EXAMPLE of a PERFECT OUTPUT:**
-If the service name was "Review a real estate lease", the output should be this exact JSON format:
-{
-  "id": "real-estate-lease-review",
-  "title_en": "Real Estate Lease Review",
-  "title_ar": "مراجعة عقد إيجار عقاري",
-  "description_en": "Analyze a residential or commercial lease agreement to identify potential risks and unfair clauses.",
-  "description_ar": "تحليل عقد إيجار سكني أو تجاري لتحديد المخاطر المحتملة والبنود غير العادلة.",
-  "subCategory_en": "Real Estate Law",
-  "subCategory_ar": "قانون العقارات",
-  "category": "specialized-consultations",
-  "icon": "Home",
-  "systemInstruction_en": "You are a legal expert specializing in Saudi real estate law. Your task is to meticulously review the uploaded lease agreement, identify clauses that are disadvantageous to the tenant, and suggest specific amendments.",
-  "systemInstruction_ar": "أنت خبير قانوني متخصص في قانون العقارات السعودي. مهمتك هي مراجعة عقد الإيجار المرفق بدقة، وتحديد البنود التي تضر بمصالح المستأجر، واقتراح تعديلات محددة.",
-  "formInputs": [
-    {
-      "name": "lease_agreement_file",
-      "label_en": "Upload Lease Agreement",
-      "label_ar": "رفع عقد الإيجار",
-      "type": "file"
-    },
-    {
-      "name": "specific_questions",
-      "label_en": "Specific Questions (Optional)",
-      "label_ar": "أسئلة محددة (اختياري)",
-      "type": "textarea"
-    }
-  ]
-}
-
-Now, based on the service name **"${aiServiceName}"**, generate a new JSON object following the same structure and adhering strictly to all rules.
-
-**DETAILS TO GENERATE:**
-- **category:** Must be one of: ${categoryIds.length > 0 ? categoryIds.join(', ') : Object.values(ServiceCategory).join(', ')}.
-- **icon:** Choose the most appropriate icon name. The value must be a valid icon name provided in the schema definition.
-
-**FINAL REMINDER:** The separation of English (\`_en\`) and Arabic (\`_ar\`) and the quality of the system instruction are mandatory.`;
-            
-            const response = await generateServiceConfigWithAI(prompt, schema);
-
-            let jsonString = response.text.trim();
-            if (jsonString.startsWith('```json')) {
-                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-            } else if (jsonString.startsWith('```')) {
-                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-            }
-            const generatedData = JSON.parse(jsonString);
-
-            const serviceData: Service = {
-                id: generatedData.id || '',
-                title: { en: generatedData.title_en || '', ar: generatedData.title_ar || '' },
-                description: { en: generatedData.description_en || '', ar: generatedData.description_ar || '' },
-                category: (generatedData.category as string) || (categories[0]?.id || ''),
-                subCategory: { en: generatedData.subCategory_en || '', ar: generatedData.subCategory_ar || '' },
-                icon: generatedData.icon || 'FileText',
-                geminiModel: 'gemini-2.5-flash',
-                systemInstruction: { en: generatedData.systemInstruction_en || '', ar: generatedData.systemInstruction_ar || '' },
-                usageCount: 0,
-                formInputs: (generatedData.formInputs || []).map((input: any) => {
-                    const formInput: FormInput = {
-                        name: input.name || '',
-                        label: { en: input.label_en || '', ar: input.label_ar || '' },
-                        type: (input.type as FormInputType) || 'text',
-                    };
-                    return formInput;
-                }),
-            };
-            
-            setNewService(serviceData);
-            setShowServiceForm(true);
-
-        } catch (error) {
-            console.error("Error generating service with AI:", error);
-            let msg = t('generateServiceError');
-            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
-                msg = t('quotaExhaustedMessage');
-            }
-            alert(msg);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-    
-    const handleAddNewServiceClick = () => {
-        setNewService({
-            ...initialServiceState,
-            category: categories.length > 0 ? categories[0].id : ''
-        });
-        setIsEditingService(false);
-        setShowServiceForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleGenerateLandingPage = async () => {
-        if (!landingPagePrompt) {
-            alert(t('enterTopic'));
-            return;
-        }
-        setIsGeneratingLanding(true);
-        try {
-            const schema = {
-                type: Type.OBJECT,
-                properties: {
-                    heroTitleMain_en: { type: Type.STRING },
-                    heroTitleMain_ar: { type: Type.STRING },
-                    heroTitleHighlight_en: { type: Type.STRING },
-                    heroTitleHighlight_ar: { type: Type.STRING },
-                    heroSubtitle_en: { type: Type.STRING },
-                    heroSubtitle_ar: { type: Type.STRING },
-                    featuresTitle_en: { type: Type.STRING },
-                    featuresTitle_ar: { type: Type.STRING },
-                    features: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
-                                title_en: { type: Type.STRING },
-                                title_ar: { type: Type.STRING },
-                                description_en: { type: Type.STRING },
-                                description_ar: { type: Type.STRING },
-                                color: { type: Type.STRING, description: "Tailwind CSS gradient classes e.g. 'from-blue-400 to-blue-600'" }
-                            },
-                            required: ['icon', 'title_en', 'title_ar', 'description_en', 'description_ar', 'color']
-                        }
-                    }
-                },
-                required: ['heroTitleMain_en', 'heroTitleMain_ar', 'heroTitleHighlight_en', 'heroTitleHighlight_ar', 'heroSubtitle_en', 'heroSubtitle_ar', 'featuresTitle_en', 'featuresTitle_ar', 'features']
-            };
-
-            const prompt = `Generate a high-converting Landing Page configuration for a legal service website based on this topic: "${landingPagePrompt}".
-
-            Requirements:
-            1. **Bilingual:** Provide professional English and Arabic translations for all text fields.
-            2. **Hero Section:** 
-               - Main Title: Catchy and authoritative.
-               - Highlight Title: A short, powerful phrase (e.g., "Powered by AI").
-               - Subtitle: A compelling 2-sentence value proposition.
-            3. **Features:** Generate exactly 9 distinct features related to the topic.
-               - Icon: Choose the most relevant icon name. The value must be a valid icon name provided in the schema definition.
-               - Color: Provide valid Tailwind CSS gradient classes (e.g., 'from-purple-400 to-pink-600', 'from-blue-500 to-cyan-400', 'from-emerald-400 to-teal-600'). Make them varied and bright.
-            4. **Output:** Pure JSON only. No markdown.
-            `;
-
-            const response = await generateServiceConfigWithAI(prompt, schema);
-            
-            let jsonString = response.text.trim();
-            if (jsonString.startsWith('```json')) {
-                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-            } else if (jsonString.startsWith('```')) {
-                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-            }
-            const data = JSON.parse(jsonString);
-
-            const newConfig: LandingPageConfig = {
-                heroTitleMain: { en: data.heroTitleMain_en, ar: data.heroTitleMain_ar },
-                heroTitleHighlight: { en: data.heroTitleHighlight_en, ar: data.heroTitleHighlight_ar },
-                heroSubtitle: { en: data.heroSubtitle_en, ar: data.heroSubtitle_ar },
-                featuresTitle: { en: data.featuresTitle_en, ar: data.featuresTitle_ar },
-                features: data.features.map((f: any) => ({
-                    icon: f.icon,
-                    title: { en: f.title_en, ar: f.title_ar },
-                    description: { en: f.description_en, ar: f.description_ar },
-                    color: f.color
-                }))
-            };
-
-            const updatedSettings: SiteSettings = {
-                ...siteSettings,
-                landingPageConfig: newConfig
-            };
-            
-            await setDoc(doc(db, "site_settings", "main"), updatedSettings);
-            setSiteSettings(updatedSettings);
-            alert(t('landingGeneratedSuccess'));
-            setLandingPagePrompt('');
-
-        } catch (error) {
-            console.error("Error generating landing page:", error);
-            let msg = t('landingGenerateFailed');
-            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
-                msg = t('quotaExhaustedMessage');
-            }
-            alert(msg);
-        } finally {
-            setIsGeneratingLanding(false);
-        }
-    };
-
-    const handleClearLandingConfig = async () => {
-        if(window.confirm(t('resetLandingConfirm'))){
-             const updatedSettings: SiteSettings = {
-                ...siteSettings,
-                landingPageConfig: undefined
-            };
-            await setDoc(doc(db, "site_settings", "main"), updatedSettings);
-            setSiteSettings(updatedSettings);
-            alert(t('landingResetSuccess'));
-        }
-    }
-    
-    const handleUpdateUserStatus = async (userId: string, status: 'active' | 'disabled') => {
-        const confirmationMessage = status === 'active' ? t('enableUserConfirm') : t('disableUserConfirm');
-        if (window.confirm(confirmationMessage)) {
+    // --- Services Handlers ---
+    const handleDeleteService = async (serviceId: string) => {
+        if (window.confirm(t('deleteConfirm'))) {
             try {
-                await updateDoc(doc(db, "users", userId), { status });
-                alert(t('userUpdatedSuccess'));
-                fetchUsers();
-            } catch (error) {
-                console.error("Error updating user status:", error);
-                alert(t('userUpdatedError'));
+                await deleteDoc(doc(db, 'services', serviceId));
+                setServices(services.filter(s => s.id !== serviceId));
+                alert(t('serviceDeletedSuccess'));
+            } catch (err) {
+                console.error("Error deleting service: ", err);
+                alert(t('serviceDeletedError'));
             }
         }
     };
-
-    const handleOpenTokenModal = (user: UserData) => {
-        setSelectedUserForAction(user);
-        setIsTokenModalOpen(true);
-    };
-
-    const handleOpenGrantModalForUser = (user: UserData) => {
-        setSelectedUserForAction(user);
-        setIsGrantModalOpen(true);
-    }
-
-    const handleDeleteUser = async (userId: string) => {
-        if (window.confirm(t('deleteUserConfirm'))) {
-            try {
-                await deleteDoc(doc(db, "users", userId));
-                alert(t('userDeletedSuccess'));
-                fetchUsers();
-            } catch (error) {
-                console.error("Error deleting user:", error);
-                alert(t('userDeletedError'));
-            }
-        }
-    };
-    
-    const handleServiceInputChange = (field: keyof Service, value: any) => {
-        setNewService(prev => ({ ...prev, [field]: value }));
-    };
-    
-    const handleNestedServiceInputChange = (field: 'title' | 'description' | 'subCategory' | 'systemInstruction', lang: 'en' | 'ar', value: string) => {
-        setNewService(prev => ({
-            ...prev,
-            [field]: { ...prev[field], [lang]: value }
-        }));
-    };
-
-    const handleAddFormInput = () => {
-        const newFormInput: FormInput = { name: '', label: { en: '', ar: '' }, type: 'text', options: [] };
-        handleServiceInputChange('formInputs', [...newService.formInputs, newFormInput]);
-    };
-
-    const handleRemoveFormInput = (index: number) => {
-        handleServiceInputChange('formInputs', newService.formInputs.filter((_, i) => i !== index));
-    };
-
-    const handleFormInputChange = (index: number, field: keyof FormInput, value: any) => {
-        const updatedInputs = [...newService.formInputs];
-        (updatedInputs[index] as any)[field] = value;
-        handleServiceInputChange('formInputs', updatedInputs);
-    };
-    
-    const handleFormInputLabelChange = (index: number, lang: 'en' | 'ar', value: string) => {
-        const updatedInputs = [...newService.formInputs];
-        updatedInputs[index].label[lang] = value;
-        handleServiceInputChange('formInputs', updatedInputs);
-    }
-    
-    const handleAddOption = (inputIndex: number) => {
-        const updatedInputs = [...newService.formInputs];
-        if(!updatedInputs[inputIndex].options) updatedInputs[inputIndex].options = [];
-        updatedInputs[inputIndex].options?.push({ value: '', label: { en: '', ar: '' } });
-        handleServiceInputChange('formInputs', updatedInputs);
-    };
-    
-    const handleRemoveOption = (inputIndex: number, optionIndex: number) => {
-        const updatedInputs = [...newService.formInputs];
-        updatedInputs[inputIndex].options = updatedInputs[inputIndex].options?.filter((_, i) => i !== optionIndex);
-        handleServiceInputChange('formInputs', updatedInputs);
-    };
-
-    const handleOptionChange = (inputIndex: number, optionIndex: number, field: 'value' | 'label', value: any) => {
-        const updatedInputs = [...newService.formInputs];
-        const options = updatedInputs[inputIndex].options;
-        if (options) {
-            if(field === 'label'){
-                 (options[optionIndex] as any)[field] = value
-            } else {
-                (options[optionIndex] as any)[field] = value;
-            }
-            handleServiceInputChange('formInputs', updatedInputs);
-        }
-    };
-    
-    const handleOptionLabelChange = (inputIndex: number, optionIndex: number, lang: 'en' | 'ar', value: string) => {
-         const updatedInputs = [...newService.formInputs];
-         const option = updatedInputs[inputIndex].options?.[optionIndex];
-         if(option){
-             option.label[lang] = value;
-             handleServiceInputChange('formInputs', updatedInputs);
-         }
-    }
 
     const handleSaveService = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1135,364 +774,95 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             return;
         }
         try {
-            await setDoc(doc(db, "services", newService.id), newService);
-            alert(t('serviceSavedSuccess'));
-            setNewService(initialServiceState);
+            await setDoc(doc(db, 'services', newService.id), newService);
             setShowServiceForm(false);
             setIsEditingService(false);
-            setAiServiceName('');
+            setNewService(initialServiceState);
             fetchServices();
+            alert('Service saved successfully');
         } catch (error) {
-            console.error("Error saving service: ", error);
-            alert(t('serviceSavedError'));
+            console.error("Error saving service:", error);
+            alert('Error saving service');
         }
     };
 
-    const handleCancelEditService = () => {
-        setNewService(initialServiceState);
-        setShowServiceForm(false);
-        setIsEditingService(false);
-        setAiServiceName('');
-    };
-    
-    const handleDeleteService = async (serviceId: string) => {
-        if(window.confirm(t('deleteConfirm'))){
-            try {
-                await deleteDoc(doc(db, "services", serviceId));
-                alert(t('serviceDeletedSuccess'));
-                fetchServices();
-            } catch (error) {
-                console.error("Error deleting service: ", error);
-                alert(t('serviceDeletedError'));
-            }
+    const handleGenerateService = async () => {
+        if (!aiServiceName) {
+            alert(t('enterServiceName'));
+            return;
         }
-    }
-
-    const handleDeleteSelectedServices = async () => {
-        const count = selectedServices.length;
-        if (count === 0) return;
-        const confirmMessage = t('deleteSelectedConfirm').replace('{count}', String(count));
-        if (window.confirm(confirmMessage)) {
-            try {
-                const batch = writeBatch(db);
-                selectedServices.forEach(id => {
-                    const serviceRef = doc(db, "services", id);
-                    batch.delete(serviceRef);
-                });
-                await batch.commit();
-                alert(t('serviceDeletedSuccess'));
-                setSelectedServices([]);
-                fetchServices();
-            } catch (error) {
-                console.error("Error deleting selected services:", error);
-                alert(t('serviceDeletedError'));
-            }
-        }
-    };
-
-    const handleSelectAllToggle = () => {
-        const filteredIds = filteredServices.map(s => s.id);
-        const allInFilterSelected = filteredServices.length > 0 && filteredServices.every(s => selectedServices.includes(s.id));
-        if (allInFilterSelected) {
-            setSelectedServices(prev => prev.filter(id => !filteredIds.includes(id)));
-        } else {
-            setSelectedServices(prev => [...new Set([...prev, ...filteredIds])]);
-        }
-    };
-
-    const handleEditServiceClick = (service: Service) => {
-        setNewService(service);
-        setIsEditingService(true);
-        setShowServiceForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleRunClick = (service: Service) => {
-        setSelectedService(service);
-        setIsExecutionModalOpen(true);
-    };
-
-    const handleRevokeSubscription = async (userId: string, subId: string) => {
-        if (window.confirm(t('revokeConfirm'))) {
-            try {
-                const subRef = doc(db, 'customers', userId, 'subscriptions', subId);
-                await deleteDoc(subRef);
-                alert(t('revokeSuccess'));
-                fetchUsersWithSubscriptions();
-            } catch (error) {
-                console.error("Error revoking subscription:", error);
-                alert(t('revokeError'));
-            }
-        }
-    }
-    
-    // Plan Management Handlers
-    const handleAddPlanClick = () => {
-        setEditingPlan({ ...initialPlanState, features: [{ en: '', ar: '' }] });
-        setShowPlanForm(true);
-    };
-
-    const handleEditPlanClick = (plan: Plan) => {
-        setEditingPlan(plan);
-        setShowPlanForm(true);
-    };
-
-    const handleCancelPlanEdit = () => {
-        setEditingPlan(null);
-        setShowPlanForm(false);
-    };
-    
-    const handleSavePlan = async (planToSave: Plan) => {
-        if (!planToSave.id || !planToSave.priceId) {
-            alert("Plan ID and Stripe Price ID are required.");
-            return false;
-        }
+        setIsGenerating(true);
         try {
-            await setDoc(doc(db, "subscription_plans", planToSave.id), planToSave);
-            alert(t('planSavedSuccess'));
-            fetchPlans();
-            handleCancelPlanEdit();
-            return true;
-        } catch (error) {
-            console.error("Error saving plan:", error);
-            alert(t('planSavedError'));
-            return false;
-        }
-    };
-
-    const handleDeletePlan = async (planId: string) => {
-        if (window.confirm(t('deleteConfirm'))) { // Using generic delete confirm, might want a specific one
-            try {
-                await deleteDoc(doc(db, "subscription_plans", planId));
-                alert(t('serviceDeletedSuccess')); // Re-using translation
-                fetchPlans();
-            } catch (error) {
-                console.error("Error deleting plan:", error);
-                alert(t('serviceDeletedError')); // Re-using translation
+            const prompt = `Create a legal service configuration for: "${aiServiceName}".
+            Return ONLY a JSON object with the following schema:
+            {
+              "id": "kebab-case-id",
+              "title": { "en": "Title EN", "ar": "Title AR" },
+              "description": { "en": "Desc EN", "ar": "Desc AR" },
+              "category": "litigation-and-pleadings",
+              "subCategory": { "en": "Sub Cat EN", "ar": "Sub Cat AR" },
+              "icon": "IconName (from Lucide React)",
+              "geminiModel": "gemini-2.5-flash",
+              "systemInstruction": { "en": "System instructions for AI...", "ar": "System instructions AR..." },
+              "formInputs": [
+                { "name": "input_name", "label": { "en": "Label EN", "ar": "Label AR" }, "type": "text|textarea|date|file|select", "options": [{"value": "val", "label": {"en": "Opt EN", "ar": "Opt AR"}}] }
+              ]
             }
-        }
-    };
-    
-    const handleTogglePlanStatus = async (plan: Plan) => {
-        const newStatus = plan.status === 'active' ? 'inactive' : 'active';
-        try {
-            await updateDoc(doc(db, "subscription_plans", plan.id), { status: newStatus });
-            alert(t('planStatusUpdated'));
-            fetchPlans();
-        } catch (error) {
-             console.error("Error updating plan status:", error);
-             alert(t('planStatusUpdateError'));
-        }
-    };
-
-    // Site Settings Handlers
-    const handleSiteSettingsChange = (field: keyof SiteSettings, value: any) => {
-        setSiteSettings(prev => ({ ...prev, [field]: value }));
-    };
-    
-    const handleAdPixelChange = (field: keyof AdPixels, value: string) => {
-        setSiteSettings(prev => ({
-            ...prev,
-            adPixels: { ...prev.adPixels, [field]: value }
-        }));
-    };
-
-    const handleNestedSiteSettingsChange = (field: 'siteName' | 'siteSubtitle' | 'metaDescription' | 'seoKeywords', lang: Language, value: string) => {
-        setSiteSettings(prev => ({
-            ...prev,
-            [field]: { ...(prev[field] as Record<Language, string>), [lang]: value }
-        }));
-    };
-
-    const handleSaveSettings = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSavingSettings(true);
-        try {
-            let logoUrl = siteSettings.logoUrl;
-            if (logoFile) {
-                logoUrl = await uploadFile(logoFile, `site/logo-${Date.now()}`);
-            }
-
-            let faviconUrl = siteSettings.faviconUrl;
-            if (faviconFile) {
-                faviconUrl = await uploadFile(faviconFile, `site/favicon-${Date.now()}`);
-            }
-
-            const updatedSettings: SiteSettings = {
-                ...siteSettings,
-                logoUrl,
-                faviconUrl,
-            };
-
-            await setDoc(doc(db, "site_settings", "main"), updatedSettings);
-            setSiteSettings(updatedSettings);
-            setLogoFile(null);
-            setFaviconFile(null);
-            alert(t('settingsSavedSuccess'));
-        } catch (error) {
-            console.error("Error saving site settings:", error);
-            alert(t('settingsSavedError'));
-        } finally {
-            setSavingSettings(false);
-        }
-    };
-
-    // Support System Handlers
-    const handleAdminReply = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if(!currentUser || !selectedTicket || !replyMessage.trim()) return;
-
-        try {
-            await addDoc(collection(db, 'support_tickets', selectedTicket.id, 'messages'), {
-                content: replyMessage,
-                senderId: currentUser.uid,
-                senderRole: 'admin',
-                createdAt: serverTimestamp()
-            });
-
-            await updateDoc(doc(db, 'support_tickets', selectedTicket.id), {
-                status: 'answered',
-                lastUpdate: serverTimestamp(),
-                unreadUser: true,
-                unreadAdmin: false
-            });
+            Available categories: ${categories.map(c => c.id).join(', ')}.
+            Available icons: ${iconNames.join(', ')}.
+            `;
             
-            setReplyMessage('');
-        } catch (error) {
-            console.error("Error sending reply:", error);
-        }
-    };
-
-    // Notification System Handlers
-    const handleCreateNotification = async () => {
-        if (!newNotification.title?.en || !newNotification.message?.en) {
-            alert('Title and Message are required.'); // Fallback text
-            return;
-        }
-
-        try {
-            await addDoc(collection(db, 'system_notifications'), {
-                ...newNotification,
-                createdAt: serverTimestamp(),
-                targetAudience: 'all',
-                isActive: true
-            });
-            setNewNotification({ title: { en: '', ar: '' }, message: { en: '', ar: '' }, type: 'info', isActive: true });
-            alert(t('notificationCreated'));
-            fetchNotifications();
-        } catch (error) {
-            console.error('Error creating notification:', error);
-            alert(t('notificationFailed'));
-        }
-    };
-
-    const handleDeleteNotification = async (id: string) => {
-        if (!window.confirm(t('areYouSure'))) return;
-        try {
-            await deleteDoc(doc(db, 'system_notifications', id));
-            fetchNotifications();
-        } catch (error) {
-            console.error('Error deleting notification:', error);
-        }
-    };
-
-    const handleToggleNotificationStatus = async (notif: SystemNotification) => {
-        try {
-            await updateDoc(doc(db, 'system_notifications', notif.id), {
-                isActive: !notif.isActive
-            });
-            fetchNotifications();
-        } catch (error) {
-            console.error('Error updating notification:', error);
-        }
-    };
-
-    // Category Management Handlers
-    const handleGenerateCategory = async () => {
-        if (!aiCategoryName) {
-            alert(language === 'ar' ? 'الرجاء إدخال اسم القسم لإنشائه.' : 'Please enter a category name to generate.');
-            return;
-        }
-        setIsGeneratingCategory(true);
-        setShowCategoryForm(false);
-        setEditingCategory(null);
-        try {
-            const schema = {
+            const response = await generateServiceConfigWithAI(prompt, {
                 type: Type.OBJECT,
                 properties: {
-                    id: { type: Type.STRING, description: 'A unique, URL-friendly ID in kebab-case based on the English title.' },
-                    title_en: { type: Type.STRING },
-                    title_ar: { type: Type.STRING },
-                    icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
-                    order: { type: Type.INTEGER, description: 'A number for sorting, suggest a high number like 99.' }
-                },
-                required: ['id', 'title_en', 'title_ar', 'icon', 'order']
-            };
+                    id: { type: Type.STRING },
+                    title: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    description: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    category: { type: Type.STRING },
+                    subCategory: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    icon: { type: Type.STRING },
+                    geminiModel: { type: Type.STRING },
+                    systemInstruction: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    formInputs: { 
+                        type: Type.ARRAY, 
+                        items: { 
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING },
+                                label: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                                type: { type: Type.STRING },
+                                options: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { value: {type: Type.STRING}, label: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } } } } }
+                            }
+                        } 
+                    }
+                }
+            });
 
-            const prompt = `Generate a JSON configuration for a new legal service category named "${aiCategoryName}".
-            
-            **Instructions:**
-            1.  **Output JSON only:** Your response must be a single, valid JSON object. No extra text or markdown.
-            2.  **Bilingual:** Provide accurate Arabic translations for fields ending in \`_ar\`. English for fields ending in \`_en\`.
-            3.  **Icon:** Choose the most suitable icon name. The value must be a valid icon name provided in the schema definition.
-            4.  **Order:** Set the order to 99.
-            5.  **ID:** Create a URL-friendly kebab-case ID from the English title.
-            
-            **Example JSON Structure:**
-            {
-              "id": "family-law",
-              "title_en": "Family Law",
-              "title_ar": "قانون الأسرة",
-              "icon": "Users",
-              "order": 99
+            if (response.text) {
+                const generatedService = JSON.parse(response.text);
+                setNewService({ ...initialServiceState, ...generatedService });
+                setShowServiceForm(true);
+                setIsEditingService(false);
             }
-            
-            Now, generate the configuration for "${aiCategoryName}".`;
-
-            const response = await generateCategoryConfigWithAI(prompt, schema);
-            
-            let jsonString = response.text.trim();
-            if (jsonString.startsWith('```json')) {
-                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-            } else if (jsonString.startsWith('```')) {
-                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-            }
-            const data = JSON.parse(jsonString);
-
-            const newCategory: Category = {
-                id: data.id,
-                title: { en: data.title_en, ar: data.title_ar },
-                icon: data.icon,
-                order: data.order
-            };
-
-            setEditingCategory(newCategory);
-            setIsEditingCategory(false);
-            setShowCategoryForm(true);
-            setAiCategoryName('');
-
         } catch (error) {
-            console.error("Error generating category with AI:", error);
-            let msg = language === 'ar' ? 'فشل إنشاء القسم بالذكاء الاصطناعي.' : 'Failed to generate category with AI.';
-            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
-                msg = t('quotaExhaustedMessage');
-            }
-            alert(msg);
+            console.error("AI Generation Error:", error);
+            alert(t('generateServiceError'));
         } finally {
-            setIsGeneratingCategory(false);
+            setIsGenerating(false);
         }
     };
 
+    // --- Categories Handlers ---
     const handleSaveCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingCategory || !editingCategory.id.trim()) {
-            alert('Category ID is required.');
-            return;
-        }
+        if (!editingCategory) return;
         
         try {
-            // Using setDoc will create or overwrite.
-            await setDoc(doc(db, "service_categories", editingCategory.id), editingCategory, { merge: true });
+            const id = isEditingCategory ? editingCategory.id : editingCategory.title.en.toLowerCase().replace(/\s+/g, '-');
+            await setDoc(doc(db, 'service_categories', id), {
+                ...editingCategory,
+                id: id
+            });
             alert(t('categorySavedSuccess'));
             setShowCategoryForm(false);
             setEditingCategory(null);
@@ -1506,7 +876,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
     const handleDeleteCategory = async (categoryId: string) => {
         if (window.confirm(t('deleteCategoryConfirm'))) {
             try {
-                await deleteDoc(doc(db, "service_categories", categoryId));
+                await deleteDoc(doc(db, 'service_categories', categoryId));
                 alert(t('categoryDeletedSuccess'));
                 fetchCategories();
             } catch (error) {
@@ -1516,992 +886,654 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }
     };
 
-    const handleAddNewCategory = () => {
-        const newOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order)) + 1 : 1;
-        setEditingCategory({
-            id: '',
-            title: { en: '', ar: '' },
-            icon: 'FileText',
-            order: newOrder
-        });
-        setIsEditingCategory(false);
-        setShowCategoryForm(true);
+    // --- Plans Handlers ---
+    const handleSavePlan = async (plan: Plan) => {
+        try {
+            await setDoc(doc(db, 'subscription_plans', plan.id), plan);
+            alert(t('planSavedSuccess'));
+            fetchPlans();
+            setShowPlanForm(false);
+            setEditingPlan(null);
+            return true;
+        } catch (error) {
+            console.error("Error saving plan:", error);
+            alert(t('planSavedError'));
+            return false;
+        }
     };
 
-    const handleEditCategoryClick = (category: Category) => {
-        setEditingCategory(category);
-        setIsEditingCategory(true);
-        setShowCategoryForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // --- Settings Handlers ---
+    const handleSaveSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingSettings(true);
+        try {
+            let newLogoUrl = siteSettings.logoUrl;
+            let newFaviconUrl = siteSettings.faviconUrl;
+
+            if (logoFile) {
+                try {
+                    // Add timestamp and sanitize filename to ensure uniqueness and avoid caching
+                    const fileName = `logo-${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                    newLogoUrl = await uploadFile(logoFile, `site/${fileName}`);
+                } catch (e) {
+                    console.error("Logo upload failed", e);
+                    alert(t('settingsSavedError') + ": Logo upload failed");
+                    setSavingSettings(false);
+                    return;
+                }
+            }
+            if (faviconFile) {
+                try {
+                    const fileName = `favicon-${Date.now()}-${faviconFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                    newFaviconUrl = await uploadFile(faviconFile, `site/${fileName}`);
+                } catch (e) {
+                    console.error("Favicon upload failed", e);
+                    alert(t('settingsSavedError') + ": Favicon upload failed");
+                    setSavingSettings(false);
+                    return;
+                }
+            }
+
+            const updatedSettings = {
+                ...siteSettings,
+                logoUrl: newLogoUrl,
+                faviconUrl: newFaviconUrl
+            };
+
+            await setDoc(doc(db, 'site_settings', 'main'), updatedSettings);
+            setSiteSettings(updatedSettings);
+            
+            // Clear file selections after successful save
+            setLogoFile(null);
+            setFaviconFile(null);
+            
+            alert(t('settingsSavedSuccess'));
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            alert(t('settingsSavedError') + ": " + (error instanceof Error ? error.message : "Unknown error"));
+        } finally {
+            setSavingSettings(false);
+        }
     };
 
-    const renderUserManagementContent = () => {
-        const totalUsers = users.length;
-        const totalTokenBalance = users.reduce((acc, user) => acc + (user.tokenBalance || 0), 0);
-        const totalTokensUsed = users.reduce((acc, user) => acc + (user.tokensUsed || 0), 0);
-        const activeSubscribers = usersWithSub.filter(u => u.subscription?.status === 'active' || u.subscription?.status === 'trialing').length;
-
-        const StatCard = ({ title, value, icon: Icon, gradient }: any) => (
-             <div className={`relative overflow-hidden rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform hover:-translate-y-1 duration-300`}>
-                <div className={`absolute right-0 top-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${gradient} opacity-10 blur-2xl`}></div>
-                <div className="relative flex items-center space-x-4 rtl:space-x-reverse">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
-                        <Icon size={24} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                        <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight mt-1">{value}</p>
-                    </div>
-                </div>
-             </div>
-        );
-
-        return (
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <Users className="text-primary-500" /> {t('userManagement')}
-                </h2>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                     <StatCard 
-                        title={t('totalUsers')} 
-                        value={totalUsers} 
-                        icon={Users} 
-                        gradient="from-blue-500 to-indigo-600" 
-                    />
-                    <StatCard 
-                        title={t('activeSubscribers')} 
-                        value={activeSubscribers} 
-                        icon={CreditCard} 
-                        gradient="from-emerald-400 to-teal-600" 
-                    />
-                    <StatCard 
-                        title={t('tokenBalance')} 
-                        value={totalTokenBalance.toLocaleString()} 
-                        icon={Coins} 
-                        gradient="from-amber-400 to-orange-500" 
-                    />
-                     <StatCard 
-                        title={t('tokensUsed')} 
-                        value={totalTokensUsed.toLocaleString()} 
-                        icon={Activity} 
-                        gradient="from-rose-400 to-pink-600" 
-                    />
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
-                                <tr>
-                                    <th className="px-6 py-4">{t('email')}</th>
-                                    <th className="px-6 py-4">{t('role')}</th>
-                                    <th className="px-6 py-4">{t('status')}</th>
-                                    <th className="px-6 py-4">{t('tokenBalance')}</th>
-                                    <th className="px-6 py-4 text-purple-600 dark:text-purple-400">{t('used')}</th>
-                                    <th className="px-6 py-4">{t('dateJoined')}</th>
-                                    <th className="px-6 py-4 text-right">{t('actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {loadingUsers ? (
-                                    <tr><td colSpan={7} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
-                                ) : userError ? (
-                                    <tr><td colSpan={7} className="text-center py-10 text-red-500">{userError}</td></tr>
-                                ) : users.length === 0 ? (
-                                    <tr><td colSpan={7} className="text-center py-10 text-gray-500">{t('noUsersFound')}</td></tr>
-                                ) : users.map((user) => {
-                                    const isSelf = user.email === ADMIN_EMAIL;
-                                    return (
-                                        <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                                            <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{user.email}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
-                                                    {user.role === 'admin' ? t('adminRole') : t('userRole')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full flex w-fit items-center gap-1 ${user.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
-                                                    {user.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>}
-                                                    {user.status ? t(user.status) : t('active')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 font-mono text-gray-600 dark:text-gray-300">{user.tokenBalance?.toLocaleString() ?? 0}</td>
-                                            <td className="px-6 py-4 font-mono font-bold text-purple-600 dark:text-purple-400">{user.tokensUsed?.toLocaleString() ?? 0}</td>
-                                            <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {!isSelf && (
-                                                        <>
-                                                            <button onClick={() => handleOpenGrantModalForUser(user)} className="text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 p-1.5 rounded-lg transition-colors" title={t('grantSubscription')}>
-                                                                <Gift size={18} />
-                                                            </button>
-                                                            <button onClick={() => handleOpenTokenModal(user)} className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 p-1.5 rounded-lg transition-colors" title={t('addTokens')}>
-                                                                <Coins size={18} />
-                                                            </button>
-                                                            {user.status === 'disabled' ? (
-                                                                <button onClick={() => handleUpdateUserStatus(user.id, 'active')} className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1.5 rounded-lg transition-colors" title={t('enable')}>
-                                                                    <CheckCircle size={18}/>
-                                                                </button>
-                                                            ) : (
-                                                                <button onClick={() => handleUpdateUserStatus(user.id, 'disabled')} className="text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 p-1.5 rounded-lg transition-colors" title={t('disable')}>
-                                                                    <Ban size={18} />
-                                                                </button>
-                                                            )}
-                                                            <button onClick={() => handleDeleteUser(user.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-lg transition-colors" title={t('delete')}>
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        );
+    // --- Notifications Handlers ---
+    const handleCreateNotification = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await addDoc(collection(db, 'system_notifications'), {
+                ...newNotification,
+                createdAt: serverTimestamp(),
+                targetAudience: 'all'
+            });
+            alert(t('notificationCreated'));
+            setNewNotification({ title: { en: '', ar: '' }, message: { en: '', ar: '' }, type: 'info', isActive: true });
+            fetchNotifications();
+        } catch (error) {
+            console.error("Error creating notification:", error);
+            alert(t('notificationFailed'));
+        }
     };
 
-    const renderServiceManagementContent = () => (
+    const toggleNotificationStatus = async (id: string, currentStatus: boolean) => {
+        try {
+            await updateDoc(doc(db, 'system_notifications', id), { isActive: !currentStatus });
+            fetchNotifications();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleDeleteNotification = async (id: string) => {
+        if(window.confirm(t('areYouSure'))) {
+            await deleteDoc(doc(db, 'system_notifications', id));
+            fetchNotifications();
+        }
+    };
+
+    // --- Support Handlers ---
+    const handleReplyTicket = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedTicket || !replyMessage.trim()) return;
+
+        try {
+            await addDoc(collection(db, 'support_tickets', selectedTicket.id, 'messages'), {
+                content: replyMessage,
+                senderId: currentUser?.uid,
+                senderRole: 'admin',
+                createdAt: serverTimestamp()
+            });
+
+            await updateDoc(doc(db, 'support_tickets', selectedTicket.id), {
+                lastUpdate: serverTimestamp(),
+                status: 'answered',
+                unreadUser: true
+            });
+            setReplyMessage('');
+        } catch (error) {
+            console.error("Error sending reply:", error);
+        }
+    };
+
+    const renderPlanManagement = () => (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <PlusSquare className="text-primary-500" /> {t('manageServices')}
-                </h2>
-                <button onClick={handleAddNewServiceClick} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
-                    <Plus size={18} /> {t('add')}
+                <h2 className="text-xl font-bold dark:text-white">{t('planManagement')}</h2>
+                <button onClick={() => { setEditingPlan(initialPlanState); setShowPlanForm(true); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                    <Plus size={18}/> {t('addNewPlan')}
                 </button>
             </div>
-            
-            {/* AI Generator Card */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
-                    <Wand2 size={150} />
-                </div>
-                <div className="relative z-10">
-                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
-                        <Wand2 className="text-yellow-300" /> {t('generateWithAI')}
-                    </h3>
-                    <p className="text-indigo-100 mb-6 max-w-xl leading-relaxed text-sm opacity-90">{t('aiGeneratorDescription')}</p>
-                    
-                    <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                        <input 
-                            type="text" 
-                            placeholder={t('serviceNamePlaceholder')} 
-                            value={aiServiceName}
-                            onChange={e => setAiServiceName(e.target.value)}
-                            className="flex-grow px-4 py-3 rounded-xl border-0 bg-white/20 backdrop-blur-md text-white placeholder-indigo-200 focus:ring-2 focus:ring-white/50 outline-none"
-                        />
-                        <button 
-                            type="button" 
-                            onClick={handleGenerateService} 
-                            disabled={isGenerating}
-                            className="bg-white text-indigo-700 font-bold py-3 px-6 rounded-xl hover:bg-indigo-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center gap-2"
-                        >
-                            {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
-                            {t('generate')}
-                        </button>
-                    </div>
-                </div>
-            </div>
 
-            { showServiceForm && (
-                <form onSubmit={handleSaveService} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 animate-fade-in-down">
-                    <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4 mb-2">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditingService ? t('editService') : t('serviceDetails')}</h3>
-                        <button type="button" onClick={handleCancelEditService} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
-                    </div>
-                    
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('serviceIdPlaceholder')}</label>
-                            <input type="text" value={newService.id} onChange={e => handleServiceInputChange('id', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" disabled={isEditingService}/>
-                        </div>
-                         <div>
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('geminiModel')}</label>
-                             <select value={newService.geminiModel} onChange={e => handleServiceInputChange('geminiModel', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Smarter & Fast - Recommended)</option>
-                                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Cost Effective & Fastest)</option>
-                                <option value="gemini-3-pro-preview">Gemini 3.0 Pro (Highest Intelligence - Complex Tasks)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('titleEnPlaceholder')}</label>
-                             <input type="text" value={newService.title.en} onChange={e => handleNestedServiceInputChange('title', 'en', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"/>
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('titleArPlaceholder')}</label>
-                             <input type="text" value={newService.title.ar} onChange={e => handleNestedServiceInputChange('title', 'ar', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right"/>
-                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('descriptionEnPlaceholder')}</label>
-                             <textarea value={newService.description.en} onChange={e => handleNestedServiceInputChange('description', 'en', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows={2}/>
-                         </div>
-                         <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('descriptionArPlaceholder')}</label>
-                             <textarea value={newService.description.ar} onChange={e => handleNestedServiceInputChange('description', 'ar', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" rows={2}/>
-                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('category')}</label>
-                            <select value={newService.category} onChange={e => handleServiceInputChange('category', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                                <option value="" disabled>Select Category</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.title[language]}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('subCategoryEnPlaceholder')}</label>
-                             <input type="text" value={newService.subCategory.en} onChange={e => handleNestedServiceInputChange('subCategory', 'en', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"/>
-                        </div>
-                        <div>
-                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('subCategoryArPlaceholder')}</label>
-                             <input type="text" value={newService.subCategory.ar} onChange={e => handleNestedServiceInputChange('subCategory', 'ar', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right"/>
-                        </div>
-                    </div>
-                     
-                     <div>
-                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('icon')}</label>
-                         <select value={newService.icon} onChange={e => handleServiceInputChange('icon', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                             {iconNames.map(iconName => (
-                                 <option key={iconName} value={iconName}>{iconName}</option>
-                             ))}
-                         </select>
-                     </div>
-
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <h4 className="font-bold mb-2 text-gray-800 dark:text-white">System Instruction</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Instruction (English)</label>
-                                 <textarea value={newService.systemInstruction?.en} onChange={e => handleNestedServiceInputChange('systemInstruction', 'en', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows={4}/>
-                             </div>
-                             <div>
-                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Instruction (Arabic)</label>
-                                 <textarea value={newService.systemInstruction?.ar} onChange={e => handleNestedServiceInputChange('systemInstruction', 'ar', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" rows={4}/>
-                             </div>
-                        </div>
-                    </div>
-
-                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                         <h4 className="font-bold mb-2 text-gray-800 dark:text-white">{t('formInputs')}</h4>
-                         {newService.formInputs.map((input, index) => (
-                             <div key={index} className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded mb-3 border border-gray-200 dark:border-gray-600">
-                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-2">
-                                     <input type="text" placeholder={t('inputNamePlaceholder')} value={input.name} onChange={e => handleFormInputChange(index, 'name', e.target.value)} className="p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-500"/>
-                                     <input type="text" placeholder={t('labelEnPlaceholder')} value={input.label.en} onChange={e => handleFormInputLabelChange(index, 'en', e.target.value)} className="p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-500"/>
-                                     <input type="text" placeholder={t('labelArPlaceholder')} value={input.label.ar} onChange={e => handleFormInputLabelChange(index, 'ar', e.target.value)} className="p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-500 text-right"/>
-                                     <select value={input.type} onChange={e => handleFormInputChange(index, 'type', e.target.value)} className="p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-500">
-                                         <option value="text">Text</option>
-                                         <option value="textarea">Textarea</option>
-                                         <option value="date">Date</option>
-                                         <option value="file">File</option>
-                                         <option value="select">Select</option>
-                                     </select>
-                                 </div>
-                                 
-                                 {input.type === 'select' && (
-                                     <div className="ml-4 mt-2 border-l-2 border-gray-300 pl-4">
-                                         <p className="text-xs font-bold mb-1">{t('options')}</p>
-                                         {input.options?.map((option, optIndex) => (
-                                             <div key={optIndex} className="flex gap-2 mb-1">
-                                                 <input type="text" placeholder="Value" value={option.value} onChange={e => handleOptionChange(index, optIndex, 'value', e.target.value)} className="p-1 border rounded text-xs w-20 dark:bg-gray-700 dark:border-gray-500"/>
-                                                 <input type="text" placeholder={t('featureEn')} value={option.label.en} onChange={e => handleOptionLabelChange(index, optIndex, 'en', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500"/>
-                                                 <input type="text" placeholder={t('featureAr')} value={option.label.ar} onChange={e => handleOptionLabelChange(index, optIndex, 'ar', e.target.value)} className="p-1 border rounded text-xs flex-1 dark:bg-gray-700 dark:border-gray-500 text-right"/>
-                                                 <button type="button" onClick={() => handleRemoveOption(index, optIndex)} className="text-red-500 text-xs"><X size={14}/></button>
-                                             </div>
-                                         ))}
-                                         <button type="button" onClick={() => handleAddOption(index)} className="text-xs text-primary-600 font-bold mt-1">+ {t('addOption')}</button>
-                                     </div>
-                                 )}
-                                 
-                                 <button type="button" onClick={() => handleRemoveFormInput(index)} className="text-red-500 text-xs mt-2 flex items-center gap-1 hover:underline"><Trash2 size={12}/> {t('delete')}</button>
-                             </div>
-                         ))}
-                         <button type="button" onClick={handleAddFormInput} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-3 py-1 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">+ {t('addFormInput')}</button>
-                     </div>
-                    
-                     <div className="flex items-center gap-4 pt-4">
-                         <button type="submit" className="flex-grow bg-primary-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all">{t('saveService')}</button>
-                         {(isEditingService || showServiceForm) && (
-                            <button type="button" onClick={handleCancelEditService} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
-                         )}
-                    </div>
-                </form>
-            )}
-
-             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">{t('existingServices')}</h3>
-                    <button onClick={handleDeleteSelectedServices} disabled={selectedServices.length === 0} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1 rounded transition-colors disabled:opacity-50 flex items-center gap-1">
-                        <Trash2 size={16}/> {t('deleteSelected')} ({selectedServices.length})
-                    </button>
-                </div>
-
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                     <button onClick={() => setFilterCategory('all')} className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${filterCategory === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{t('allCategories')}</button>
-                     {categories.map(cat => (
-                         <button key={cat.id} onClick={() => setFilterCategory(cat.id)} className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${filterCategory === cat.id ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{cat.title[language]}</button>
-                     ))}
-                </div>
-
-                {/* Services Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-medium">
-                            <tr>
-                                <th className="px-4 py-3 w-10">
-                                    <input 
-                                        type="checkbox" 
-                                        ref={selectAllCheckboxRef}
-                                        onChange={handleSelectAllToggle}
-                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                    />
-                                </th>
-                                <th className="px-4 py-3">{t('serviceName')}</th>
-                                <th className="px-4 py-3">{t('category')}</th>
-                                <th className="px-4 py-3">{t('subCategory')}</th>
-                                <th className="px-4 py-3 text-center">{t('usage')}</th>
-                                <th className="px-4 py-3 text-right">{t('actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {loadingServices ? (
-                                <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
-                            ) : filteredServices.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-10 text-gray-500">{t('noServicesFound')}</td></tr>
-                            ) : (
-                                filteredServices.map(service => (
-                                    <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td className="px-4 py-3">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedServices.includes(service.id)}
-                                                onChange={() => {
-                                                    if (selectedServices.includes(service.id)) {
-                                                        setSelectedServices(prev => prev.filter(id => id !== service.id));
-                                                    } else {
-                                                        setSelectedServices(prev => [...prev, service.id]);
-                                                    }
-                                                }}
-                                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{service.title[language]}</td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{categoryMap.get(service.category) || service.category}</td>
-                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{service.subCategory[language]}</td>
-                                        <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">{service.usageCount || 0}</td>
-                                        <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
-                                            <button onClick={() => handleRunClick(service)} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors" title={t('run')}><Play size={16}/></button>
-                                            <button onClick={() => handleEditServiceClick(service)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors" title={t('edit')}><Edit size={16}/></button>
-                                            <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors" title={t('delete')}><Trash2 size={16}/></button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {isExecutionModalOpen && (
-                <ServiceExecutionModal
-                    isOpen={isExecutionModalOpen}
-                    onClose={() => setIsExecutionModalOpen(false)}
-                    service={selectedService}
-                />
-            )}
-        </div>
-    );
-
-    const renderCategoryManagementContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <Tag className="text-primary-500" /> {t('manageCategories')}
-            </h2>
-            
-            {/* AI Category Generator */}
-            <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden mb-6">
-                <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
-                    <Tag size={120} />
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center">
-                    <div className="flex-grow">
-                        <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
-                            <Wand2 className="text-yellow-300" size={20} /> Create with AI
-                        </h3>
-                        <p className="text-teal-100 text-sm opacity-90">Enter a category name and let AI configure it.</p>
-                    </div>
-                    <div className="flex w-full md:w-auto gap-2">
-                        <input 
-                            type="text" 
-                            placeholder="Category Name (e.g., Family Law)" 
-                            value={aiCategoryName}
-                            onChange={e => setAiCategoryName(e.target.value)}
-                            className="flex-grow md:w-64 px-4 py-2 rounded-lg border-0 bg-white/20 backdrop-blur-md text-white placeholder-teal-200 focus:ring-2 focus:ring-white/50 outline-none"
-                        />
-                        <button 
-                            onClick={handleGenerateCategory}
-                            disabled={isGeneratingCategory}
-                            className="bg-white text-teal-700 font-bold py-2 px-4 rounded-lg hover:bg-teal-50 disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
-                        >
-                            {isGeneratingCategory ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
-                            Generate
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <button onClick={handleAddNewCategory} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
-                <Plus size={18} /> {t('add')}
-            </button>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categories.map(cat => (
-                    <div key={cat.id} className="p-4 border rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300">
-                                {iconMap[cat.icon] ? React.createElement(iconMap[cat.icon], { size: 20 }) : <Tag size={20} />}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800 dark:text-white">{cat.title[language]}</h3>
-                                <p className="text-xs text-gray-500">ID: {cat.id}</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => handleEditCategoryClick(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"><Edit size={16} /></button>
-                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"><Trash2 size={16} /></button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            {showCategoryForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4 dark:text-white">{t('editCategory')}</h3>
-                        <form onSubmit={handleSaveCategory} className="space-y-4">
-                            <input type="text" placeholder="ID" value={editingCategory?.id || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, id: e.target.value}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" disabled={isEditingCategory} />
-                            <input type="text" placeholder="Title (EN)" value={editingCategory?.title.en || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, title: {...prev.title, en: e.target.value}}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
-                            <input type="text" placeholder="Title (AR)" value={editingCategory?.title.ar || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, title: {...prev.title, ar: e.target.value}}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
-                            
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('icon')}</label>
-                                <select 
-                                    value={editingCategory?.icon || 'FileText'} 
-                                    onChange={e => setEditingCategory(prev => prev ? ({...prev, icon: e.target.value}) : null)} 
-                                    className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                                >
-                                    {iconNames.map(iconName => (
-                                        <option key={iconName} value={iconName}>{iconName}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <input type="number" placeholder="Order" value={editingCategory?.order || 0} onChange={e => setEditingCategory(prev => prev ? ({...prev, order: Number(e.target.value)}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
-                            
-                            <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={() => setShowCategoryForm(false)} className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 dark:text-white">{t('cancel')}</button>
-                                <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white">{t('save')}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
-    const renderSubscriptionManagementContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <CreditCard className="text-primary-500" /> {t('subscriptionManagement')}
-            </h2>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 dark:bg-gray-700/50">
-                        <tr>
-                            <th className="px-6 py-4 dark:text-gray-300">{t('email')}</th>
-                            <th className="px-6 py-4 dark:text-gray-300">{t('plan')}</th>
-                            <th className="px-6 py-4 dark:text-gray-300">{t('status')}</th>
-                            <th className="px-6 py-4 dark:text-gray-300">{t('endsOn')}</th>
-                            <th className="px-6 py-4 dark:text-gray-300">{t('actions')}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {usersWithSub.filter(u => u.subscription).map(user => (
-                            <tr key={user.id}>
-                                <td className="px-6 py-4 dark:text-white">{user.email}</td>
-                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.planId}</td>
-                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.status}</td>
-                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.current_period_end ? new Date(user.subscription.current_period_end * 1000).toLocaleDateString() : 'N/A'}</td>
-                                <td className="px-6 py-4">
-                                    {user.subscription?.isManual && (
-                                        <button onClick={() => handleRevokeSubscription(user.id, user.subscription!.id)} className="text-red-500 hover:underline">{t('revoke')}</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-
-    const renderPlanManagementContent = () => (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><Star className="text-primary-500"/> {t('planManagement')}</h2>
-                <button onClick={handleAddPlanClick} className="bg-primary-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-primary-700 transition-colors flex items-center gap-2"><Plus size={18}/> {t('add')}</button>
-            </div>
             {showPlanForm && editingPlan && (
                 <PlanForm 
                     plan={editingPlan} 
                     onSave={handleSavePlan} 
-                    onCancel={handleCancelPlanEdit}
-                    isEditing={!!editingPlan.id} 
+                    onCancel={() => { setShowPlanForm(false); setEditingPlan(null); }}
+                    isEditing={!!editingPlan.id && plans.some(p => p.id === editingPlan.id)}
                 />
             )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans.map(plan => (
-                    <div key={plan.id} className="border rounded-xl p-6 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm relative">
-                        <div className="absolute top-4 right-4 flex gap-2">
-                            <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded"><Edit size={16}/></button>
-                            <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded"><Trash2 size={16}/></button>
+                    <div key={plan.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
+                        {plan.isPopular && <div className="absolute top-4 right-4 text-yellow-500"><Star fill="currentColor" size={20}/></div>}
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.title[language]}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{plan.id}</p>
+                        <div className="text-2xl font-black text-primary-600 dark:text-primary-400 mb-2">{plan.price[language]}</div>
+                        <div className="inline-block bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 mb-4">
+                            {plan.tokens.toLocaleString()} Tokens
                         </div>
-                        <h3 className="text-xl font-bold dark:text-white">{plan.title[language]}</h3>
-                        <p className="text-2xl font-black text-primary-600 mt-2">{plan.price[language]}</p>
-                        <div className="mt-4 space-y-2">
-                            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2"><Coins size={14}/> {plan.tokens.toLocaleString()} Tokens</p>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${plan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t(plan.status)}</span>
-                                <button onClick={() => handleTogglePlanStatus(plan)} className="text-xs underline text-gray-500">{plan.status === 'active' ? t('deactivate') : t('activate')}</button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-
-    const renderMarketingContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <BarChart className="text-primary-500" /> {t('marketing')}
-            </h2>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{t('adPixels')}</h3>
-                <p className="text-sm text-gray-500 mb-6">{t('adPixelsDesc')}</p>
-                
-                <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
-                        <input 
-                            type="text" 
-                            value={siteSettings.adPixels?.googleTagId || ''} 
-                            onChange={e => handleAdPixelChange('googleTagId', e.target.value)} 
-                            placeholder="G-XXXXXXXXXX"
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
-                        <input 
-                            type="text" 
-                            value={siteSettings.adPixels?.facebookPixelId || ''} 
-                            onChange={e => handleAdPixelChange('facebookPixelId', e.target.value)} 
-                            placeholder="123456789012345"
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
-                        <input 
-                            type="text" 
-                            value={siteSettings.adPixels?.snapchatPixelId || ''} 
-                            onChange={e => handleAdPixelChange('snapchatPixelId', e.target.value)} 
-                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
-                        <input 
-                            type="text" 
-                            value={siteSettings.adPixels?.tiktokPixelId || ''} 
-                            onChange={e => handleAdPixelChange('tiktokPixelId', e.target.value)} 
-                            placeholder="Cxxxxxxxxxxxxxxxx"
-                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
-                        />
-                    </div>
-                    <div className="md:col-span-2 flex justify-end mt-4">
-                        <button type="submit" disabled={savingSettings} className="px-6 py-2.5 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all flex items-center gap-2">
-                            {savingSettings && <Loader2 className="animate-spin" size={18}/>}
-                            {t('saveSettings')}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-
-    const renderNotificationsContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <Bell className="text-primary-500" /> {t('notifications')}
-            </h2>
-            
-            {/* Create Notification */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('createNotification')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input type="text" placeholder={t('titleEn')} value={newNotification.title?.en || ''} onChange={e => setNewNotification(prev => ({...prev, title: {...prev.title!, en: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" />
-                    <input type="text" placeholder={t('titleAr')} value={newNotification.title?.ar || ''} onChange={e => setNewNotification(prev => ({...prev, title: {...prev.title!, ar: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" />
-                    <textarea placeholder={t('messageEn')} value={newNotification.message?.en || ''} onChange={e => setNewNotification(prev => ({...prev, message: {...prev.message!, en: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows={2}/>
-                    <textarea placeholder={t('messageAr')} value={newNotification.message?.ar || ''} onChange={e => setNewNotification(prev => ({...prev, message: {...prev.message!, ar: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" rows={2}/>
-                </div>
-                <div className="flex items-center gap-4">
-                    <select value={newNotification.type} onChange={e => setNewNotification(prev => ({...prev, type: e.target.value as any}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
-                        <option value="info">{t('info')}</option>
-                        <option value="success">{t('success')}</option>
-                        <option value="warning">{t('warning')}</option>
-                        <option value="alert">{t('alert')}</option>
-                    </select>
-                    <button onClick={handleCreateNotification} className="px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 flex items-center gap-2">
-                        <Send size={18}/> {t('createNotification')}
-                    </button>
-                </div>
-            </div>
-
-            {/* List Notifications */}
-            <div className="grid grid-cols-1 gap-4">
-                {notifications.map(notif => (
-                    <div key={notif.id} className={`p-4 rounded-xl border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-75'}`}>
-                        <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-lg ${notif.type === 'info' ? 'bg-blue-100 text-blue-600' : notif.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                                {notif.type === 'info' && <Info size={20}/>}
-                                {notif.type === 'success' && <CheckCircle size={20}/>}
-                                {(notif.type === 'warning' || notif.type === 'alert') && <AlertTriangle size={20}/>}
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white">{notif.title[language]}</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
-                                <p className="text-xs text-gray-400 mt-1">{notif.createdAt?.toDate().toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => handleToggleNotificationStatus(notif)} className={`p-2 rounded-lg transition-colors ${notif.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                                {notif.isActive ? <Eye size={20}/> : <EyeOff size={20}/>}
-                            </button>
-                            <button onClick={() => handleDeleteNotification(notif.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                                <Trash2 size={20}/>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <span className={`text-xs px-2 py-1 rounded-full ${plan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{plan.status}</span>
+                            <button onClick={() => { setEditingPlan(plan); setShowPlanForm(true); }} className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1">
+                                <Edit size={16}/> {t('edit')}
                             </button>
                         </div>
                     </div>
                 ))}
-                {notifications.length === 0 && <p className="text-center text-gray-500">{t('noNotificationsFound')}</p>}
             </div>
-        </div>
-    );
-
-    const renderSupportContent = () => (
-        <div className="h-[calc(100vh-140px)] flex flex-col">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-6 flex-shrink-0">
-                <LifeBuoy className="text-primary-500" /> {t('support')}
-            </h2>
-            <div className="flex-grow flex overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                {/* Ticket List */}
-                <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300">
-                        {t('selectTicket')}
-                    </div>
-                    <div className="flex-grow overflow-y-auto">
-                        {tickets.map(ticket => (
-                            <div 
-                                key={ticket.id} 
-                                onClick={() => setSelectedTicket(ticket)}
-                                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <h4 className={`font-bold text-sm truncate ${ticket.unreadAdmin ? 'text-primary-600' : 'text-gray-800 dark:text-white'}`}>{ticket.subject}</h4>
-                                    {ticket.unreadAdmin && <span className="w-2 h-2 bg-red-500 rounded-full"></span>}
-                                </div>
-                                <p className="text-xs text-gray-500 truncate mb-1">{ticket.userEmail}</p>
-                                <div className="flex justify-between items-center">
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ticket.status === 'open' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
-                                        {t(ticket.status)}
-                                    </span>
-                                    <span className="text-[10px] text-gray-400">{ticket.lastUpdate?.toDate().toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                        ))}
-                        {tickets.length === 0 && <div className="p-8 text-center text-gray-500 text-sm">{t('noTickets')}</div>}
-                    </div>
-                </div>
-
-                {/* Chat Area */}
-                <div className="w-2/3 flex flex-col bg-gray-50 dark:bg-gray-900/50">
-                    {selectedTicket ? (
-                        <>
-                            <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm">
-                                <div>
-                                    <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
-                                    <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{selectedTicket.status}</span>
-                                </div>
-                            </div>
-                            
-                            <div className="flex-grow overflow-y-auto p-4 space-y-4">
-                                {messages.map(msg => (
-                                    <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700'}`}>
-                                            <p className="whitespace-pre-wrap">{msg.content}</p>
-                                            <p className={`text-[10px] mt-1 text-right ${msg.senderRole === 'admin' ? 'text-primary-200' : 'text-gray-400'}`}>
-                                                {msg.createdAt?.toDate().toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            <form onSubmit={handleAdminReply} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
-                                        value={replyMessage} 
-                                        onChange={(e) => setReplyMessage(e.target.value)}
-                                        placeholder={t('typeReply')}
-                                        className="flex-grow p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none"
-                                    />
-                                    <button type="submit" disabled={!replyMessage.trim()} className="p-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors">
-                                        <Send size={20} className="rtl:rotate-180"/>
-                                    </button>
-                                </div>
-                            </form>
-                        </>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                            <MessageSquare size={48} className="mb-2 opacity-50"/>
-                            <p>{t('selectTicket')}</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderSiteSettingsContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><Cog className="text-primary-500"/> {t('siteSettings')}</h2>
-            
-            <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
-                
-                {/* Basic Information */}
-                <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Site Identity</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteNameEn')}</label>
-                            <input type="text" value={siteSettings.siteName.en} onChange={e => handleNestedSiteSettingsChange('siteName', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteNameAr')}</label>
-                            <input type="text" value={siteSettings.siteName.ar} onChange={e => handleNestedSiteSettingsChange('siteName', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteSubtitleEn')}</label>
-                            <input type="text" value={siteSettings.siteSubtitle?.en || ''} onChange={e => handleNestedSiteSettingsChange('siteSubtitle', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteSubtitleAr')}</label>
-                            <input type="text" value={siteSettings.siteSubtitle?.ar || ''} onChange={e => handleNestedSiteSettingsChange('siteSubtitle', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* SEO Settings */}
-                <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">SEO & Meta Data</h4>
-                    <div className="grid grid-cols-1 gap-6">
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('metaDescriptionEn')}</label>
-                            <textarea value={siteSettings.metaDescription?.en || ''} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows={2} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('metaDescriptionAr')}</label>
-                            <textarea value={siteSettings.metaDescription?.ar || ''} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" rows={2} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('seoKeywordsEn')}</label>
-                                <input type="text" value={siteSettings.seoKeywords?.en || ''} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('seoKeywordsAr')}</label>
-                                <input type="text" value={siteSettings.seoKeywords?.ar || ''} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Branding (Logo & Favicon) */}
-                <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Branding</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-bold mb-2 dark:text-gray-300">{t('logo')}</label>
-                            <div className="flex items-center gap-4">
-                                {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt="Logo" className="h-10 w-auto object-contain bg-gray-100 p-1 rounded border" />}
-                                <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
-                                    <Upload size={16} /> Upload New Logo
-                                    <input type="file" accept="image/*" className="hidden" onChange={e => setLogoFile(e.target.files ? e.target.files[0] : null)} />
-                                </label>
-                                {logoFile && <span className="text-xs text-green-600">{logoFile.name}</span>}
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-2 dark:text-gray-300">{t('favicon')}</label>
-                            <div className="flex items-center gap-4">
-                                {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt="Favicon" className="h-8 w-8 object-contain bg-gray-100 p-1 rounded border" />}
-                                <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
-                                    <Upload size={16} /> Upload New Favicon
-                                    <input type="file" accept="image/*" className="hidden" onChange={e => setFaviconFile(e.target.files ? e.target.files[0] : null)} />
-                                </label>
-                                {faviconFile && <span className="text-xs text-green-600">{faviconFile.name}</span>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Landing Page Configuration */}
-                <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Landing Page Generator</h4>
-                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
-                        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-3">{t('generateWithAIConfig')}</p>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                placeholder={t('enterTopic')} 
-                                value={landingPagePrompt}
-                                onChange={e => setLandingPagePrompt(e.target.value)}
-                                className="flex-grow p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-                            />
-                            <button type="button" onClick={handleGenerateLandingPage} disabled={isGeneratingLanding} className="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50">
-                                {isGeneratingLanding ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
-                                {t('generate')}
-                            </button>
-                        </div>
-                        <div className="mt-3 flex items-center gap-2">
-                            <span className={`text-xs font-bold px-2 py-1 rounded ${siteSettings.landingPageConfig ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
-                                {siteSettings.landingPageConfig ? t('customPageActive') : t('defaultPageActive')}
-                            </span>
-                            {siteSettings.landingPageConfig && (
-                                <button type="button" onClick={handleClearLandingConfig} className="text-xs text-red-500 underline hover:text-red-700">
-                                    {t('resetToDefault')}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* System Status */}
-                <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">System</h4>
-                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => handleSiteSettingsChange('isMaintenanceMode', e.target.checked)} className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5" />
-                        <div>
-                            <span className="font-bold text-gray-800 dark:text-white block">{t('enableMaintenance')}</span>
-                            <span className="text-xs text-gray-500">Only admins will be able to access the site.</span>
-                        </div>
-                    </label>
-                </div>
-
-                <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <button type="submit" disabled={savingSettings} className="px-8 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary-600/20">
-                        {savingSettings && <Loader2 className="animate-spin" size={20} />}
-                        {t('saveSettings')}
-                    </button>
-                </div>
-            </form>
         </div>
     );
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Sidebar */}
-            <div className="w-full md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t('adminPanel')}</h1>
-                </div>
-                <nav className="p-4 space-y-2">
+        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('adminPanel')}</h1>
+                
+                <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     {[
-                        { id: 'users', label: t('userManagement'), icon: Users },
-                        { id: 'services', label: t('manageServices'), icon: LayoutGrid },
-                        { id: 'categories', label: t('manageCategories'), icon: Tag },
-                        { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
-                        { id: 'plans', label: t('planManagement'), icon: Star },
-                        { id: 'settings', label: t('siteSettings'), icon: Cog },
-                        { id: 'marketing', label: t('marketing'), icon: BarChart },
-                        { id: 'notifications', label: t('notifications'), icon: Bell },
-                        { id: 'support', label: t('support'), icon: LifeBuoy },
-                    ].map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === item.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
-                        >
-                            <item.icon size={20} />
-                            {item.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
+                        { id: 'users', label: 'userManagement', icon: Users },
+                        { id: 'services', label: 'manageServices', icon: LayoutTemplate },
+                        { id: 'categories', label: 'manageCategories', icon: LayoutGrid },
+                        { id: 'subscriptions', label: 'subscriptionManagement', icon: CreditCard },
+                        { id: 'plans', label: 'planManagement', icon: Tag },
+                        { id: 'settings', label: 'siteSettings', icon: Cog },
+                        { id: 'marketing', label: 'marketing', icon: BarChart },
+                        { id: 'notifications', label: 'notifications', icon: Bell },
+                        { id: 'support', label: 'support', icon: LifeBuoy }
+                    ].map(tab => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-primary-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                            >
+                                <Icon size={18} />
+                                {t(tab.label as any)}
+                            </button>
+                        );
+                    })}
+                </div>
 
-            {/* Main Content */}
-            <div className="flex-grow p-6 md:p-10 overflow-y-auto">
-                <div className="max-w-7xl mx-auto">
-                    {activeTab === 'users' && renderUserManagementContent()}
-                    {activeTab === 'services' && renderServiceManagementContent()}
-                    {activeTab === 'categories' && renderCategoryManagementContent()}
-                    {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
-                    {activeTab === 'plans' && renderPlanManagementContent()}
-                    {activeTab === 'settings' && renderSiteSettingsContent()}
-                    {activeTab === 'marketing' && renderMarketingContent()}
-                    {activeTab === 'notifications' && renderNotificationsContent()}
-                    {activeTab === 'support' && renderSupportContent()}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[600px]">
+                    {activeTab === 'users' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold dark:text-white">{t('userManagement')}</h2>
+                                <button onClick={fetchUsers} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><RefreshCw size={20}/></button>
+                            </div>
+                            
+                            {loadingUsers ? (
+                                <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-600" size={32} /></div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left rtl:text-right">
+                                        <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 font-medium">
+                                            <tr>
+                                                <th className="p-4">{t('email')}</th>
+                                                <th className="p-4">{t('role')}</th>
+                                                <th className="p-4">{t('tokenBalance')}</th>
+                                                <th className="p-4">{t('status')}</th>
+                                                <th className="p-4 text-end">{t('actions')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {users.map(user => (
+                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                                    <td className="p-4 font-medium dark:text-white">{user.email}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                            {user.role}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4">{user.tokenBalance?.toLocaleString()}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                                            {user.status || 'active'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 flex justify-end gap-2">
+                                                        <button onClick={() => { setSelectedUserForAction(user); setIsTokenModalOpen(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title={t('addTokens')}><Coins size={18}/></button>
+                                                        <button onClick={() => { setSelectedUserForAction(user); setIsGrantModalOpen(true); fetchUsersWithSubscriptions(); }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title={t('grantSubscription')}><Gift size={18}/></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'services' && (
+                        <div className="space-y-6">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <h2 className="text-xl font-bold dark:text-white">{t('manageServices')}</h2>
+                                <div className="flex gap-2">
+                                    <div className="relative">
+                                        <input type="text" placeholder={t('enterServiceName')} value={aiServiceName} onChange={(e) => setAiServiceName(e.target.value)} className="pl-3 pr-10 py-2 border rounded-lg text-sm w-64 bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />
+                                        <button onClick={handleGenerateService} disabled={isGenerating} className="absolute right-1 top-1 p-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-purple-400"><Wand2 size={16}/></button>
+                                    </div>
+                                    <button onClick={() => { setNewService(initialServiceState); setShowServiceForm(true); setIsEditingService(false); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700"><Plus size={18}/> {t('add')}</button>
+                                </div>
+                            </div>
+
+                            {showServiceForm && (
+                                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 space-y-4">
+                                    <h3 className="font-bold text-lg dark:text-white">{isEditingService ? t('editService') : t('serviceDetails')}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <input type="text" placeholder="ID" value={newService.id} onChange={e => setNewService({...newService, id: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" disabled={isEditingService} />
+                                        <select value={newService.category} onChange={e => setNewService({...newService, category: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white">
+                                            <option value="">Select Category</option>
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.title[language]}</option>)}
+                                        </select>
+                                        <input type="text" placeholder="Title (EN)" value={newService.title.en} onChange={e => setNewService({...newService, title: {...newService.title, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
+                                        <input type="text" placeholder="Title (AR)" value={newService.title.ar} onChange={e => setNewService({...newService, title: {...newService.title, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
+                                        <textarea placeholder="Description (EN)" value={newService.description.en} onChange={e => setNewService({...newService, description: {...newService.description, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" rows={2} />
+                                        <textarea placeholder="Description (AR)" value={newService.description.ar} onChange={e => setNewService({...newService, description: {...newService.description, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" rows={2} />
+                                    </div>
+                                    <div className="flex justify-end gap-3">
+                                        <button onClick={() => setShowServiceForm(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">{t('cancel')}</button>
+                                        <button onClick={handleSaveService} className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">{t('save')}</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {services.map(service => (
+                                    <div key={service.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-primary-600">
+                                                {React.createElement(iconMap[service.icon] || LayoutTemplate, { size: 20 })}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <button onClick={() => { setNewService(service); setShowServiceForm(true); setIsEditingService(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16}/></button>
+                                                <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
+                                            </div>
+                                        </div>
+                                        <h4 className="font-bold dark:text-white truncate">{service.title[language]}</h4>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{service.description[language]}</p>
+                                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between text-xs text-gray-500">
+                                            <span>{service.category}</span>
+                                            <span>Used: {service.usageCount || 0}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'categories' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold dark:text-white">{t('manageCategories')}</h2>
+                                <button onClick={() => { setEditingCategory({ id: '', title: { en: '', ar: '' }, icon: 'FileText', order: categories.length + 1 }); setShowCategoryForm(true); setIsEditingCategory(false); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                                    <Plus size={18}/> {t('addNewCategory')}
+                                </button>
+                            </div>
+
+                            {showCategoryForm && editingCategory && (
+                                <form onSubmit={handleSaveCategory} className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <input type="text" placeholder="Title (EN)" value={editingCategory.title.en} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                        <input type="text" placeholder="Title (AR)" value={editingCategory.title.ar} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required />
+                                        <input type="text" placeholder="Icon Name" value={editingCategory.icon} onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                        <input type="number" placeholder="Order" value={editingCategory.order} onChange={e => setEditingCategory({...editingCategory, order: Number(e.target.value)})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                    </div>
+                                    <div className="flex justify-end gap-3">
+                                        <button type="button" onClick={() => setShowCategoryForm(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">{t('cancel')}</button>
+                                        <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">{t('save')}</button>
+                                    </div>
+                                </form>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {categories.map(cat => (
+                                    <div key={cat.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                                {React.createElement(iconMap[cat.icon] || LayoutGrid, { size: 20 })}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold dark:text-white">{cat.title[language]}</h4>
+                                                <p className="text-xs text-gray-500">Order: {cat.order}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => { setEditingCategory(cat); setShowCategoryForm(true); setIsEditingCategory(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16}/></button>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'subscriptions' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold dark:text-white">{t('subscriptionManagement')}</h2>
+                                <button onClick={fetchUsersWithSubscriptions} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><RefreshCw size={20}/></button>
+                            </div>
+                            
+                            {loadingSubs ? (
+                                <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-600" size={32} /></div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left rtl:text-right">
+                                        <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 font-medium">
+                                            <tr>
+                                                <th className="p-4">{t('email')}</th>
+                                                <th className="p-4">{t('plan')}</th>
+                                                <th className="p-4">{t('status')}</th>
+                                                <th className="p-4">{t('endsOn')}</th>
+                                                <th className="p-4">{t('type')}</th>
+                                                <th className="p-4 text-end">{t('actions')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {usersWithSub.filter(u => u.subscription).length === 0 ? (
+                                                <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('noActiveSubscription')}</td></tr>
+                                            ) : usersWithSub.filter(u => u.subscription).map(user => (
+                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                                    <td className="p-4 font-medium dark:text-white">{user.email}</td>
+                                                    <td className="p-4">{user.subscription?.planId}</td>
+                                                    <td className="p-4"><span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{user.subscription?.status}</span></td>
+                                                    <td className="p-4">{new Date(user.subscription!.current_period_end * 1000).toLocaleDateString()}</td>
+                                                    <td className="p-4">{user.subscription?.isManual ? 'Manual' : 'Stripe'}</td>
+                                                    <td className="p-4 text-end">
+                                                        {user.subscription?.isManual ? (
+                                                            <button onClick={async () => {
+                                                                if(window.confirm(t('revokeConfirm'))) {
+                                                                    await deleteDoc(doc(db, 'customers', user.id, 'subscriptions', user.subscription!.id));
+                                                                    fetchUsersWithSubscriptions();
+                                                                }
+                                                            }} className="text-red-600 hover:underline text-xs">{t('revoke')}</button>
+                                                        ) : (
+                                                            <span className="text-gray-400 text-xs">{t('manageInStripe')}</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'plans' && renderPlanManagement()}
+
+                    {activeTab === 'settings' && (
+                        <form onSubmit={handleSaveSettings} className="space-y-6 max-w-3xl">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold dark:text-white">{t('siteSettings')}</h2>
+                                <button type="submit" disabled={savingSettings} className="bg-primary-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700 shadow-lg disabled:bg-primary-400">
+                                    {savingSettings && <Loader2 className="animate-spin" size={18}/>} {t('saveSettings')}
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteNameEn')}</label>
+                                    <input type="text" value={siteSettings.siteName.en} onChange={e => setSiteSettings({...siteSettings, siteName: {...siteSettings.siteName, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteNameAr')}</label>
+                                    <input type="text" value={siteSettings.siteName.ar} onChange={e => setSiteSettings({...siteSettings, siteName: {...siteSettings.siteName, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteSubtitleEn')}</label>
+                                    <input type="text" value={siteSettings.siteSubtitle.en} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteSubtitleAr')}</label>
+                                    <input type="text" value={siteSettings.siteSubtitle.ar} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t dark:border-gray-700">
+                                <h3 className="font-bold text-lg dark:text-white">Branding & Images</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-gray-800">{t('logo')}</label>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1">
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*"
+                                                        onChange={e => setLogoFile(e.target.files?.[0] || null)} 
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
+                                                    />
+                                                    {logoFile && <p className="text-xs text-green-600 mt-1 font-semibold">Selected: {logoFile.name}</p>}
+                                                </div>
+                                                {siteSettings.logoUrl && !logoFile && (
+                                                    <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                                        <img src={siteSettings.logoUrl} alt="Current Logo" className="h-10 w-auto object-contain" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-gray-800">{t('favicon')}</label>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1">
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*"
+                                                        onChange={e => setFaviconFile(e.target.files?.[0] || null)} 
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
+                                                    />
+                                                    {faviconFile && <p className="text-xs text-green-600 mt-1 font-semibold">Selected: {faviconFile.name}</p>}
+                                                </div>
+                                                {siteSettings.faviconUrl && !faviconFile && (
+                                                    <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                                        <img src={siteSettings.faviconUrl} alt="Current Favicon" className="h-8 w-8 object-contain" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t dark:border-gray-700">
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => setSiteSettings({...siteSettings, isMaintenanceMode: e.target.checked})} className="h-5 w-5 rounded text-primary-600 focus:ring-primary-500" />
+                                    <span className="font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('enableMaintenance')}</span>
+                                </label>
+                            </div>
+                        </form>
+                    )}
+
+                    {activeTab === 'marketing' && (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-bold dark:text-white">{t('adPixels')}</h2>
+                            <p className="text-gray-500 text-sm">{t('adPixelsDesc')}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('googleTagId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.googleTagId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, googleTagId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="G-XXXXXXXXXX" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('facebookPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.facebookPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, facebookPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="1234567890" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('snapchatPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, snapchatPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('tiktokPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, tiktokPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="CXXXXXXXXXXXX" />
+                                </div>
+                            </div>
+                            <button onClick={handleSaveSettings} className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 shadow-md">{t('saveSettings')}</button>
+                        </div>
+                    )}
+
+                    {activeTab === 'notifications' && (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-bold dark:text-white">{t('createNotification')}</h2>
+                            <form onSubmit={handleCreateNotification} className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="text" placeholder={t('titleEn')} value={newNotification.title?.en} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                    <input type="text" placeholder={t('titleAr')} value={newNotification.title?.ar} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required />
+                                    <textarea placeholder={t('messageEn')} value={newNotification.message?.en} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required rows={2} />
+                                    <textarea placeholder={t('messageAr')} value={newNotification.message?.ar} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required rows={2} />
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <select value={newNotification.type} onChange={e => setNewNotification({...newNotification, type: e.target.value as any})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white">
+                                        <option value="info">Info</option>
+                                        <option value="success">Success</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="alert">Alert</option>
+                                    </select>
+                                    <button type="submit" className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700">{t('createNotification')}</button>
+                                </div>
+                            </form>
+
+                            <div className="space-y-4">
+                                <h3 className="font-bold dark:text-white">Active Notifications</h3>
+                                {notifications.map(notif => (
+                                    <div key={notif.id} className={`p-4 rounded-lg border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900 opacity-60'}`}>
+                                        <div>
+                                            <h4 className="font-bold dark:text-white">{notif.title[language]}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
+                                            <span className="text-xs text-gray-400">{new Date(notif.createdAt.seconds * 1000).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <button onClick={() => toggleNotificationStatus(notif.id, notif.isActive)} className={`px-3 py-1 rounded-full text-xs ${notif.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
+                                                {notif.isActive ? t('active') : t('inactive')}
+                                            </button>
+                                            <button onClick={() => handleDeleteNotification(notif.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><Trash2 size={18}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'support' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                            {/* Ticket List */}
+                            <div className="lg:col-span-1 border-r border-gray-200 dark:border-gray-700 overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-3">
+                                    {tickets.map(ticket => (
+                                        <div 
+                                            key={ticket.id}
+                                            onClick={() => setSelectedTicket(ticket)}
+                                            className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${selectedTicket?.id === ticket.id ? 'bg-primary-50 border-primary-500 dark:bg-primary-900/20' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} ${ticket.unreadAdmin ? 'border-l-4 border-l-primary-500' : ''}`}
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h4 className="font-bold text-sm dark:text-white truncate">{ticket.subject}</h4>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>{ticket.status}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 truncate">{ticket.userEmail}</p>
+                                            <p className="text-[10px] text-gray-400 mt-2 text-right">{ticket.lastUpdate?.toDate().toLocaleDateString()}</p>
+                                        </div>
+                                    ))}
+                                    {tickets.length === 0 && <p className="text-center text-gray-500 py-10">{t('noTickets')}</p>}
+                                </div>
+                            </div>
+
+                            {/* Chat View */}
+                            <div className="lg:col-span-2 flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                {selectedTicket ? (
+                                    <>
+                                        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+                                            <h3 className="font-bold dark:text-white">{selectedTicket.subject}</h3>
+                                            <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
+                                        </div>
+                                        <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                                            {messages.map(msg => (
+                                                <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
+                                                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                                                        <p className="text-[10px] opacity-70 mt-1 text-right">{msg.createdAt?.toDate().toLocaleTimeString()}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <div ref={messagesEndRef} />
+                                        </div>
+                                        <form onSubmit={handleReplyTicket} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+                                            <input 
+                                                type="text" 
+                                                value={replyMessage} 
+                                                onChange={e => setReplyMessage(e.target.value)} 
+                                                placeholder={t('typeReply')} 
+                                                className="flex-grow p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" 
+                                            />
+                                            <button type="submit" disabled={!replyMessage.trim()} className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 disabled:bg-gray-300"><Send size={20}/></button>
+                                        </form>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                        <MessageSquare size={48} className="mb-4 opacity-50" />
+                                        <p>{t('selectTicket')}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Modals */}
-            <GrantSubscriptionModal 
-                isOpen={isGrantModalOpen}
-                onClose={() => setIsGrantModalOpen(false)}
-                users={users}
-                plans={plans}
-                onGrant={fetchUsersWithSubscriptions}
-                initialUserId={selectedUserForAction?.id}
-            />
             {selectedUserForAction && (
-                <AddTokenModal
-                    isOpen={isTokenModalOpen}
-                    onClose={() => setIsTokenModalOpen(false)}
-                    userId={selectedUserForAction.id}
-                    userEmail={selectedUserForAction.email}
-                    onSuccess={fetchUsers}
-                />
+                <>
+                    <AddTokenModal 
+                        isOpen={isTokenModalOpen} 
+                        onClose={() => setIsTokenModalOpen(false)} 
+                        userId={selectedUserForAction.id}
+                        userEmail={selectedUserForAction.email}
+                        onSuccess={fetchUsers}
+                    />
+                    <GrantSubscriptionModal
+                        isOpen={isGrantModalOpen}
+                        onClose={() => setIsGrantModalOpen(false)}
+                        users={users}
+                        plans={plans}
+                        onGrant={fetchUsers}
+                        initialUserId={selectedUserForAction.id}
+                    />
+                </>
             )}
         </div>
     );
 };
+
+export default AdminPage;

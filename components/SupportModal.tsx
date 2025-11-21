@@ -259,7 +259,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                     value={subject} 
                     onChange={(e) => setSubject(e.target.value)} 
                     required 
-                    className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all" 
+                    className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all" 
                     placeholder="Briefly describe the issue"
                     />
                 </div>
@@ -288,7 +288,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                     onChange={(e) => setInitialMessage(e.target.value)} 
                     required 
                     rows={4}
-                    className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all resize-none"
+                    className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all resize-none"
                     placeholder="How can we help you?"
                     />
                 </div>
@@ -324,7 +324,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                     value={newMessage} 
                     onChange={(e) => setNewMessage(e.target.value)} 
                     placeholder={t('typeMessage')}
-                    className="flex-grow px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                    className="flex-grow px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-full bg-white dark:bg-gray-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                   />
                   <button type="submit" disabled={!newMessage.trim()} className="p-2.5 bg-primary-600 text-white rounded-full hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-colors shadow-md flex-shrink-0">
                     <Send size={18} className="ltr:rotate-0 rtl:rotate-180"/>

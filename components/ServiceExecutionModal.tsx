@@ -1,5 +1,6 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Printer, Volume2, Copy, Check, FileSignature } from 'lucide-react';
+import { X, File, Loader2, Printer, Copy, Check } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -38,25 +39,14 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [result, setResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isFormatting, setIsFormatting] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
   
   useEffect(() => {
       setOutputLanguage(language);
   }, [language]);
-
-  useEffect(() => {
-    // Cleanup speech synthesis on component unmount or modal close
-    return () => {
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-        }
-    };
-  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -97,11 +87,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     setIsLoading(true);
     setResult('');
     setRetryMessage('');
-
-    if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-        setIsSpeaking(false);
-    }
 
     const prompt = constructPrompt();
     const fileInput = service.formInputs.find(i => i.type === 'file');
@@ -166,10 +151,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     setResult('');
     setIsLoading(false);
     setRetryMessage('');
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
     onClose();
   }
 
@@ -208,83 +189,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     }
   };
 
-  const handleListen = () => {
-    if (!result) return;
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      const utterance = new SpeechSynthesisUtterance(stripHtml(result));
-      utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';
-      utterance.onend = () => setIsSpeaking(false);
-      speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
-    }
-  };
-
-  const handleFormatAsLetter = async () => {
-    if (!result) return;
-    setIsFormatting(true);
-    if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-        setIsSpeaking(false);
-    }
-
-    const letterFormattingSystemInstructionAR = `أنت مساعد خبير في تنسيق المستندات القانونية. مهمتك هي أخذ النص المقدم وتحويله إلى مستند احترافي جاهز للطباعة على ورق الشركة الرسمي.
-يجب عليك **دائمًا** استخدام قالب HTML التالي فقط. لا تضف أي نص خارج القالب. لا تضف أي معلومات ترويسة أو خاتمة (مثل اسم المرسل أو المستلم).
-
-<section style="font-family: 'Calibri', 'Noto Naskh Arabic', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: rtl; text-align: right;">
-  <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">الموضوع: [ضع عنواناً مناسباً للمحتوى هنا]</h2>
-  <div style="font-size: 1.1rem; color: #333;">
-    ${stripHtml(result)}
-  </div>
-</section>
-
-مهمتك هي فقط وضع عنوان مناسب ودمج النص المقدم في القالب.`;
-
-    const letterFormattingSystemInstructionEN = `You are an expert legal document formatter. Your task is to take the provided text and format it into a professional document ready for printing on official company letterhead.
-You **must always** use the following HTML template only. Do not add any text outside the template. Do not add any letterhead or signature information (like sender or recipient names).
-
-<section style="font-family: 'Calibri', 'Arial', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: ltr; text-align: left;">
-  <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">Subject: [Insert a suitable subject for the content here]</h2>
-  <div style="font-size: 1.1rem; color: #333;">
-    ${stripHtml(result)}
-  </div>
-</section>
-
-Your only job is to provide a suitable subject line and integrate the provided text into the template.`;
-
-    const prompt = `Please format the following text professionally within the provided HTML structure. Add a suitable subject line. Original text is enclosed in triple quotes. """${stripHtml(result)}"""`;
-
-    try {
-        const response = await runGemini(
-            'gemini-2.5-flash',
-            prompt,
-            undefined,
-            undefined,
-            {
-                systemInstruction: outputLanguage === Language.AR ? letterFormattingSystemInstructionAR : letterFormattingSystemInstructionEN,
-            }
-        );
-        setResult(response.text);
-    } catch (error) {
-        console.error("Error formatting as letter:", error);
-        let errorMessage = (error as Error).message;
-        if (errorMessage.includes('QUOTA_EXHAUSTED')) {
-             errorMessage = t('quotaExhaustedMessage');
-        }
-        setResult(`${t('serviceSavedError')}: ${errorMessage}`);
-    } finally {
-        setIsFormatting(false);
-    }
-  };
-
   const handleClear = () => {
     setResult('');
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
   };
 
   if (!isOpen || !service) return null;
@@ -308,11 +214,11 @@ Your only job is to provide a suitable subject line and integrate the provided t
                         {service.formInputs.map(input => (
                             <div key={input.name}>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{input.label[language]}</label>
-                            {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />}
-                            {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />}
-                            {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" />}
+                            {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
+                            {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
+                            {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
                             {input.type === 'select' && (
-                                <select name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
+                                <select name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600">
                                 <option value="">{`Select ${input.label[language]}`}</option>
                                 {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                 </select>
@@ -336,7 +242,7 @@ Your only job is to provide a suitable subject line and integrate the provided t
                     </div>
                     
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-                        <button type="submit" disabled={isLoading || isFormatting} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                        <button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
                             {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('executeTask')}
                         </button>
@@ -397,7 +303,7 @@ Your only job is to provide a suitable subject line and integrate the provided t
 
             {/* Result Section */}
             <div className="lg:col-span-2 bg-[#fcfaf6] dark:bg-slate-900 rounded-lg flex flex-col">
-              {(isLoading || isFormatting) ? (
+              {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full">
                       <Loader2 className="animate-spin text-primary-500" size={32}/>
                       <p className="mt-2 text-gray-500 text-center">{retryMessage || t('generatingResponse')}</p>
@@ -406,10 +312,6 @@ Your only job is to provide a suitable subject line and integrate the provided t
                  <div className="flex flex-col w-full h-full">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
                         <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600 dark:text-gray-300">
-                             <button onClick={handleListen} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
-                                <Volume2 size={16} />
-                                <span className="hidden sm:inline">{isSpeaking ? t('stop') : t('listen')}</span>
-                            </button>
                              <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                                 <span className="hidden sm:inline">{isCopied ? t('copied') : t('copy')}</span>
@@ -417,10 +319,6 @@ Your only job is to provide a suitable subject line and integrate the provided t
                             <button onClick={handlePrint} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
                                 <Printer size={16} />
                                 <span className="hidden sm:inline">{t('print')}</span>
-                            </button>
-                            <button onClick={handleFormatAsLetter} disabled={isFormatting || isLoading} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                {isFormatting ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />}
-                                <span className="hidden sm:inline">{t('formatAsLetter')}</span>
                             </button>
                         </div>
                         <div className="flex items-center gap-2">

@@ -1,5 +1,38 @@
 
-import { Service } from '../types';
+import { Service, Category } from '../types';
+
+export const seedCategories: Category[] = [
+    {
+        id: 'litigation-and-pleadings',
+        title: { en: 'Litigation & Pleadings', ar: 'التقاضي والمرافعات' },
+        icon: 'Gavel',
+        order: 1
+    },
+    {
+        id: 'specialized-consultations',
+        title: { en: 'Specialized Consultations', ar: 'الاستشارات المتخصصة' },
+        icon: 'FileText',
+        order: 2
+    },
+    {
+        id: 'investigations-and-criminal',
+        title: { en: 'Investigations & Criminal', ar: 'التحقيقات والجنايات' },
+        icon: 'Search',
+        order: 3
+    },
+    {
+        id: 'corporate-and-compliance',
+        title: { en: 'Corporate & Compliance', ar: 'الشركات والامتثال' },
+        icon: 'Building2',
+        order: 4
+    },
+    {
+        id: 'creative-services',
+        title: { en: 'Creative Services', ar: 'الخدمات الإبداعية' },
+        icon: 'Wand2',
+        order: 5
+    }
+];
 
 export const litigationSeedServices: Service[] = [
   // 1) Civil & Commercial Litigation
@@ -1747,7 +1780,6 @@ export const investigationsAndCriminalSeedServices: Service[] = [
         subCategory: { en: "Corporate & Institutional Investigations", ar: "التحقيقات المهنية والمؤسسية" },
         icon: "ScanEye",
         geminiModel: "gemini-2.5-flash",
-        // FIX: Added missing formInputs and usageCount properties to complete the Service object.
         formInputs: [{ name: "institutional_details", label: { en: "Institution Details and Area of Concern", ar: "تفاصيل المؤسسة ومجال الاهتمام" }, type: "textarea" }],
         usageCount: 0
     },
@@ -1880,7 +1912,7 @@ export const corporateAndComplianceSeedServices: Service[] = [
       category: 'corporate-and-compliance',
       subCategory: { en: 'Legal Compliance & Governance', ar: 'الامتثال القانوني والحوكمة' },
       icon: 'ShieldCheck',
-      geminiModel: 'gemini-2.5-flash',
+      geminiModel: 'gemini-3-pro-preview',
       formInputs: [
         { name: 'company_documents', label: { en: 'Upload Company Policies & Procedures', ar: 'رفع سياسات وإجراءات الشركة' }, type: 'file' }
       ],

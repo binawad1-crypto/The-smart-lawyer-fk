@@ -132,8 +132,8 @@ export const generateServiceConfigWithAI = async (prompt: string, schema: any): 
     try {
         return await withRetry(() => 
             ai.models.generateContent({
-                // Switch to gemini-2.5-flash for better quota management and speed
-                model: 'gemini-2.5-flash',
+                // FIX: Updated deprecated 'gemini-2.5-pro' to 'gemini-3-pro-preview' for complex text tasks.
+                model: 'gemini-3-pro-preview',
                 // FIX: The new API expects contents to be a structured object.
                 contents: { parts: [{ text: prompt }] },
                 config: {
