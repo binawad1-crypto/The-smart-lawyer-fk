@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Printer, Volume2, Copy, Check } from 'lucide-react';
+import { X, File, Loader2, Printer, Volume2, Copy, Check, FileSignature } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -13,122 +13,24 @@ interface ServiceExecutionModalProps {
   service: Service | null;
 }
 
-const professionalOutputInstructionSystem = `أنت مساعد قانوني خبير. مهمتك هي تحليل طلب المستخدم وتقديم إجابة احترافية ودقيقة.
-يجب عليك **دائمًا** تنسيق إجابتك النهائية باستخدام قالب HTML التالي فقط. لا تكتب أي نص أو تعليقات خارج وسوم HTML.
-
-أولاً، قم بتنفيذ المهمة المطلوبة في طلب المستخدم.
-ثانياً، ضع نتائج تحليلك وإجابتك داخل القالب التالي:
-
-<section style="
-  font-family: 'Calibri', 'Noto Naskh Arabic', sans-serif;
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  padding: 22px;
-  border-radius: 14px;
-  line-height: 1.8;
-  direction: rtl;
-  text-align: right;
-">
-  <h2 style="
-    font-size: 1.45rem;
-    margin-bottom: 10px;
-    color: #222;
-    font-weight: 700;
-  ">[ضع هنا عنواناً مناسباً للنتيجة، مثل "تحليل المستند" أو "ملخص القضية"]</h2>
-
-  <p style="
-    font-size: 1.05rem;
-    color: #555;
-    margin-bottom: 14px;
-    font-weight: 700;
-  ">[ضع هنا مقدمة موجزة عن النتائج التي توصلت إليها]</p>
-
-  <div style="font-size: 1rem; color: #333; margin-bottom: 18px; font-weight: 400;">
-    <!-- ابدأ بوضع المحتوى الرئيسي هنا. يمكنك استخدام فقرات <p> وقوائم <ul> بحرية -->
-    <p>[هنا تضع الفقرة الأولى من التحليل أو الرد...]</p>
-    <p>[وهنا الفقرة الثانية إذا لزم الأمر...]</p>
-    
-    <ul style="padding-right: 20px; margin-top: 15px; margin-bottom: 15px;">
-        <li style="margin-bottom: 6px;">• [النقطة الأولى من التحليل]</li>
-        <li style="margin-bottom: 6px;">• [النقطة الثانية من التحليل]</li>
-        <li style="margin-bottom: 6px;">• [النقطة الثالثة، وهكذا...]</li>
-    </ul>
-    
-    <p>[فقرة ختامية أو توصيات.]</p>
-  </div>
-
-  <p style="
-    font-size: 0.95rem;
-    color: #444;
-    margin-top: 10px;
-    font-weight: 400;
-  ">💡 ملاحظة: تم إنشاء هذا المستند بواسطة المساعد الذكي ويجب مراجعته من قبل متخصص.</p>
-</section>
+const professionalOutputInstructionSystem = `أنت مساعد قانوني خبير. مهمتك هي تحليل طلب المستخدم وتقديم إجابة احترافية ودقيقة ومنسقة بشكل جيد.
 
 التعليمات الهامة:
-- مهمتك الأساسية هي الإجابة على طلب المستخدم. القالب هو فقط لتنسيق تلك الإجابة.
+- مهمتك الأساسية هي الإجابة على طلب المستخدم بشكل شامل.
+- قم بتنظيم إجابتك باستخدام العناوين والنقاط والقوائم لجعلها سهلة القراءة والفهم.
+- لا تستخدم أي وسوم HTML في إجابتك. قدم الرد كنص عادي منسق.
 - لا تصف الخدمة، بل قم بتنفيذها.
-- استبدل كل المحتوى الموجود بين القوسين \`[...]\` بالنتائج الفعلية لتحليلك.
-- التزم تماماً بتقديم المخرج بصيغة HTML فقط.
+- أنهِ إجابتك **دائمًا** بالملاحظة التالية في سطر منفصل: "💡 ملاحظة: تم إنشاء هذا المستند بواسطة المساعد الذكي ويجب مراجعته من قبل متخصص."
 `;
 
-const professionalOutputInstructionSystemEN = `You are an expert legal assistant. Your task is to analyze the user's request and provide a professional, accurate answer.
-You **must always** format your final answer using only the following HTML template. Do not write any text or comments outside the HTML tags.
-
-First, perform the task requested by the user.
-Second, place your analysis and answer inside the following template:
-
-<section style="
-  font-family: 'Calibri', 'Arial', sans-serif;
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  padding: 22px;
-  border-radius: 14px;
-  line-height: 1.8;
-  direction: ltr;
-  text-align: left;
-">
-  <h2 style="
-    font-size: 1.45rem;
-    margin-bottom: 10px;
-    color: #222;
-    font-weight: 700;
-  ">[Insert a suitable title for the result here, e.g., "Document Analysis" or "Case Summary"]</h2>
-
-  <p style="
-    font-size: 1.05rem;
-    color: #555;
-    margin-bottom: 14px;
-    font-weight: 700;
-  ">[Insert a brief introduction to your findings here]</p>
-
-  <div style="font-size: 1rem; color: #333; margin-bottom: 18px; font-weight: 400;">
-    <!-- Start placing the main content here. You can use <p> paragraphs and <ul> lists freely -->
-    <p>[Place the first paragraph of your analysis or response here...]</p>
-    <p>[And the second paragraph if needed...]</p>
-    
-    <ul style="padding-left: 20px; margin-top: 15px; margin-bottom: 15px;">
-        <li style="margin-bottom: 6px;">• [First point of analysis]</li>
-        <li style="margin-bottom: 6px;">• [Second point of analysis]</li>
-        <li style="margin-bottom: 6px;">• [Third point, and so on...]</li>
-    </ul>
-    
-    <p>[A concluding paragraph or recommendations.]</p>
-  </div>
-
-  <p style="
-    font-size: 0.95rem;
-    color: #444;
-    margin-top: 10px;
-    font-weight: 400;
-  ">💡 Note: This document was generated by the Smart Assistant and should be reviewed by a qualified professional.</p>
-</section>
+const professionalOutputInstructionSystemEN = `You are an expert legal assistant. Your task is to analyze the user's request and provide a professional, accurate, and well-formatted answer.
 
 IMPORTANT INSTRUCTIONS:
-- Your primary task is to answer the user's request. The template is only for formatting that answer.
+- Your primary task is to comprehensively answer the user's request.
+- Structure your response using headings, bullet points, and lists to make it easy to read and understand.
+- Do not use any HTML tags in your response. Provide the response as formatted plain text.
 - Do not describe the service; execute it.
-- Replace all content within the brackets \`[...]\` with the actual results of your analysis.
-- Strictly adhere to providing the output in HTML format only.
+- **Always** end your response with the following note on a new line: "💡 Note: This document was generated by the Smart Assistant and should be reviewed by a qualified professional."
 `;
 
 
@@ -140,6 +42,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [result, setResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isFormatting, setIsFormatting] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -320,6 +223,59 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     }
   };
 
+  const handleFormatAsLetter = async () => {
+    if (!result) return;
+    setIsFormatting(true);
+    if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+    }
+
+    const letterFormattingSystemInstructionAR = `أنت مساعد خبير في تنسيق المستندات القانونية. مهمتك هي أخذ النص المقدم وتحويله إلى مستند احترافي جاهز للطباعة على ورق الشركة الرسمي.
+يجب عليك **دائمًا** استخدام قالب HTML التالي فقط. لا تضف أي نص خارج القالب. لا تضف أي معلومات ترويسة أو خاتمة (مثل اسم المرسل أو المستلم).
+
+<section style="font-family: 'Calibri', 'Noto Naskh Arabic', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: rtl; text-align: right;">
+  <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">الموضوع: [ضع عنواناً مناسباً للمحتوى هنا]</h2>
+  <div style="font-size: 1.1rem; color: #333;">
+    ${stripHtml(result)}
+  </div>
+</section>
+
+مهمتك هي فقط وضع عنوان مناسب ودمج النص المقدم في القالب.`;
+
+    const letterFormattingSystemInstructionEN = `You are an expert legal document formatter. Your task is to take the provided text and format it into a professional document ready for printing on official company letterhead.
+You **must always** use the following HTML template only. Do not add any text outside the template. Do not add any letterhead or signature information (like sender or recipient names).
+
+<section style="font-family: 'Calibri', 'Arial', sans-serif; background: #fafafa; border: 1px solid #e5e5e5; padding: 22px; padding-top: 80px; padding-bottom: 80px; border-radius: 14px; line-height: 1.8; direction: ltr; text-align: left;">
+  <h2 style="font-size: 1.3rem; margin-bottom: 25px; color: #222; font-weight: 700; text-align: center;">Subject: [Insert a suitable subject for the content here]</h2>
+  <div style="font-size: 1.1rem; color: #333;">
+    ${stripHtml(result)}
+  </div>
+</section>
+
+Your only job is to provide a suitable subject line and integrate the provided text into the template.`;
+
+    const prompt = `Please format the following text professionally within the provided HTML structure. Add a suitable subject line. Original text is enclosed in triple quotes. """${stripHtml(result)}"""`;
+
+    try {
+        const response = await runGemini(
+            'gemini-2.5-flash',
+            prompt,
+            undefined,
+            undefined,
+            {
+                systemInstruction: outputLanguage === Language.AR ? letterFormattingSystemInstructionAR : letterFormattingSystemInstructionEN,
+            }
+        );
+        setResult(response.text);
+    } catch (error) {
+        console.error("Error formatting as letter:", error);
+        setResult(`${t('serviceSavedError')}: ${(error as Error).message}`);
+    } finally {
+        setIsFormatting(false);
+    }
+  };
+
   const handleClear = () => {
     setResult('');
     if (speechSynthesis.speaking) {
@@ -377,7 +333,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                     </div>
                     
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-                        <button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                        <button type="submit" disabled={isLoading || isFormatting} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
                             {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('executeTask')}
                         </button>
@@ -437,8 +393,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
 
             {/* Result Section */}
-            <div className="lg:col-span-2 bg-gray-50 dark:bg-slate-900/50 rounded-lg flex flex-col">
-              {isLoading ? (
+            <div className="lg:col-span-2 bg-[#fcfaf6] dark:bg-slate-900 rounded-lg flex flex-col">
+              {(isLoading || isFormatting) ? (
                   <div className="flex flex-col items-center justify-center h-full">
                       <Loader2 className="animate-spin text-primary-500" size={32}/>
                       <p className="mt-2 text-gray-500 text-center">{retryMessage || t('generatingResponse')}</p>
@@ -459,6 +415,10 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                                 <Printer size={16} />
                                 <span className="hidden sm:inline">{t('print')}</span>
                             </button>
+                            <button onClick={handleFormatAsLetter} disabled={isFormatting || isLoading} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isFormatting ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />}
+                                <span className="hidden sm:inline">{t('formatAsLetter')}</span>
+                            </button>
                         </div>
                         <div className="flex items-center gap-2">
                              <button onClick={handleClear} className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20">
@@ -472,7 +432,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         ) : (
                              <pre 
                                 className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
-                                style={{ fontSize: '16px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                style={{ fontSize: '14px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
                             >
                                 {result}
                             </pre>

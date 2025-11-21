@@ -2,7 +2,7 @@
 import React from 'react';
 import { Translations, Plan } from './types';
 import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
-    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3 } from 'lucide-react';
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -18,7 +18,7 @@ export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1
 // FIX: Export iconMap for use in components
 export const iconMap: { [key: string]: React.ComponentType<any> } = {
     FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
-    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature
 };
 
 // FIX: Export iconNames for use in AdminPage AI generator
@@ -80,6 +80,7 @@ export const translations: Translations = {
     default: { en: 'Default', ar: 'افتراضي' },
     short: { en: 'Short', ar: 'قصير' },
     medium: { en: 'Medium', ar: 'متوسط' },
+    formatAsLetter: { en: 'Format as Letter', ar: 'تنسيق كخطاب' },
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
