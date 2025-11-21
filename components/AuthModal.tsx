@@ -64,6 +64,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = 'l
 
   const handleGoogleLogin = async () => {
       setError('');
+      // ملاحظة للمطور: يجب تفعيل تسجيل الدخول عبر جوجل في لوحة تحكم Firebase.
+      // يتم وضع "معرف عميل الويب" (Web client ID) الذي حصلت عليه من Google Cloud هناك.
+      // سيعمل الكود أدناه تلقائيًا بعد إتمام هذه الإعدادات.
       const provider = new GoogleAuthProvider();
       try {
           const result = await signInWithPopup(auth, provider);
