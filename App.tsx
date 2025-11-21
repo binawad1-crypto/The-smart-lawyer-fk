@@ -16,6 +16,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import PixelTracker from './components/PixelTracker';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import SupportPanel from './components/SupportModal';
+import ChatWidget from './components/ChatWidget';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support';
 
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [initialAuthView, setInitialAuthView] = useState<'login' | 'signup'>('login');
   const [view, setView] = useState<View>('dashboard');
+  const [isChatWidgetOpen, setIsChatWidgetOpen] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -169,7 +171,12 @@ const App: React.FC = () => {
         <>
           <MobileBottomNav 
             currentView={view} 
-            onNavigate={handleNavigate} 
+            onNavigate={handleNavigate}
+            onAssistantClick={() => setIsChatWidgetOpen(true)} 
+          />
+          <ChatWidget 
+            isOpen={isChatWidgetOpen}
+            onClose={() => setIsChatWidgetOpen(false)}
           />
         </>
       )}

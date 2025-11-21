@@ -177,6 +177,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isOutputExpanded, setIsOutputExpanded] = useState(false);
+    const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
     const handleToggleServices = () => {
         const nextState = !isExpanded;
@@ -447,6 +448,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry, geminiConfig);
             setResult(response.text);
+            if (response.text) {
+                setIsResultModalOpen(true);
+            }
 
             if (currentUser && !currentUser.isAdmin) {
                 const tokensConsumed = response.usageMetadata?.totalTokens || 0;
@@ -552,14 +556,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             const isSuccess = !!response.text;
     
-            if (isSuccess && selectedService?.id) {
-                try {
-                    const serviceRef = doc(db, 'services', selectedService.id);
-                    await updateDoc(serviceRef, {
-                        usageCount: increment(1)
-                    });
-                } catch (err) {
-                    console.error("Failed to update service usage count:", err);
+            if (isSuccess) {
+                setIsResultModalOpen(true);
+                if (selectedService?.id) {
+                    try {
+                        const serviceRef = doc(db, 'services', selectedService.id);
+                        await updateDoc(serviceRef, {
+                            usageCount: increment(1)
+                        });
+                    } catch (err) {
+                        console.error("Failed to update service usage count:", err);
+                    }
                 }
 
                 if (currentUser && !currentUser.isAdmin) {
@@ -1043,6 +1050,58 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
         </div>
     );
+    
+    const renderResultModal = () => (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 lg:hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]">
+                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 justify-between shadow-sm relative z-10">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-400"/>
+                        {t('results')}
+                    </h3>
+                    <div className="flex items-center gap-1">
+                        <button onClick={handleListen} title={isSpeaking ? t('stop') : t('listen')} className={`p-1.5 rounded transition-colors ${isSpeaking ? 'text-green-400 bg-white/10' : 'text-teal-100 hover:bg-white/10'}`}><Volume2 size={16} /></button>
+                        <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
+                        <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                        <div className="w-px h-4 bg-white/20 mx-1"></div>
+                        <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
+                        <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                        <div className="w-px h-4 bg-white/20 mx-1"></div>
+                        <button onClick={() => { setIsResultModalOpen(false); if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); } }} title={t('cancel')} className="p-1.5 rounded text-red-300 hover:bg-white/10 hover:text-red-400 transition-colors"><X size={16} /></button>
+                    </div>
+                </div>
+
+                <div className="flex-grow overflow-auto custom-scrollbar bg-white dark:bg-slate-900 relative p-4">
+                    {isGenerating ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                           <Loader2 className="animate-spin text-teal-600" size={40} />
+                            <p className="text-gray-500 text-center font-medium mt-4">{retryMessage || t('generatingResponse')}</p>
+                        </div>
+                    ) : result ? (
+                        <div 
+                            className="max-w-none transition-transform duration-200 ease-out"
+                            style={{ transform: `scale(${outputScale})`, transformOrigin: dir === 'rtl' ? 'top right' : 'top left' }}
+                        >
+                            {result.trim().startsWith('<section') ? (
+                                <div dangerouslySetInnerHTML={{ __html: result }} />
+                            ) : (
+                                <pre 
+                                    className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
+                                    style={{ fontSize: '18px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                >
+                                    {result}
+                                </pre>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
+                            <p className="text-gray-400 font-medium text-sm">{t('resultPlaceholder')}</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8">
@@ -1064,11 +1123,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             : isOutputExpanded
                             ? 'lg:col-span-3'
                             : 'lg:col-span-1'
-                    } h-full transition-all duration-300`}>
+                    } h-full transition-all duration-300 hidden lg:flex`}>
                         {renderOutputPanel()}
                     </div>
                 </div>
             </div>
+            {isResultModalOpen && renderResultModal()}
         </div>
     );
 };
