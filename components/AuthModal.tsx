@@ -32,7 +32,7 @@ const getFirebaseAuthErrorMessage = (errorCode: string): string => {
     case 'auth/operation-not-allowed':
         return 'طريقة الدخول هذه غير مفعلة. يرجى تفعيل مزود الدخول في إعدادات Firebase.';
     case 'auth/unauthorized-domain':
-        return 'هذا النطاق (Domain) غير مصرح له باستخدام تسجيل الدخول. يرجى إضافته في إعدادات Firebase Authentication.';
+        return `النطاق الحالي (${window.location.hostname}) غير مصرح له. يرجى إضافته في Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
     default:
       console.error(`Unhandled Firebase Auth Error: ${errorCode}`);
       return `حدث خطأ غير متوقع (${errorCode}). يرجى المحاولة مرة أخرى.`;

@@ -1,7 +1,4 @@
 
-
-
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 // Ensure the API key is available in the environment variables
@@ -31,6 +28,11 @@ const withRetry = async <T>(
       console.error(`Gemini API call attempt ${attempt + 1} failed:`, error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       
+      // Check for 429 (Quota Exceeded) specifically. 
+      // Usually, retrying immediately on quota exceeded (daily limit) is futile, 
+      // but if it's rate limiting (RPM), a backoff might work. 
+      // However, typically 429 from Gemini means "Resource Exhausted" which is often the hard limit.
+      // We will NOT retry 429 to avoid spamming the API when it's already rejecting us.
       const isRetryable = errorMessage.includes('503') || 
                           errorMessage.toLowerCase().includes('unavailable') || 
                           errorMessage.toLowerCase().includes('overloaded');
@@ -48,7 +50,7 @@ const withRetry = async <T>(
           break; // Exit loop to throw last error
         }
       } else {
-        // Not a retryable error, break and throw immediately
+        // Not a retryable error (like 400, 401, 429), break and throw immediately
         break;
       }
     }
@@ -71,6 +73,21 @@ const fileToGenerativePart = async (file: File) => {
       mimeType: file.type,
     },
   };
+};
+
+// Helper to handle and format errors consistently
+const handleGeminiError = (error: unknown): never => {
+    console.error("Gemini API Error:", error);
+    if (error instanceof Error) {
+        const msg = error.message;
+        // Handle Quota Exhausted (429) specifically
+        if (msg.includes('429') || msg.includes('Resource has been exhausted') || msg.includes('RESOURCE_EXHAUSTED')) {
+             // Throwing a specific key/code that consumers can translate
+             throw new Error("QUOTA_EXHAUSTED");
+        }
+        throw new Error(`AI Service Error: ${msg}`);
+    }
+    throw new Error("An unknown error occurred with the AI service.");
 };
 
 export const runGemini = async (
@@ -102,11 +119,7 @@ export const runGemini = async (
 
     return response;
   } catch (error) {
-    console.error("Error calling Gemini API after all retries:", error);
-    if (error instanceof Error) {
-        throw new Error(`An error occurred: ${error.message}`);
-    }
-    throw new Error("An unknown error occurred while contacting the Gemini API.");
+    handleGeminiError(error);
   }
 };
 
@@ -116,18 +129,22 @@ export const generateServiceConfigWithAI = async (prompt: string, schema: any): 
         throw new Error("API_KEY for Gemini is not set.");
     }
 
-    return withRetry(() => 
-        ai.models.generateContent({
-            // FIX: Updated deprecated 'gemini-2.5-pro' to 'gemini-3-pro-preview' for complex text tasks.
-            model: 'gemini-3-pro-preview',
-            // FIX: The new API expects contents to be a structured object.
-            contents: { parts: [{ text: prompt }] },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            },
-        })
-    );
+    try {
+        return await withRetry(() => 
+            ai.models.generateContent({
+                // Switch to gemini-2.5-flash for better quota management and speed
+                model: 'gemini-2.5-flash',
+                // FIX: The new API expects contents to be a structured object.
+                contents: { parts: [{ text: prompt }] },
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                },
+            })
+        );
+    } catch (error) {
+        handleGeminiError(error);
+    }
 };
 
 export const generateCategoryConfigWithAI = async (prompt: string, schema: any): Promise<GenerateContentResponse> => {
@@ -135,14 +152,18 @@ export const generateCategoryConfigWithAI = async (prompt: string, schema: any):
         throw new Error("API_KEY for Gemini is not set.");
     }
 
-    return withRetry(() => 
-        ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: { parts: [{ text: prompt }] },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            },
-        })
-    );
+    try {
+        return await withRetry(() => 
+            ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: { parts: [{ text: prompt }] },
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                },
+            })
+        );
+    } catch (error) {
+        handleGeminiError(error);
+    }
 };

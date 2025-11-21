@@ -81,6 +81,10 @@ export const translations: Translations = {
     short: { en: 'Short', ar: 'قصير' },
     medium: { en: 'Medium', ar: 'متوسط' },
     formatAsLetter: { en: 'Format as Letter', ar: 'تنسيق كخطاب' },
+    quotaExhaustedMessage: { 
+        en: 'Service unavailable due to high traffic or quota limits. Please try again later or check your billing status.', 
+        ar: 'الخدمة غير متاحة حالياً بسبب ضغط الاستخدام أو نفاد الحصة. يرجى المحاولة لاحقاً أو التحقق من حالة الفوترة.' 
+    },
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },

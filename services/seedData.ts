@@ -1,3 +1,4 @@
+
 import { Service } from '../types';
 
 export const litigationSeedServices: Service[] = [
@@ -1879,7 +1880,7 @@ export const corporateAndComplianceSeedServices: Service[] = [
       category: 'corporate-and-compliance',
       subCategory: { en: 'Legal Compliance & Governance', ar: 'الامتثال القانوني والحوكمة' },
       icon: 'ShieldCheck',
-      geminiModel: 'gemini-3-pro-preview',
+      geminiModel: 'gemini-2.5-flash',
       formInputs: [
         { name: 'company_documents', label: { en: 'Upload Company Policies & Procedures', ar: 'رفع سياسات وإجراءات الشركة' }, type: 'file' }
       ],

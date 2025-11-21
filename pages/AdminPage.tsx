@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -444,7 +445,7 @@ const PlanForm: React.FC<{
 };
 
 
-const AdminPage = () => {
+export default function AdminPage() {
     const { t, language } = useLanguage();
     const { currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
@@ -508,13 +509,11 @@ const AdminPage = () => {
     const [isGeneratingLanding, setIsGeneratingLanding] = useState(false);
 
     // Support System State
-    const [supportView, setSupportView] = useState<'list' | 'chat' | 'settings'>('list');
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [messages, setMessages] = useState<TicketMessage[]>([]);
     const [replyMessage, setReplyMessage] = useState('');
     const [loadingTickets, setLoadingTickets] = useState(false);
-    const [newTicketType, setNewTicketType] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Notification System State
@@ -557,7 +556,6 @@ const AdminPage = () => {
             const snapshot = await getDocs(q);
             const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plan));
             setPlans(plansData);
-        // FIX: Replaced `catch (err) => {` with `catch (err) {` to fix syntax error.
         } catch (err) {
             console.error("Error fetching plans: ", err);
             setPlanError(t('fetchPlansError'));
@@ -703,7 +701,7 @@ const AdminPage = () => {
             fetchPlans();
         } else if (activeTab === 'plans') {
             fetchPlans();
-        } else if (activeTab === 'settings' || activeTab === 'landing' || activeTab === 'marketing' || activeTab === 'support') {
+        } else if (activeTab === 'settings' || activeTab === 'marketing' || activeTab === 'support') {
             fetchSiteSettings();
         } else if (activeTab === 'notifications') {
             fetchNotifications();
@@ -744,6 +742,7 @@ const AdminPage = () => {
         const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
             const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TicketMessage));
             setMessages(fetchedMessages);
+            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         });
 
         // Mark ticket as read by admin if it was unread
@@ -857,7 +856,6 @@ If the service name was "Review a real estate lease", the output should be this 
 Now, based on the service name **"${aiServiceName}"**, generate a new JSON object following the same structure and adhering strictly to all rules.
 
 **DETAILS TO GENERATE:**
-- **systemInstruction_en / systemInstruction_ar:** A detailed instruction telling the AI its role for this specific service.
 - **category:** Must be one of: ${categoryIds.length > 0 ? categoryIds.join(', ') : Object.values(ServiceCategory).join(', ')}.
 - **icon:** Choose the most appropriate icon name. The value must be a valid icon name provided in the schema definition.
 
@@ -898,7 +896,11 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
         } catch (error) {
             console.error("Error generating service with AI:", error);
-            alert(t('generateServiceError'));
+            let msg = t('generateServiceError');
+            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
+                msg = t('quotaExhaustedMessage');
+            }
+            alert(msg);
         } finally {
             setIsGenerating(false);
         }
@@ -921,7 +923,6 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }
         setIsGeneratingLanding(true);
         try {
-            // ... (Schema remains the same)
             const schema = {
                 type: Type.OBJECT,
                 properties: {
@@ -1001,7 +1002,11 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
         } catch (error) {
             console.error("Error generating landing page:", error);
-            alert(t('landingGenerateFailed'));
+            let msg = t('landingGenerateFailed');
+            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
+                msg = t('quotaExhaustedMessage');
+            }
+            alert(msg);
         } finally {
             setIsGeneratingLanding(false);
         }
@@ -1468,7 +1473,11 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
 
         } catch (error) {
             console.error("Error generating category with AI:", error);
-            alert(language === 'ar' ? 'فشل إنشاء القسم بالذكاء الاصطناعي.' : 'Failed to generate category with AI.');
+            let msg = language === 'ar' ? 'فشل إنشاء القسم بالذكاء الاصطناعي.' : 'Failed to generate category with AI.';
+            if (error instanceof Error && error.message.includes('QUOTA_EXHAUSTED')) {
+                msg = t('quotaExhaustedMessage');
+            }
+            alert(msg);
         } finally {
             setIsGeneratingCategory(false);
         }
@@ -1715,8 +1724,9 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                          <div>
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('geminiModel')}</label>
                              <select value={newService.geminiModel} onChange={e => handleServiceInputChange('geminiModel', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                                <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Smarter & Fast - Recommended)</option>
+                                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Cost Effective & Fastest)</option>
+                                <option value="gemini-3-pro-preview">Gemini 3.0 Pro (Highest Intelligence - Complex Tasks)</option>
                             </select>
                         </div>
                     </div>
@@ -1870,183 +1880,144 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {loadingServices ? (
-                                <tr><td colSpan={6} className="text-center py-8"><Loader2 className="animate-spin inline-block text-primary-500"/></td></tr>
+                                <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500" size={32}/></td></tr>
                             ) : filteredServices.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">{t('noServicesFound')}</td></tr>
-                            ) : filteredServices.map(service => (
-                                <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                                     <td className="px-4 py-3">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedServices.includes(service.id)}
-                                            onChange={() => setSelectedServices(prev => prev.includes(service.id) ? prev.filter(id => id !== service.id) : [...prev, service.id])}
-                                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                        />
-                                    </td>
-                                    <td className="px-4 py-3 font-medium dark:text-white">
-                                        <div className="font-cairo">{service.title[language]}</div>
-                                        <div className="text-xs text-gray-400 font-mono">{service.id}</div>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{categoryMap.get(service.category) || service.category}</td>
-                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{service.subCategory[language]}</td>
-                                    <td className="px-4 py-3 text-center font-mono text-primary-600 dark:text-primary-400 font-bold">{service.usageCount || 0}</td>
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleRunClick(service)} className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 p-1.5 rounded" title={t('run')}>
-                                                <Play size={16}/>
-                                            </button>
-                                            <button onClick={() => handleEditServiceClick(service)} className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded" title={t('edit')}>
-                                                <Edit size={16}/>
-                                            </button>
-                                            <button onClick={() => handleDeleteService(service.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded" title={t('delete')}>
-                                                <Trash2 size={16}/>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                <tr><td colSpan={6} className="text-center py-10 text-gray-500">{t('noServicesFound')}</td></tr>
+                            ) : (
+                                filteredServices.map(service => (
+                                    <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedServices.includes(service.id)}
+                                                onChange={() => {
+                                                    if (selectedServices.includes(service.id)) {
+                                                        setSelectedServices(prev => prev.filter(id => id !== service.id));
+                                                    } else {
+                                                        setSelectedServices(prev => [...prev, service.id]);
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{service.title[language]}</td>
+                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{categoryMap.get(service.category) || service.category}</td>
+                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{service.subCategory[language]}</td>
+                                        <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">{service.usageCount || 0}</td>
+                                        <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
+                                            <button onClick={() => handleRunClick(service)} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors" title={t('run')}><Play size={16}/></button>
+                                            <button onClick={() => handleEditServiceClick(service)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors" title={t('edit')}><Edit size={16}/></button>
+                                            <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors" title={t('delete')}><Trash2 size={16}/></button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
-             </div>
+            </div>
+            {isExecutionModalOpen && (
+                <ServiceExecutionModal
+                    isOpen={isExecutionModalOpen}
+                    onClose={() => setIsExecutionModalOpen(false)}
+                    service={selectedService}
+                />
+            )}
         </div>
     );
-    
+
     const renderCategoryManagementContent = () => (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <LayoutGrid className="text-primary-500" /> {t('manageCategories')}
+                <Tag className="text-primary-500" /> {t('manageCategories')}
             </h2>
-
-            <div className="bg-gradient-to-br from-blue-600 to-teal-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
-                 <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
-                    <Wand2 size={150} />
+            
+            {/* AI Category Generator */}
+            <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden mb-6">
+                <div className="absolute right-0 top-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+                    <Tag size={120} />
                 </div>
-                <div className="relative z-10">
-                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
-                        <Wand2 className="text-yellow-300" /> {t('generateWithAI')}
-                    </h3>
-                    <p className="text-blue-100 mb-6 max-w-xl leading-relaxed text-sm opacity-90">{language === 'ar' ? 'صف قسمًا جديدًا (مثال: "قانون الأسرة") وسيقوم الذكاء الاصطناعي بإنشاء الإعدادات الكاملة لك.' : 'Describe a new category (e.g., "Family Law") and the AI will generate the full configuration for you.'}</p>
-                    
-                    <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="flex-grow">
+                        <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
+                            <Wand2 className="text-yellow-300" size={20} /> Create with AI
+                        </h3>
+                        <p className="text-teal-100 text-sm opacity-90">Enter a category name and let AI configure it.</p>
+                    </div>
+                    <div className="flex w-full md:w-auto gap-2">
                         <input 
                             type="text" 
-                            placeholder={language === 'ar' ? 'أدخل اسم القسم، مثال: "قانون الشركات"' : 'Enter category name, e.g., "Corporate Law"'}
+                            placeholder="Category Name (e.g., Family Law)" 
                             value={aiCategoryName}
                             onChange={e => setAiCategoryName(e.target.value)}
-                            className="flex-grow px-4 py-3 rounded-xl border-0 bg-white/20 backdrop-blur-md text-white placeholder-blue-200 focus:ring-2 focus:ring-white/50 outline-none"
+                            className="flex-grow md:w-64 px-4 py-2 rounded-lg border-0 bg-white/20 backdrop-blur-md text-white placeholder-teal-200 focus:ring-2 focus:ring-white/50 outline-none"
                         />
                         <button 
-                            type="button" 
-                            onClick={handleGenerateCategory} 
+                            onClick={handleGenerateCategory}
                             disabled={isGeneratingCategory}
-                            className="bg-white text-blue-700 font-bold py-3 px-6 rounded-xl hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center gap-2"
+                            className="bg-white text-teal-700 font-bold py-2 px-4 rounded-lg hover:bg-teal-50 disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
                         >
-                            {isGeneratingCategory ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
-                            {t('generate')}
+                            {isGeneratingCategory ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
+                            Generate
                         </button>
                     </div>
                 </div>
             </div>
-            
-            <div className="flex justify-end">
-                <button onClick={handleAddNewCategory} className="bg-primary-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-primary-700 transition-colors flex items-center gap-2 shadow-lg shadow-primary-600/20">
-                    <Plus size={18} /> {t('addNewCategory')}
-                </button>
+
+            <button onClick={handleAddNewCategory} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
+                <Plus size={18} /> {t('add')}
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map(cat => (
+                    <div key={cat.id} className="p-4 border rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300">
+                                {iconMap[cat.icon] ? React.createElement(iconMap[cat.icon], { size: 20 }) : <Tag size={20} />}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-800 dark:text-white">{cat.title[language]}</h3>
+                                <p className="text-xs text-gray-500">ID: {cat.id}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => handleEditCategoryClick(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"><Edit size={16} /></button>
+                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"><Trash2 size={16} /></button>
+                        </div>
+                    </div>
+                ))}
             </div>
+            {showCategoryForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md">
+                        <h3 className="text-lg font-bold mb-4 dark:text-white">{t('editCategory')}</h3>
+                        <form onSubmit={handleSaveCategory} className="space-y-4">
+                            <input type="text" placeholder="ID" value={editingCategory?.id || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, id: e.target.value}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" disabled={isEditingCategory} />
+                            <input type="text" placeholder="Title (EN)" value={editingCategory?.title.en || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, title: {...prev.title, en: e.target.value}}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
+                            <input type="text" placeholder="Title (AR)" value={editingCategory?.title.ar || ''} onChange={e => setEditingCategory(prev => prev ? ({...prev, title: {...prev.title, ar: e.target.value}}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
+                            
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{t('icon')}</label>
+                                <select 
+                                    value={editingCategory?.icon || 'FileText'} 
+                                    onChange={e => setEditingCategory(prev => prev ? ({...prev, icon: e.target.value}) : null)} 
+                                    className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                                >
+                                    {iconNames.map(iconName => (
+                                        <option key={iconName} value={iconName}>{iconName}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-            {showCategoryForm && editingCategory && (
-                <form onSubmit={handleSaveCategory} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 mb-8 animate-fade-in-down">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditingCategory ? t('editCategory') : t('addNewCategory')}</h3>
-                    
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('categoryId')}</label>
-                        <input type="text" value={editingCategory.id} onChange={e => setEditingCategory({...editingCategory, id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required disabled={isEditingCategory}/>
+                            <input type="number" placeholder="Order" value={editingCategory?.order || 0} onChange={e => setEditingCategory(prev => prev ? ({...prev, order: Number(e.target.value)}) : null)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
+                            
+                            <div className="flex justify-end gap-2 mt-4">
+                                <button type="button" onClick={() => setShowCategoryForm(false)} className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 dark:text-white">{t('cancel')}</button>
+                                <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white">{t('save')}</button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('titleEnPlaceholder')}</label>
-                            <input type="text" value={editingCategory.title.en} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, en: e.target.value}})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('titleArPlaceholder')}</label>
-                            <input type="text" value={editingCategory.title.ar} onChange={e => setEditingCategory({...editingCategory, title: {...editingCategory.title, ar: e.target.value}})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500 text-right" required />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('icon')}</label>
-                            <select value={editingCategory.icon} onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
-                                {iconNames.map(iconName => (
-                                    <option key={iconName} value={iconName}>{iconName}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('order')}</label>
-                            <input type="number" value={editingCategory.order} onChange={e => setEditingCategory({...editingCategory, order: parseInt(e.target.value, 10) || 0})} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-primary-500" required />
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <button type="submit" className="px-8 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 flex items-center justify-center shadow-lg shadow-primary-600/20 transition-all">
-                            {t('save')}
-                        </button>
-                        <button type="button" onClick={() => { setShowCategoryForm(false); setEditingCategory(null); setIsEditingCategory(false); }} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">{t('cancel')}</button>
-                    </div>
-                </form>
+                </div>
             )}
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
-                            <tr>
-                                <th className="px-6 py-4">{t('categoryName')}</th>
-                                <th className="px-6 py-4">{t('icon')}</th>
-                                <th className="px-6 py-4">{t('order')}</th>
-                                <th className="px-6 py-4 text-right">{t('actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {loadingCategories ? (
-                                <tr><td colSpan={4} className="text-center py-10"><Loader2 className="animate-spin inline-block text-primary-500"/></td></tr>
-                            ) : categoryError ? (
-                                <tr><td colSpan={4} className="text-center py-10 text-red-500">{categoryError}</td></tr>
-                            ) : categories.map((category) => {
-                                const Icon = iconMap[category.icon] || Users;
-                                return (
-                                    <tr key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                            <div className="font-cairo">{category.title[language]}</div>
-                                            <div className="text-xs text-gray-400 font-mono">{category.id}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                                <Icon size={18} />
-                                                <span>{category.icon}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-mono">{category.order}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => handleEditCategoryClick(category)} className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded" title={t('edit')}>
-                                                    <Edit size={16}/>
-                                                </button>
-                                                <button onClick={() => handleDeleteCategory(category.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded" title={t('delete')}>
-                                                    <Trash2 size={16}/>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 
@@ -2055,585 +2026,482 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
                 <CreditCard className="text-primary-500" /> {t('subscriptionManagement')}
             </h2>
-            
-            <div className="flex justify-end">
-                <button onClick={() => setIsGrantModalOpen(true)} className="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-lg shadow-purple-600/20">
-                    <Gift size={18} /> {t('grantSubscription')}
-                </button>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-medium">
-                            <tr>
-                                <th className="px-6 py-4">{t('email')}</th>
-                                <th className="px-6 py-4">{t('plan')}</th>
-                                <th className="px-6 py-4">{t('status')}</th>
-                                <th className="px-6 py-4">{t('endsOn')}</th>
-                                <th className="px-6 py-4">{t('type')}</th>
-                                <th className="px-6 py-4 text-right">{t('actions')}</th>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th className="px-6 py-4 dark:text-gray-300">{t('email')}</th>
+                            <th className="px-6 py-4 dark:text-gray-300">{t('plan')}</th>
+                            <th className="px-6 py-4 dark:text-gray-300">{t('status')}</th>
+                            <th className="px-6 py-4 dark:text-gray-300">{t('endsOn')}</th>
+                            <th className="px-6 py-4 dark:text-gray-300">{t('actions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {usersWithSub.filter(u => u.subscription).map(user => (
+                            <tr key={user.id}>
+                                <td className="px-6 py-4 dark:text-white">{user.email}</td>
+                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.planId}</td>
+                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.status}</td>
+                                <td className="px-6 py-4 dark:text-gray-300">{user.subscription?.current_period_end ? new Date(user.subscription.current_period_end * 1000).toLocaleDateString() : 'N/A'}</td>
+                                <td className="px-6 py-4">
+                                    {user.subscription?.isManual && (
+                                        <button onClick={() => handleRevokeSubscription(user.id, user.subscription!.id)} className="text-red-500 hover:underline">{t('revoke')}</button>
+                                    )}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                             {loadingSubs ? (
-                                <tr><td colSpan={6} className="text-center py-8"><Loader2 className="animate-spin inline-block" /></td></tr>
-                            ) : subError ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-red-500">{subError}</td></tr>
-                            ) : usersWithSub.filter(u => u.subscription).length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">{t('noActiveSubscription')}</td></tr>
-                            ) : usersWithSub.filter(u => u.subscription).map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td className="px-6 py-4 font-medium dark:text-white">{user.email}</td>
-                                    <td className="px-6 py-4">{plans.find(p => p.id === user.subscription?.planId)?.title[language] || user.subscription?.planId}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.subscription?.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                            {user.subscription?.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{new Date(user.subscription!.current_period_end * 1000).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4">
-                                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.subscription?.isManual ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                            {user.subscription?.isManual ? t('customPlan') : 'Stripe'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        {user.subscription?.isManual ? (
-                                            <button onClick={() => handleRevokeSubscription(user.id, user.subscription!.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" title={t('revoke')}>
-                                                <Trash2 size={18} />
-                                            </button>
-                                        ) : (
-                                            <span className="text-xs text-gray-400 italic">{t('manageInStripe')}</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
 
     const renderPlanManagementContent = () => (
         <div className="space-y-6">
-             <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <Star className="text-primary-500" /> {t('planManagement')}
-            </h2>
-            
-            <div className="flex justify-end">
-                 <button onClick={handleAddPlanClick} className="bg-primary-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-primary-700 transition-colors flex items-center gap-2 shadow-lg shadow-primary-600/20">
-                    <Plus size={18} /> {t('addNewPlan')}
-                </button>
-            </div>
-
-            {showPlanForm && editingPlan && (
-                <div className="animate-fade-in-down">
-                    <PlanForm 
-                        plan={editingPlan} 
-                        onSave={handleSavePlan} 
-                        onCancel={handleCancelPlanEdit} 
-                        isEditing={!!editingPlan.id && editingPlan.id !== '' && plans.some(p => p.id === editingPlan.id)}
-                    />
-                </div>
-            )}
-
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                 {loadingPlans ? (
-                     <div className="col-span-full text-center py-10"><Loader2 className="animate-spin inline-block" size={32}/></div>
-                 ) : planError ? (
-                     <p className="col-span-full text-center py-10 text-red-500">{planError}</p>
-                 ) : plans.length === 0 ? (
-                     <div className="col-span-full text-center py-10 text-gray-500">{t('noServicesFound')}</div>
-                 ) : plans.map(plan => (
-                     <div key={plan.id} className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border transition-all hover:shadow-md ${plan.status === 'active' ? 'border-gray-200 dark:border-gray-700' : 'border-red-200 dark:border-red-900/30 opacity-75'}`}>
-                         <div className="p-6">
-                             <div className="flex justify-between items-start mb-4">
-                                 <div>
-                                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">{plan.title[language]}</h3>
-                                     <p className="text-sm text-gray-500 dark:text-gray-400">{plan.id}</p>
-                                 </div>
-                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${plan.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
-                                     {t(plan.status)}
-                                 </span>
-                             </div>
-                             <div className="mb-4">
-                                 <p className="text-2xl font-black text-gray-900 dark:text-white">{plan.price[language]}</p>
-                                 <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{plan.tokens.toLocaleString()} {t('tokens')}</p>
-                             </div>
-                             <div className="space-y-2 mb-6">
-                                 {plan.features.slice(0, 3).map((f, i) => (
-                                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                         <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
-                                         <span className="truncate">{f[language]}</span>
-                                     </div>
-                                 ))}
-                                 {plan.features.length > 3 && <p className="text-xs text-gray-400 italic">+ {plan.features.length - 3} more</p>}
-                             </div>
-                             <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                 <button onClick={() => handleEditPlanClick(plan)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-2 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm">
-                                     {t('edit')}
-                                 </button>
-                                 <button onClick={() => handleTogglePlanStatus(plan)} className={`p-2 rounded-lg transition-colors ${plan.status === 'active' ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`} title={plan.status === 'active' ? t('deactivate') : t('activate')}>
-                                     <Ban size={20} />
-                                 </button>
-                                 <button onClick={() => handleDeletePlan(plan.id)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title={t('delete')}>
-                                     <Trash2 size={20} />
-                                 </button>
-                             </div>
-                         </div>
-                     </div>
-                 ))}
-             </div>
-        </div>
-    );
-    
-    const renderLandingPageGenerator = () => (
-         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <LayoutTemplate className="text-primary-500" /> {t('landingPage')}
-                </h2>
-                <div className="flex items-center gap-2">
-                     <span className={`text-sm font-bold px-3 py-1 rounded-full ${siteSettings.landingPageConfig ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                         {siteSettings.landingPageConfig ? t('customPageActive') : t('defaultPageActive')}
-                     </span>
-                     {siteSettings.landingPageConfig && (
-                         <button onClick={handleClearLandingConfig} className="text-red-500 hover:bg-red-50 p-2 rounded-lg text-sm font-bold flex items-center gap-1">
-                             <RefreshCw size={16}/> {t('resetToDefault')}
-                         </button>
-                     )}
-                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><Star className="text-primary-500"/> {t('planManagement')}</h2>
+                <button onClick={handleAddPlanClick} className="bg-primary-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-primary-700 transition-colors flex items-center gap-2"><Plus size={18}/> {t('add')}</button>
             </div>
-
-            <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-8 shadow-lg text-white relative overflow-hidden">
-                 <div className="relative z-10">
-                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
-                        <Wand2 className="text-yellow-300" /> {t('generateWithAIConfig')}
-                    </h3>
-                    <p className="text-teal-100 mb-6 max-w-xl leading-relaxed text-sm opacity-90">
-                        {t('aiGeneratorDescription')}
-                    </p>
-                     <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                        <input 
-                            type="text" 
-                            placeholder={t('enterTopic')} 
-                            value={landingPagePrompt}
-                            onChange={e => setLandingPagePrompt(e.target.value)}
-                            className="flex-grow px-4 py-3 rounded-xl border-0 bg-white/20 backdrop-blur-md text-white placeholder-teal-200 focus:ring-2 focus:ring-white/50 outline-none"
-                        />
-                        <button 
-                            type="button" 
-                            onClick={handleGenerateLandingPage} 
-                            disabled={isGeneratingLanding}
-                            className="bg-white text-teal-700 font-bold py-3 px-6 rounded-xl hover:bg-teal-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center gap-2"
-                        >
-                            {isGeneratingLanding ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
-                            {t('generate')}
-                        </button>
-                    </div>
-                 </div>
-            </div>
-         </div>
-    );
-
-    const renderSiteSettingsContent = () => (
-         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <Cog className="text-primary-500" /> {t('siteSettings')}
-            </h2>
-            
-            <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteNameEn')}</label>
-                        <input type="text" value={siteSettings.siteName.en} onChange={(e) => handleNestedSiteSettingsChange('siteName', Language.EN, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteNameAr')}</label>
-                        <input type="text" value={siteSettings.siteName.ar} onChange={(e) => handleNestedSiteSettingsChange('siteName', Language.AR, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" />
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleEn')}</label>
-                        <input type="text" value={siteSettings.siteSubtitle.en} onChange={(e) => handleNestedSiteSettingsChange('siteSubtitle', Language.EN, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleAr')}</label>
-                        <input type="text" value={siteSettings.siteSubtitle.ar} onChange={(e) => handleNestedSiteSettingsChange('siteSubtitle', Language.AR, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionEn')}</label>
-                        <textarea value={siteSettings.metaDescription.en} onChange={(e) => handleNestedSiteSettingsChange('metaDescription', Language.EN, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows={3}/>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionAr')}</label>
-                        <textarea value={siteSettings.metaDescription.ar} onChange={(e) => handleNestedSiteSettingsChange('metaDescription', Language.AR, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" rows={3}/>
-                    </div>
-                </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('seoKeywordsEn')}</label>
-                        <textarea value={siteSettings.seoKeywords.en} onChange={(e) => handleNestedSiteSettingsChange('seoKeywords', Language.EN, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows={2}/>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('seoKeywordsAr')}</label>
-                        <textarea value={siteSettings.seoKeywords.ar} onChange={(e) => handleNestedSiteSettingsChange('seoKeywords', Language.AR, e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" rows={2}/>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('logo')}</label>
-                         <div className="flex items-center gap-4">
-                            {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt={t('logo')} className="h-12 w-auto bg-gray-100 p-1 rounded" />}
-                            <input type="file" accept="image/*" onChange={(e) => e.target.files && setLogoFile(e.target.files[0])} className="text-sm" />
-                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('favicon')}</label>
-                        <div className="flex items-center gap-4">
-                            {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt={t('favicon')} className="h-8 w-8 bg-gray-100 p-1 rounded" />}
-                             <input type="file" accept="image/*" onChange={(e) => e.target.files && setFaviconFile(e.target.files[0])} className="text-sm" />
+            {showPlanForm && editingPlan && (
+                <PlanForm 
+                    plan={editingPlan} 
+                    onSave={handleSavePlan} 
+                    onCancel={handleCancelPlanEdit}
+                    isEditing={!!editingPlan.id} 
+                />
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {plans.map(plan => (
+                    <div key={plan.id} className="border rounded-xl p-6 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm relative">
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded"><Edit size={16}/></button>
+                            <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded"><Trash2 size={16}/></button>
+                        </div>
+                        <h3 className="text-xl font-bold dark:text-white">{plan.title[language]}</h3>
+                        <p className="text-2xl font-black text-primary-600 mt-2">{plan.price[language]}</p>
+                        <div className="mt-4 space-y-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2"><Coins size={14}/> {plan.tokens.toLocaleString()} Tokens</p>
+                            <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 text-xs rounded-full ${plan.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t(plan.status)}</span>
+                                <button onClick={() => handleTogglePlanStatus(plan)} className="text-xs underline text-gray-500">{plan.status === 'active' ? t('deactivate') : t('activate')}</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-xl">
-                    <input 
-                        type="checkbox" 
-                        id="maintenance"
-                        checked={siteSettings.isMaintenanceMode} 
-                        onChange={(e) => handleSiteSettingsChange('isMaintenanceMode', e.target.checked)}
-                        className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="maintenance" className="font-bold text-gray-700 dark:text-gray-200">{t('enableMaintenance')}</label>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                    <button type="submit" disabled={savingSettings} className="px-8 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-70 flex items-center shadow-lg shadow-primary-600/20">
-                        {savingSettings && <Loader2 className="animate-spin mr-2" size={20}/>}
-                        {t('saveSettings')}
-                    </button>
-                </div>
-            </form>
-         </div>
-    );
-    
-    const renderMarketingContent = () => (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                <BarChart className="text-primary-500" /> {t('marketing')}
-            </h2>
-             <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
-                <div className="mb-4">
-                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">{t('adPixels')}</h3>
-                     <p className="text-sm text-gray-500 dark:text-gray-400">{t('adPixelsDesc')}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
-                        <input type="text" value={siteSettings.adPixels?.googleTagId || ''} onChange={(e) => handleAdPixelChange('googleTagId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="G-XXXXXXXXXX" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
-                        <input type="text" value={siteSettings.adPixels?.facebookPixelId || ''} onChange={(e) => handleAdPixelChange('facebookPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="1234567890" />
-                    </div>
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
-                        <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={(e) => handleAdPixelChange('snapchatPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
-                        <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={(e) => handleAdPixelChange('tiktokPixelId', e.target.value)} className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" placeholder="CXXXXXXXXXXXXXX" />
-                    </div>
-                </div>
-                 <div className="flex justify-end pt-4">
-                    <button type="submit" disabled={savingSettings} className="px-8 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-70 flex items-center shadow-lg shadow-primary-600/20">
-                        {savingSettings && <Loader2 className="animate-spin mr-2" size={20}/>}
-                        {t('saveSettings')}
-                    </button>
-                </div>
-            </form>
+                ))}
+            </div>
         </div>
     );
 
-    const renderSupportContent = () => (
-        <div className="flex flex-col h-[calc(100vh-140px)] bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="flex h-full">
-                 {/* Ticket List Sidebar */}
-                 <div className={`w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
-                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                         <h3 className="font-bold text-gray-800 dark:text-white">{t('support')}</h3>
-                     </div>
-                     <div className="flex-grow overflow-y-auto">
-                         {loadingTickets ? (
-                             <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary-500"/></div>
-                         ) : tickets.length === 0 ? (
-                             <div className="text-center p-8 text-gray-500">{t('noTickets')}</div>
-                         ) : (
-                             tickets.map(ticket => (
-                                 <div 
-                                    key={ticket.id}
-                                    onClick={() => setSelectedTicket(ticket)}
-                                    className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                                 >
-                                     <div className="flex justify-between mb-1">
-                                         <span className={`font-bold text-sm ${ticket.unreadAdmin ? 'text-primary-600 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>{ticket.userEmail}</span>
-                                         <span className="text-xs text-gray-500">{ticket.lastUpdate?.toDate().toLocaleDateString()}</span>
-                                     </div>
-                                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{ticket.subject}</p>
-                                     <div className="mt-2 flex items-center gap-2">
-                                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ticket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : ticket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>{t(ticket.status)}</span>
-                                         <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-400">{ticket.type}</span>
-                                          {ticket.unreadAdmin && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
-                                     </div>
-                                 </div>
-                             ))
-                         )}
-                     </div>
-                 </div>
-
-                 {/* Chat Area */}
-                 <div className={`w-full md:w-2/3 flex flex-col ${!selectedTicket ? 'hidden md:flex' : 'flex'}`}>
-                     {selectedTicket ? (
-                         <>
-                             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
-                                 <div className="flex items-center gap-3">
-                                     <button onClick={() => setSelectedTicket(null)} className="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                                         <ChevronLeft size={20} className={language === 'ar' ? 'rotate-180' : ''} />
-                                     </button>
-                                     <div>
-                                         <h3 className="font-bold text-gray-800 dark:text-white">{selectedTicket.subject}</h3>
-                                         <p className="text-xs text-gray-500">{selectedTicket.userEmail}</p>
-                                     </div>
-                                 </div>
-                                 <span className={`text-xs px-2 py-1 rounded-full border ${selectedTicket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : selectedTicket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                                     {t(selectedTicket.status)}
-                                 </span>
-                             </div>
-
-                             <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/50">
-                                 {messages.map(msg => (
-                                     <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                         <div className={`max-w-[75%] p-3 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
-                                             <p>{msg.content}</p>
-                                             <div className={`text-[10px] mt-1 opacity-70 text-right`}>
-                                                 {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
-                                             </div>
-                                         </div>
-                                     </div>
-                                 ))}
-                                 <div ref={messagesEndRef} />
-                             </div>
-
-                             <form onSubmit={handleAdminReply} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
-                                 <input 
-                                    type="text" 
-                                    value={replyMessage}
-                                    onChange={(e) => setReplyMessage(e.target.value)}
-                                    placeholder={t('typeReply')}
-                                    className="flex-grow p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-                                 />
-                                 <button type="submit" disabled={!replyMessage.trim()} className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 transition-colors shadow-md">
-                                     <Send size={20} className="ltr:rotate-0 rtl:rotate-180"/>
-                                 </button>
-                             </form>
-                         </>
-                     ) : (
-                         <div className="flex flex-col items-center justify-center h-full text-center p-8 text-gray-500">
-                             <LifeBuoy size={48} className="mb-4 opacity-50"/>
-                             <p>{t('selectTicket')}</p>
-                         </div>
-                     )}
-                 </div>
+    const renderMarketingContent = () => (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <BarChart className="text-primary-500" /> {t('marketing')}
+            </h2>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{t('adPixels')}</h3>
+                <p className="text-sm text-gray-500 mb-6">{t('adPixelsDesc')}</p>
+                
+                <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
+                        <input 
+                            type="text" 
+                            value={siteSettings.adPixels?.googleTagId || ''} 
+                            onChange={e => handleAdPixelChange('googleTagId', e.target.value)} 
+                            placeholder="G-XXXXXXXXXX"
+                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
+                        <input 
+                            type="text" 
+                            value={siteSettings.adPixels?.facebookPixelId || ''} 
+                            onChange={e => handleAdPixelChange('facebookPixelId', e.target.value)} 
+                            placeholder="123456789012345"
+                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
+                        <input 
+                            type="text" 
+                            value={siteSettings.adPixels?.snapchatPixelId || ''} 
+                            onChange={e => handleAdPixelChange('snapchatPixelId', e.target.value)} 
+                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
+                        <input 
+                            type="text" 
+                            value={siteSettings.adPixels?.tiktokPixelId || ''} 
+                            onChange={e => handleAdPixelChange('tiktokPixelId', e.target.value)} 
+                            placeholder="Cxxxxxxxxxxxxxxxx"
+                            className="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" 
+                        />
+                    </div>
+                    <div className="md:col-span-2 flex justify-end mt-4">
+                        <button type="submit" disabled={savingSettings} className="px-6 py-2.5 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 shadow-lg shadow-primary-600/20 transition-all flex items-center gap-2">
+                            {savingSettings && <Loader2 className="animate-spin" size={18}/>}
+                            {t('saveSettings')}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 
     const renderNotificationsContent = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Create Notification Form */}
-            <div className="lg:col-span-1 space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <Bell className="text-primary-500" /> {t('createNotification')}
-                </h2>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('titleEn')}</label>
-                        <input 
-                            type="text" 
-                            value={newNotification.title?.en}
-                            onChange={e => setNewNotification(p => ({ ...p, title: { ...p.title, en: e.target.value } as Record<Language, string> }))}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('titleAr')}</label>
-                        <input 
-                            type="text"
-                            value={newNotification.title?.ar}
-                            onChange={e => setNewNotification(p => ({ ...p, title: { ...p.title, ar: e.target.value } as Record<Language, string> }))}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-right"
-                        />
-                    </div>
-                     <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('messageEn')}</label>
-                        <textarea
-                            value={newNotification.message?.en}
-                            onChange={e => setNewNotification(p => ({ ...p, message: { ...p.message, en: e.target.value } as Record<Language, string> }))}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" rows={3}/>
-                    </div>
-                     <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('messageAr')}</label>
-                        <textarea
-                            value={newNotification.message?.ar}
-                            onChange={e => setNewNotification(p => ({ ...p, message: { ...p.message, ar: e.target.value } as Record<Language, string> }))}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-right" rows={3}/>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">{t('notificationType')}</label>
-                        <select
-                            value={newNotification.type}
-                            onChange={e => setNewNotification(p => ({ ...p, type: e.target.value as any }))}
-                            className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                        >
-                            <option value="info">{t('info')}</option>
-                            <option value="success">{t('success')}</option>
-                            <option value="warning">{t('warning')}</option>
-                            <option value="alert">{t('alert')}</option>
-                        </select>
-                    </div>
-                    <button onClick={handleCreateNotification} className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl hover:bg-primary-700 transition-colors shadow-lg">
-                        {t('createNotification')}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <Bell className="text-primary-500" /> {t('notifications')}
+            </h2>
+            
+            {/* Create Notification */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('createNotification')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" placeholder={t('titleEn')} value={newNotification.title?.en || ''} onChange={e => setNewNotification(prev => ({...prev, title: {...prev.title!, en: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" />
+                    <input type="text" placeholder={t('titleAr')} value={newNotification.title?.ar || ''} onChange={e => setNewNotification(prev => ({...prev, title: {...prev.title!, ar: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" />
+                    <textarea placeholder={t('messageEn')} value={newNotification.message?.en || ''} onChange={e => setNewNotification(prev => ({...prev, message: {...prev.message!, en: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600" rows={2}/>
+                    <textarea placeholder={t('messageAr')} value={newNotification.message?.ar || ''} onChange={e => setNewNotification(prev => ({...prev, message: {...prev.message!, ar: e.target.value}}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 text-right" rows={2}/>
+                </div>
+                <div className="flex items-center gap-4">
+                    <select value={newNotification.type} onChange={e => setNewNotification(prev => ({...prev, type: e.target.value as any}))} className="p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600">
+                        <option value="info">{t('info')}</option>
+                        <option value="success">{t('success')}</option>
+                        <option value="warning">{t('warning')}</option>
+                        <option value="alert">{t('alert')}</option>
+                    </select>
+                    <button onClick={handleCreateNotification} className="px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 flex items-center gap-2">
+                        <Send size={18}/> {t('createNotification')}
                     </button>
                 </div>
             </div>
 
-            {/* Existing Notifications */}
-            <div className="lg:col-span-2 space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                    <Archive className="text-primary-500" /> {t('notifications')}
-                </h2>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4 max-h-[80vh] overflow-y-auto">
-                    {loadingNotifications ? (
-                         <div className="text-center py-10"><Loader2 className="animate-spin inline-block"/></div>
-                    ) : notifications.length === 0 ? (
-                         <div className="text-center py-10 text-gray-500">{t('noNotificationsFound')}</div>
-                    ) : notifications.map(notif => (
-                        <div key={notif.id} className={`p-4 rounded-lg border flex items-start gap-4 ${
-                            notif.type === 'info' ? 'bg-blue-50 border-blue-200' :
-                            notif.type === 'success' ? 'bg-green-50 border-green-200' :
-                            'bg-yellow-50 border-yellow-200'
-                        }`}>
-                            <div className={`mt-1 ${
-                                notif.type === 'info' ? 'text-blue-500' :
-                                notif.type === 'success' ? 'text-green-500' :
-                                'text-yellow-500'
-                            }`}>
+            {/* List Notifications */}
+            <div className="grid grid-cols-1 gap-4">
+                {notifications.map(notif => (
+                    <div key={notif.id} className={`p-4 rounded-xl border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-75'}`}>
+                        <div className="flex items-start gap-3">
+                            <div className={`p-2 rounded-lg ${notif.type === 'info' ? 'bg-blue-100 text-blue-600' : notif.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
                                 {notif.type === 'info' && <Info size={20}/>}
                                 {notif.type === 'success' && <CheckCircle size={20}/>}
                                 {(notif.type === 'warning' || notif.type === 'alert') && <AlertTriangle size={20}/>}
                             </div>
-                            <div className="flex-grow">
-                                <h4 className="font-bold text-gray-800">{notif.title[language]}</h4>
-                                <p className="text-sm text-gray-600 mt-1">{notif.message[language]}</p>
-                                <span className="text-xs text-gray-400 mt-2 block">
-                                    {notif.createdAt?.toDate().toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                 <label className="relative inline-flex items-center cursor-pointer">
-                                     <input type="checkbox" checked={notif.isActive} onChange={() => handleToggleNotificationStatus(notif)} className="sr-only peer" />
-                                     <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
-                                </label>
-                                <button onClick={() => handleDeleteNotification(notif.id)} className="text-red-500 hover:text-red-700 transition-colors">
-                                    <Trash2 size={16}/>
-                                </button>
+                            <div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">{notif.title[language]}</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
+                                <p className="text-xs text-gray-400 mt-1">{notif.createdAt?.toDate().toLocaleString()}</p>
                             </div>
                         </div>
-                    ))}
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleToggleNotificationStatus(notif)} className={`p-2 rounded-lg transition-colors ${notif.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                                {notif.isActive ? <Eye size={20}/> : <EyeOff size={20}/>}
+                            </button>
+                            <button onClick={() => handleDeleteNotification(notif.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <Trash2 size={20}/>
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {notifications.length === 0 && <p className="text-center text-gray-500">{t('noNotificationsFound')}</p>}
+            </div>
+        </div>
+    );
+
+    const renderSupportContent = () => (
+        <div className="h-[calc(100vh-140px)] flex flex-col">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-6 flex-shrink-0">
+                <LifeBuoy className="text-primary-500" /> {t('support')}
+            </h2>
+            <div className="flex-grow flex overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                {/* Ticket List */}
+                <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300">
+                        {t('selectTicket')}
+                    </div>
+                    <div className="flex-grow overflow-y-auto">
+                        {tickets.map(ticket => (
+                            <div 
+                                key={ticket.id} 
+                                onClick={() => setSelectedTicket(ticket)}
+                                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <h4 className={`font-bold text-sm truncate ${ticket.unreadAdmin ? 'text-primary-600' : 'text-gray-800 dark:text-white'}`}>{ticket.subject}</h4>
+                                    {ticket.unreadAdmin && <span className="w-2 h-2 bg-red-500 rounded-full"></span>}
+                                </div>
+                                <p className="text-xs text-gray-500 truncate mb-1">{ticket.userEmail}</p>
+                                <div className="flex justify-between items-center">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ticket.status === 'open' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                                        {t(ticket.status)}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">{ticket.lastUpdate?.toDate().toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        ))}
+                        {tickets.length === 0 && <div className="p-8 text-center text-gray-500 text-sm">{t('noTickets')}</div>}
+                    </div>
+                </div>
+
+                {/* Chat Area */}
+                <div className="w-2/3 flex flex-col bg-gray-50 dark:bg-gray-900/50">
+                    {selectedTicket ? (
+                        <>
+                            <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm">
+                                <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
+                                    <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{selectedTicket.status}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                                {messages.map(msg => (
+                                    <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700'}`}>
+                                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                                            <p className={`text-[10px] mt-1 text-right ${msg.senderRole === 'admin' ? 'text-primary-200' : 'text-gray-400'}`}>
+                                                {msg.createdAt?.toDate().toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            <form onSubmit={handleAdminReply} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={replyMessage} 
+                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                        placeholder={t('typeReply')}
+                                        className="flex-grow p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                    <button type="submit" disabled={!replyMessage.trim()} className="p-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors">
+                                        <Send size={20} className="rtl:rotate-180"/>
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                            <MessageSquare size={48} className="mb-2 opacity-50"/>
+                            <p>{t('selectTicket')}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 
-
-    const tabs = [
-        { id: 'users', label: t('userManagement'), icon: Users },
-        { id: 'services', label: t('manageServices'), icon: PlusSquare },
-        { id: 'categories', label: t('manageCategories'), icon: LayoutGrid },
-        { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
-        { id: 'plans', label: t('planManagement'), icon: Archive },
-        { id: 'settings', label: t('siteSettings'), icon: Cog },
-        { id: 'landing', label: t('landingPage'), icon: LayoutTemplate },
-        { id: 'marketing', label: t('marketing'), icon: BarChart },
-        { id: 'support', label: t('support'), icon: LifeBuoy },
-        { id: 'notifications', label: t('notifications'), icon: Bell },
-    ];
-
-    useEffect(() => {
-        if(selectedTicket && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages]);
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'users': return renderUserManagementContent();
-            case 'services': return renderServiceManagementContent();
-            case 'categories': return renderCategoryManagementContent();
-            case 'subscriptions': return renderSubscriptionManagementContent();
-            case 'plans': return renderPlanManagementContent();
-            case 'settings': return renderSiteSettingsContent();
-            case 'landing': return renderLandingPageGenerator();
-            case 'marketing': return renderMarketingContent();
-            case 'support': return renderSupportContent();
-            case 'notifications': return renderNotificationsContent();
-            default: return renderUserManagementContent();
-        }
-    };
-    
-    return (
-        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-                    <aside className="lg:col-span-1 xl:col-span-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-2 sticky top-24">
-                            {tabs.map(tab => {
-                                const Icon = tab.icon;
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-bold transition-all text-sm ${isActive ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
-                                    >
-                                        <Icon size={20} className="flex-shrink-0" />
-                                        <span className="flex-grow">{tab.label}</span>
-                                        {isActive && <ArrowRight size={16} className="text-primary-500 rtl:hidden" />}
-                                        {isActive && <ArrowLeft size={16} className="text-primary-500 ltr:hidden" />}
-                                    </button>
-                                );
-                            })}
+    const renderSiteSettingsContent = () => (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><Cog className="text-primary-500"/> {t('siteSettings')}</h2>
+            
+            <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+                
+                {/* Basic Information */}
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Site Identity</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteNameEn')}</label>
+                            <input type="text" value={siteSettings.siteName.en} onChange={e => handleNestedSiteSettingsChange('siteName', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
                         </div>
-                    </aside>
-                    <main className="lg:col-span-3 xl:col-span-4">
-                        {renderContent()}
-                    </main>
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteNameAr')}</label>
+                            <input type="text" value={siteSettings.siteName.ar} onChange={e => handleNestedSiteSettingsChange('siteName', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteSubtitleEn')}</label>
+                            <input type="text" value={siteSettings.siteSubtitle?.en || ''} onChange={e => handleNestedSiteSettingsChange('siteSubtitle', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('siteSubtitleAr')}</label>
+                            <input type="text" value={siteSettings.siteSubtitle?.ar || ''} onChange={e => handleNestedSiteSettingsChange('siteSubtitle', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* SEO Settings */}
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">SEO & Meta Data</h4>
+                    <div className="grid grid-cols-1 gap-6">
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('metaDescriptionEn')}</label>
+                            <textarea value={siteSettings.metaDescription?.en || ''} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows={2} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('metaDescriptionAr')}</label>
+                            <textarea value={siteSettings.metaDescription?.ar || ''} onChange={e => handleNestedSiteSettingsChange('metaDescription', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" rows={2} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('seoKeywordsEn')}</label>
+                                <input type="text" value={siteSettings.seoKeywords?.en || ''} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.EN, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-1 dark:text-gray-300">{t('seoKeywordsAr')}</label>
+                                <input type="text" value={siteSettings.seoKeywords?.ar || ''} onChange={e => handleNestedSiteSettingsChange('seoKeywords', Language.AR, e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Branding (Logo & Favicon) */}
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Branding</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-bold mb-2 dark:text-gray-300">{t('logo')}</label>
+                            <div className="flex items-center gap-4">
+                                {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt="Logo" className="h-10 w-auto object-contain bg-gray-100 p-1 rounded border" />}
+                                <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
+                                    <Upload size={16} /> Upload New Logo
+                                    <input type="file" accept="image/*" className="hidden" onChange={e => setLogoFile(e.target.files ? e.target.files[0] : null)} />
+                                </label>
+                                {logoFile && <span className="text-xs text-green-600">{logoFile.name}</span>}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold mb-2 dark:text-gray-300">{t('favicon')}</label>
+                            <div className="flex items-center gap-4">
+                                {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt="Favicon" className="h-8 w-8 object-contain bg-gray-100 p-1 rounded border" />}
+                                <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
+                                    <Upload size={16} /> Upload New Favicon
+                                    <input type="file" accept="image/*" className="hidden" onChange={e => setFaviconFile(e.target.files ? e.target.files[0] : null)} />
+                                </label>
+                                {faviconFile && <span className="text-xs text-green-600">{faviconFile.name}</span>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Landing Page Configuration */}
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Landing Page Generator</h4>
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-3">{t('generateWithAIConfig')}</p>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                placeholder={t('enterTopic')} 
+                                value={landingPagePrompt}
+                                onChange={e => setLandingPagePrompt(e.target.value)}
+                                className="flex-grow p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <button type="button" onClick={handleGenerateLandingPage} disabled={isGeneratingLanding} className="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50">
+                                {isGeneratingLanding ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
+                                {t('generate')}
+                            </button>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                            <span className={`text-xs font-bold px-2 py-1 rounded ${siteSettings.landingPageConfig ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                                {siteSettings.landingPageConfig ? t('customPageActive') : t('defaultPageActive')}
+                            </span>
+                            {siteSettings.landingPageConfig && (
+                                <button type="button" onClick={handleClearLandingConfig} className="text-xs text-red-500 underline hover:text-red-700">
+                                    {t('resetToDefault')}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* System Status */}
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">System</h4>
+                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => handleSiteSettingsChange('isMaintenanceMode', e.target.checked)} className="rounded text-primary-600 focus:ring-primary-500 h-5 w-5" />
+                        <div>
+                            <span className="font-bold text-gray-800 dark:text-white block">{t('enableMaintenance')}</span>
+                            <span className="text-xs text-gray-500">Only admins will be able to access the site.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <button type="submit" disabled={savingSettings} className="px-8 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary-600/20">
+                        {savingSettings && <Loader2 className="animate-spin" size={20} />}
+                        {t('saveSettings')}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900">
+            {/* Sidebar */}
+            <div className="w-full md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t('adminPanel')}</h1>
+                </div>
+                <nav className="p-4 space-y-2">
+                    {[
+                        { id: 'users', label: t('userManagement'), icon: Users },
+                        { id: 'services', label: t('manageServices'), icon: LayoutGrid },
+                        { id: 'categories', label: t('manageCategories'), icon: Tag },
+                        { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
+                        { id: 'plans', label: t('planManagement'), icon: Star },
+                        { id: 'settings', label: t('siteSettings'), icon: Cog },
+                        { id: 'marketing', label: t('marketing'), icon: BarChart },
+                        { id: 'notifications', label: t('notifications'), icon: Bell },
+                        { id: 'support', label: t('support'), icon: LifeBuoy },
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === item.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                        >
+                            <item.icon size={20} />
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-grow p-6 md:p-10 overflow-y-auto">
+                <div className="max-w-7xl mx-auto">
+                    {activeTab === 'users' && renderUserManagementContent()}
+                    {activeTab === 'services' && renderServiceManagementContent()}
+                    {activeTab === 'categories' && renderCategoryManagementContent()}
+                    {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
+                    {activeTab === 'plans' && renderPlanManagementContent()}
+                    {activeTab === 'settings' && renderSiteSettingsContent()}
+                    {activeTab === 'marketing' && renderMarketingContent()}
+                    {activeTab === 'notifications' && renderNotificationsContent()}
+                    {activeTab === 'support' && renderSupportContent()}
                 </div>
             </div>
-             {isGrantModalOpen && <GrantSubscriptionModal isOpen={isGrantModalOpen} onClose={() => { setIsGrantModalOpen(false); setSelectedUserForAction(null); }} users={users} plans={plans} onGrant={fetchUsersWithSubscriptions} initialUserId={selectedUserForAction?.id} />}
-            {isTokenModalOpen && selectedUserForAction && <AddTokenModal isOpen={isTokenModalOpen} onClose={() => { setIsTokenModalOpen(false); setSelectedUserForAction(null); }} userId={selectedUserForAction.id} userEmail={selectedUserForAction.email} onSuccess={fetchUsers} />}
-            {isExecutionModalOpen && <ServiceExecutionModal isOpen={isExecutionModalOpen} onClose={() => setIsExecutionModalOpen(false)} service={selectedService} />}
+
+            {/* Modals */}
+            <GrantSubscriptionModal 
+                isOpen={isGrantModalOpen}
+                onClose={() => setIsGrantModalOpen(false)}
+                users={users}
+                plans={plans}
+                onGrant={fetchUsersWithSubscriptions}
+                initialUserId={selectedUserForAction?.id}
+            />
+            {selectedUserForAction && (
+                <AddTokenModal
+                    isOpen={isTokenModalOpen}
+                    onClose={() => setIsTokenModalOpen(false)}
+                    userId={selectedUserForAction.id}
+                    userEmail={selectedUserForAction.email}
+                    onSuccess={fetchUsers}
+                />
+            )}
         </div>
     );
 };
-
-export default AdminPage;

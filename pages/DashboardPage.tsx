@@ -361,7 +361,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             }
 
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
+                 errorMessage = t('quotaExhaustedMessage');
+            }
             setResult(`${t('serviceSavedError')}: ${errorMessage}`);
         } finally {
             setIsGenerating(false);
@@ -484,7 +487,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 }
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
+                 errorMessage = t('quotaExhaustedMessage');
+            }
             setResult(`${t('serviceSavedError')}: ${errorMessage}`);
         } finally {
             setIsGenerating(false);
@@ -592,7 +598,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setResult(response.text);
         } catch (error) {
             console.error("Error formatting as letter:", error);
-            setResult(`${t('serviceSavedError')}: ${(error as Error).message}`);
+            let errorMessage = (error as Error).message;
+            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
+                 errorMessage = t('quotaExhaustedMessage');
+            }
+            setResult(`${t('serviceSavedError')}: ${errorMessage}`);
         } finally {
             setIsFormatting(false);
         }
