@@ -210,19 +210,12 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
              )}
           </button>
           <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
-            {currentUser && (
+            {currentUser && onServicesClick && (
                 <div className="hidden md:block">
-                    {view === 'landing' && onServicesClick ? (
-                        <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
-                            <LayoutDashboard size={20} />
-                            <span className="text-sm font-semibold">{t('services')}</span>
-                        </button>
-                    ) : (
-                        <button onClick={onHomeClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('home')}>
-                            <Home size={20} />
-                            <span className="text-sm font-semibold">{t('home')}</span>
-                        </button>
-                    )}
+                    <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('services')}>
+                        <LayoutDashboard size={20} />
+                        <span className="text-sm font-semibold">{t('services')}</span>
+                    </button>
                 </div>
             )}
             {currentUser && !currentUser.isAdmin && (
