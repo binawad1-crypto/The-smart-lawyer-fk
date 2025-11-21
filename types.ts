@@ -100,6 +100,7 @@ export interface Service {
   subCategory: Record<Language, string>;
   icon: string; // Changed from React.ComponentType to string
   geminiModel: string;
+  systemInstruction?: Record<Language, string>;
   formInputs: FormInput[];
   usageCount?: number;
   geminiConfig?: any; // Optional field for extra model configs

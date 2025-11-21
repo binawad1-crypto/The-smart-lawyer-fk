@@ -1,9 +1,10 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { useAuth } from '../hooks/useAuth';
-import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin } from 'lucide-react';
+import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin, Search, Briefcase, Handshake, MessageSquare, ScanLine } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Plan, Translations, LandingPageConfig } from '../types';
@@ -52,15 +53,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
         heroSubtitle: { en: t('heroSubtitle'), ar: t('heroSubtitle') },
         featuresTitle: { en: t('featuresTitle'), ar: t('featuresTitle') },
         features: [
-            { icon: 'FileText', title: { en: 'Instant Document Analysis', ar: 'تحليل فوري للمستندات' }, description: { en: 'Upload your legal documents and get summaries.', ar: 'ارفع مستنداتك القانونية واحصل على ملخصات.' }, color: 'from-blue-400 to-blue-600' },
-            { icon: 'BrainCircuit', title: { en: 'Smart Legal Research', ar: 'بحث قانوني ذكي' }, description: { en: 'Ask complex legal questions.', ar: 'اطرح أسئلة قانونية معقدة.' }, color: 'from-purple-400 to-purple-600' },
-            { icon: 'Scale', title: { en: 'Automated Drafting', ar: 'صياغة آلية' }, description: { en: 'Generate first drafts of memos.', ar: 'أنشئ مسودات أولية للمذكرات.' }, color: 'from-teal-400 to-teal-600' },
-            { icon: 'ShieldCheck', title: { en: 'Legal Risk Assessment', ar: 'تقييم المخاطر القانونية' }, description: { en: 'Identify potential liabilities.', ar: 'تحديد الالتزامات المحتملة.' }, color: 'from-red-400 to-red-600' },
-            { icon: 'Workflow', title: { en: 'Strategic Case Planning', ar: 'تخطيط استراتيجية القضايا' }, description: { en: 'Develop data-driven strategies.', ar: 'تطوير استراتيجيات مبنية على البيانات.' }, color: 'from-orange-400 to-orange-600' },
-            { icon: 'Building2', title: { en: 'Regulatory Compliance', ar: 'الامتثال التنظيمي' }, description: { en: 'Stay compliant with regulations.', ar: 'حافظ على الامتثال للوائح.' }, color: 'from-emerald-400 to-emerald-600' },
-            { icon: 'Users', title: { en: 'Client Communication', ar: 'التواصل مع العملاء' }, description: { en: 'Generate professional responses.', ar: 'إنشاء ردود احترافية.' }, color: 'from-indigo-400 to-indigo-600' },
-            { icon: 'BookOpen', title: { en: 'Legal Translation', ar: 'الترجمة القانونية' }, description: { en: 'Accurate translation of terminology.', ar: 'ترجمة دقيقة للمصطلحات.' }, color: 'from-cyan-400 to-cyan-600' },
-            { icon: 'Archive', title: { en: 'Smart Archiving', ar: 'الأرشفة الذكية' }, description: { en: 'Organize legal knowledge.', ar: 'تنظيم المعرفة القانونية.' }, color: 'from-slate-400 to-slate-600' },
+            { icon: 'FileText', title: { en: 'Legal Document Analysis', ar: 'تحليل المستندات القانونية' }, description: { en: 'Upload contracts, pleadings, and case files to get instant insights and risk assessments.', ar: 'ارفع العقود والمذكرات وملفات القضايا للحصول على رؤى فورية وتقييمات للمخاطر.' }, color: 'from-blue-400 to-blue-600' },
+            { icon: 'Search', title: { en: 'Automated Legal Research', ar: 'البحث القانوني الآلي' }, description: { en: 'Let the AI search legal databases, precedents, and statutes to build strong arguments.', ar: 'دع الذكاء الاصطناعي يبحث في قواعد البيانات القانونية والسوابق والأنظمة لبناء حجج قوية.' }, color: 'from-purple-400 to-purple-600' },
+            { icon: 'Briefcase', title: { en: 'Case Management & Summarization', ar: 'إدارة وتلخيص القضايا' }, description: { en: 'Organize case information, track deadlines, and generate concise summaries of complex cases.', ar: 'نظم معلومات القضايا، وتتبع المواعيد النهائية، وأنشئ ملخصات موجزة للقضايا المعقدة.' }, color: 'from-teal-400 to-teal-600' },
+            { icon: 'Handshake', title: { en: 'Contract Drafting & Review', ar: 'صياغة ومراجعة العقود' }, description: { en: 'Automatically generate professional contracts from templates and review third-party agreements for risks.', ar: 'أنشئ عقودًا احترافية تلقائيًا من القوالب وراجع اتفاقيات الطرف الثالث بحثًا عن المخاطر.' }, color: 'from-red-400 to-red-600' },
+            { icon: 'Gavel', title: { en: 'Pleading & Memo Generation', ar: 'إنشاء المذكرات واللوائح' }, description: { en: 'Draft initial pleadings, responsive memos, and legal arguments based on your inputs.', ar: 'صياغة اللوائح الابتدائية والمذكرات الجوابية والحجج القانونية بناءً على مدخلاتك.' }, color: 'from-orange-400 to-orange-600' },
+            { icon: 'MessageSquare', title: { en: 'Legal Consultation Assistant', ar: 'مساعد الاستشارات القانونية' }, description: { en: 'Get preliminary answers and legal frameworks for client inquiries in real-time.', ar: 'احصل على إجابات أولية وأطر قانونية لاستفسارات العملاء في الوقت الفعلي.' }, color: 'from-emerald-400 to-emerald-600' },
+            { icon: 'ShieldCheck', title: { en: 'Compliance & Governance', ar: 'الامتثال والحوكمة' }, description: { en: 'Maintain a complete audit trail and ensure regulatory compliance for corporate clients.', ar: 'حافظ على سجل مراجعة كامل وضمان الامتثال التنظيمي للعملاء من الشركات.' }, color: 'from-indigo-400 to-indigo-600' },
+            { icon: 'BrainCircuit', title: { en: 'Litigation Strategy', ar: 'استراتيجية التقاضي' }, description: { en: 'Use AI-powered analysis to predict case outcomes and develop effective litigation strategies.', ar: 'استخدم التحليل المدعوم بالذكاء الاصطناعي لتوقع نتائج القضايا وتطوير استراتيجيات تقاضي فعالة.' }, color: 'from-cyan-400 to-cyan-600' },
+            { icon: 'ScanLine', title: { en: 'E-Discovery & Analysis', ar: 'الاكتشاف الإلكتروني والتحليل' }, description: { en: 'Process and analyze large volumes of electronic data for discovery and evidence gathering.', ar: 'معالجة وتحليل كميات كبيرة من البيانات الإلكترونية للاكتشاف وجمع الأدلة.' }, color: 'from-slate-400 to-slate-600' },
         ]
     };
   }, [settings, t]);
@@ -80,14 +81,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
   
   const featureList = settings?.landingPageConfig ? settings.landingPageConfig.features : [
     { icon: 'FileText', title: { [language]: t('feature1Title') }, description: { [language]: t('feature1Desc') }, color: 'from-blue-400 to-blue-600' },
-    { icon: 'BrainCircuit', title: { [language]: t('feature2Title') }, description: { [language]: t('feature2Desc') }, color: 'from-purple-400 to-purple-600' },
-    { icon: 'Scale', title: { [language]: t('feature3Title') }, description: { [language]: t('feature3Desc') }, color: 'from-teal-400 to-teal-600' },
-    { icon: 'ShieldCheck', title: { [language]: t('feature4Title') }, description: { [language]: t('feature4Desc') }, color: 'from-red-400 to-red-600' },
-    { icon: 'Workflow', title: { [language]: t('feature5Title') }, description: { [language]: t('feature5Desc') }, color: 'from-orange-400 to-orange-600' },
-    { icon: 'Building2', title: { [language]: t('feature6Title') }, description: { [language]: t('feature6Desc') }, color: 'from-emerald-400 to-emerald-600' },
-    { icon: 'Users', title: { [language]: t('feature7Title') }, description: { [language]: t('feature7Desc') }, color: 'from-indigo-400 to-indigo-600' },
-    { icon: 'BookOpen', title: { [language]: t('feature8Title') }, description: { [language]: t('feature8Desc') }, color: 'from-cyan-400 to-cyan-600' },
-    { icon: 'Archive', title: { [language]: t('feature9Title') }, description: { [language]: t('feature9Desc') }, color: 'from-slate-400 to-slate-600' },
+    { icon: 'Search', title: { [language]: t('feature2Title') }, description: { [language]: t('feature2Desc') }, color: 'from-purple-400 to-purple-600' },
+    { icon: 'Briefcase', title: { [language]: t('feature3Title') }, description: { [language]: t('feature3Desc') }, color: 'from-teal-400 to-teal-600' },
+    { icon: 'Handshake', title: { [language]: t('feature4Title') }, description: { [language]: t('feature4Desc') }, color: 'from-red-400 to-red-600' },
+    { icon: 'Gavel', title: { [language]: t('feature5Title') }, description: { [language]: t('feature5Desc') }, color: 'from-orange-400 to-orange-600' },
+    { icon: 'MessageSquare', title: { [language]: t('feature6Title') }, description: { [language]: t('feature6Desc') }, color: 'from-emerald-400 to-emerald-600' },
+    { icon: 'ShieldCheck', title: { [language]: t('feature7Title') }, description: { [language]: t('feature7Desc') }, color: 'from-indigo-400 to-indigo-600' },
+    { icon: 'BrainCircuit', title: { [language]: t('feature8Title') }, description: { [language]: t('feature8Desc') }, color: 'from-cyan-400 to-cyan-600' },
+    { icon: 'ScanLine', title: { [language]: t('feature9Title') }, description: { [language]: t('feature9Desc') }, color: 'from-slate-400 to-slate-600' },
   ];
 
   const handlePrimaryAction = () => {
@@ -103,16 +104,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
     <div className="bg-slate-50 dark:bg-slate-900 text-gray-800 dark:text-gray-200 font-sans">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-24 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-teal-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 opacity-80"></div>
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/2 -left-24 w-72 h-72 bg-sky-400/20 rounded-full blur-3xl"></div>
+        {/* Background Gradients & Grid */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-slate-50 dark:bg-slate-900">
+            <div
+                className="absolute inset-0 opacity-50 dark:opacity-30"
+                style={{
+                    backgroundImage: `
+                        linear-gradient(to right, rgba(34, 197, 94, 0.08) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(34, 197, 94, 0.08) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '30px 30px',
+                }}
+            ></div>
+            <div className="absolute -top-48 -right-48 w-[40rem] h-[40rem] bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-[-20rem] -left-48 w-[40rem] h-[40rem] bg-sky-500/10 rounded-full blur-3xl"></div>
         </div>
+
 
         <div className="container mx-auto px-6 text-center relative z-10">
           <div className="mx-auto mb-8 inline-flex items-center justify-center p-5 bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-teal-900/10 ring-1 ring-slate-900/5 dark:ring-white/10">
-            <Gavel size={48} className="text-primary-600 dark:text-primary-400" />
+            <Scale size={48} className="text-primary-600 dark:text-primary-400" />
           </div>
           
           <h1 className="flex flex-col items-center justify-center mb-6 leading-tight">

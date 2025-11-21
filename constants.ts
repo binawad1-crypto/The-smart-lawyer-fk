@@ -1,7 +1,8 @@
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
-import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2 } from 'lucide-react';
+import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3 } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -16,7 +17,8 @@ export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1
 
 // FIX: Export iconMap for use in components
 export const iconMap: { [key: string]: React.ComponentType<any> } = {
-    FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2
+    FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3
 };
 
 // FIX: Export iconNames for use in AdminPage AI generator
@@ -26,7 +28,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
     // General
     appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    appSubtitle: { en: 'For Law Practice', ar: 'للمحاماه' },
+    appSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
     home: { en: 'Home', ar: 'الرئيسية' },
     services: { en: 'Services', ar: 'الخدمات' },
     support: { en: 'Support', ar: 'الدعم الفني' },
@@ -81,38 +83,38 @@ export const translations: Translations = {
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    heroTitleHighlight: { en: 'For Law Practice', ar: 'للمحاماه' },
-    heroSubtitle: { en: 'Simplify your legal research, edit documents in seconds, and manage your cases with unparalleled efficiency. Dedicate more time to your clients and strategies, and let artificial intelligence handle the rest.', ar: 'بسّط أبحاثك القانونية، وحرّر المستندات في ثوانٍ، وأدر قضاياك بكفاءة لا مثيل لها. خصص المزيد من الوقت لعملائك واستراتيجياتك، ودع الذكاء الاصطناعي يتولى الباقي.' },
+    heroTitleHighlight: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
+    heroSubtitle: { en: 'Automate legal drafting, analyze case files in seconds, and manage your practice with unparalleled efficiency. Focus on winning cases, and let AI handle the routine tasks.', ar: 'أتمتة صياغة المذكرات، وحلل ملفات القضايا في ثوانٍ، وأدر مكتبك بكفاءة لا مثيل لها. ركز على كسب قضاياك، ودع الذكاء الاصطناعي يتولى المهام الروتينية.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
     goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },
     startFreeTrial: { en: 'Start Free Trial', ar: 'ابدأ تجربتك المجانية' },
-    locationAwarenessMessage: { en: 'Get AI-powered legal insights tailored to your jurisdiction. Your location provides context for more accurate, locally-relevant answers.', ar: 'احصل على رؤى قانونية مدعومة بالذكاء الاصطناعي ومخصصة لمنطقتك. يوفر موقعك سياقًا للحصول على إجابات أكثر دقة وملاءمة محليًا.' },
+    locationAwarenessMessage: { en: 'Get AI-powered legal insights tailored to your region. Your location provides context for more accurate, locally-relevant regulations and precedents.', ar: 'احصل على رؤى قانونية مدعومة بالذكاء الاصطناعي ومخصصة لمنطقتك. يوفر موقعك سياقًا للوائح والسوابق القضائية الأكثر دقة وملاءمة محليًا.' },
     pricingTitle: { en: 'Flexible Pricing Plans', ar: 'خطط أسعار مرنة' },
     pricingSubtitle: { en: 'Choose the plan that fits your needs and scale as you grow.', ar: 'اختر الخطة التي تناسب احتياجاتك وتوسع مع نموك.' },
     mostPopular: { en: 'Most Popular', ar: 'الأكثر شيوعاً' },
     tokens: { en: 'Tokens', ar: 'رمز' },
     choosePlan: { en: 'Choose Plan', ar: 'اختر الخطة' },
-    finalCtaTitle: { en: 'Ready to Transform Your Legal Practice?', ar: 'هل أنت مستعد لتغيير ممارستك القانونية؟' },
-    finalCtaSubtitle: { en: 'Join today and experience the power of AI in the legal field.', ar: 'انضم اليوم واختبر قوة الذكاء الاصطناعي في المجال القانوني.' },
+    finalCtaTitle: { en: 'Ready to Transform Your Legal Workflow?', ar: 'هل أنت مستعد لتغيير سير عملك القانوني؟' },
+    finalCtaSubtitle: { en: 'Join today and experience the power of AI in legal practice.', ar: 'انضم اليوم واختبر قوة الذكاء الاصطناعي في الممارسة القانونية.' },
     signUpForFree: { en: 'Sign Up for Free', ar: 'سجل مجانا' },
-    feature1Title: { en: 'Instant Document Analysis', ar: 'تحليل فوري للمستندات' },
-    feature1Desc: { en: 'Upload your legal documents and get summaries, key point extractions, and risk assessments in seconds.', ar: 'ارفع مستنداتك القانونية واحصل على ملخصات واستخراج النقاط الرئيسية وتقييمات المخاطر في ثوانٍ.' },
-    feature2Title: { en: 'Smart Legal Research', ar: 'بحث قانوني ذكي' },
-    feature2Desc: { en: 'Ask complex legal questions in natural language and receive well-reasoned, cited answers based on current laws.', ar: 'اطرح أسئلة قانونية معقدة بلغة طبيعية واحصل على إجابات مدعومة بالأدلة ومبنية على القوانين الحالية.' },
-    feature3Title: { en: 'Automated Drafting', ar: 'صياغة آلية' },
-    feature3Desc: { en: 'Generate first drafts of memos, contracts, and legal correspondence with AI assistance.', ar: 'أنشئ مسودات أولية للمذكرات والعقود والمراسلات القانونية بمساعدة الذكاء الاصطناعي.' },
-    feature4Title: { en: 'Legal Risk Assessment', ar: 'تقييم المخاطر القانونية' },
-    feature4Desc: { en: 'Identify potential legal risks in contracts or business plans and get mitigation strategies.', ar: 'تحديد المخاطر القانونية المحتملة في العقود أو خطط العمل والحصول على استراتيجيات للتخفيف منها.' },
-    feature5Title: { en: 'Strategic Case Planning', ar: 'تخطيط استراتيجية القضايا' },
-    feature5Desc: { en: 'Develop data-driven strategies by analyzing case law and predicting opponent tactics.', ar: 'تطوير استراتيجيات مبنية على البيانات من خلال تحليل السوابق القضائية وتوقع تكتيكات الخصم.' },
-    feature6Title: { en: 'Regulatory Compliance', ar: 'الامتثال التنظيمي' },
-    feature6Desc: { en: 'Stay up-to-date and compliant with ever-changing local and international regulations.', ar: 'ابق على اطلاع دائم ومتوافق مع اللوائح المحلية والدولية المتغيرة باستمرار.' },
-    feature7Title: { en: 'Client Communication', ar: 'التواصل مع العملاء' },
-    feature7Desc: { en: 'Generate professional, clear, and empathetic responses to client inquiries and updates.', ar: 'إنشاء ردود احترافية وواضحة ومتعاطفة على استفسارات العملاء وتحديثاتهم.' },
-    feature8Title: { en: 'Legal Translation', ar: 'الترجمة القانونية' },
-    feature8Desc: { en: 'Translate legal documents between languages with high accuracy for legal terminology.', ar: 'ترجمة المستندات القانونية بين اللغات بدقة عالية للمصطلحات القانونية.' },
-    feature9Title: { en: 'Smart Archiving', ar: 'الأرشفة الذكية' },
-    feature9Desc: { en: 'Organize and search your legal knowledge base, case files, and documents efficiently.', ar: 'نظم وابحث في قاعدة معارفك القانونية وملفات القضايا والمستندات بكفاءة.' },
+    feature1Title: { en: 'Legal Document Analysis', ar: 'تحليل المستندات القانونية' },
+    feature1Desc: { en: 'Upload contracts, pleadings, and case files to get instant insights and risk assessments.', ar: 'ارفع العقود والمذكرات وملفات القضايا للحصول على رؤى فورية وتقييمات للمخاطر.' },
+    feature2Title: { en: 'Automated Legal Research', ar: 'البحث القانوني الآلي' },
+    feature2Desc: { en: 'Let the AI search legal databases, precedents, and statutes to build strong arguments.', ar: 'دع الذكاء الاصطناعي يبحث في قواعد البيانات القانونية والسوابق والأنظمة لبناء حجج قوية.' },
+    feature3Title: { en: 'Case Management & Summarization', ar: 'إدارة وتلخيص القضايا' },
+    feature3Desc: { en: 'Organize case information, track deadlines, and generate concise summaries of complex cases.', ar: 'نظم معلومات القضايا، وتتبع المواعيد النهائية، وأنشئ ملخصات موجزة للقضايا المعقدة.' },
+    feature4Title: { en: 'Contract Drafting & Review', ar: 'صياغة ومراجعة العقود' },
+    feature4Desc: { en: 'Automatically generate professional contracts from templates and review third-party agreements for risks.', ar: 'أنشئ عقودًا احترافية تلقائيًا من القوالب وراجع اتفاقيات الطرف الثالث بحثًا عن المخاطر.' },
+    feature5Title: { en: 'Pleading & Memo Generation', ar: 'إنشاء المذكرات واللوائح' },
+    feature5Desc: { en: 'Draft initial pleadings, responsive memos, and legal arguments based on your inputs.', ar: 'صياغة اللوائح الابتدائية والمذكرات الجوابية والحجج القانونية بناءً على مدخلاتك.' },
+    feature6Title: { en: 'Legal Consultation Assistant', ar: 'مساعد الاستشارات القانونية' },
+    feature6Desc: { en: 'Get preliminary answers and legal frameworks for client inquiries in real-time.', ar: 'احصل على إجابات أولية وأطر قانونية لاستفسارات العملاء في الوقت الفعلي.' },
+    feature7Title: { en: 'Compliance & Governance', ar: 'الامتثال والحوكمة' },
+    feature7Desc: { en: 'Maintain a complete audit trail and ensure regulatory compliance for corporate clients.', ar: 'حافظ على سجل مراجعة كامل وضمان الامتثال التنظيمي للعملاء من الشركات.' },
+    feature8Title: { en: 'Litigation Strategy', ar: 'استراتيجية التقاضي' },
+    feature8Desc: { en: 'Use AI-powered analysis to predict case outcomes and develop effective litigation strategies.', ar: 'استخدم التحليل المدعوم بالذكاء الاصطناعي لتوقع نتائج القضايا وتطوير استراتيجيات تقاضي فعالة.' },
+    feature9Title: { en: 'E-Discovery & Analysis', ar: 'الاكتشاف الإلكتروني والتحليل' },
+    feature9Desc: { en: 'Process and analyze large volumes of electronic data for discovery and evidence gathering.', ar: 'معالجة وتحليل كميات كبيرة من البيانات الإلكترونية للاكتشاف وجمع الأدلة.' },
 
     // Service Categories
     allCategories: { en: 'All Categories', ar: 'جميع الأقسام' },
@@ -380,7 +382,7 @@ export const translations: Translations = {
     
     // Footer
     disclaimerTitle: { en: 'Disclaimer', ar: 'إخلاء مسؤولية' },
-    disclaimerText: { en: 'The Smart Assistant is a tool powered by artificial intelligence to assist legal professionals. It does not provide legal advice, and its outputs must be reviewed by a qualified lawyer before use. The user is solely responsible for the final legal work product.', ar: 'المساعد الذكي هو أداة مدعومة بالذكاء الاصطناعي لمساعدة المتخصصين في المجال القانوني. لا يقدم استشارات قانونية، ويجب مراجعة مخرجاته من قبل محامٍ مؤهل قبل استخدامها. المستخدم هو المسؤول الوحيد عن المنتج القانوني النهائي.' },
+    disclaimerText: { en: 'The Smart Assistant is a tool powered by artificial intelligence to assist legal professionals. It does not provide professional advice, and its outputs must be reviewed by a qualified specialist before use. The user is solely responsible for the final work product.', ar: 'المساعد الذكي هو أداة مدعومة بالذكاء الاصطناعي لمساعدة المتخصصين القانونيين. لا يقدم استشارات مهنية، ويجب مراجعة مخرجاته من قبل متخصص مؤهل قبل استخدامها. المستخدم هو المسؤول الوحيد عن المنتج النهائي.' },
     copyrightText: { en: '© 2024 The Smart Assistant. All rights reserved.', ar: '© 2024 المساعد الذكي. جميع الحقوق محفوظة.' },
     technicalSupport: { en: 'Technical Support', ar: 'الدعم الفني' },
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, LayoutGrid } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -37,6 +37,7 @@ const initialServiceState: Service = {
     subCategory: { en: '', ar: '' },
     icon: 'FileText',
     geminiModel: 'gemini-2.5-flash',
+    systemInstruction: { en: '', ar: '' },
     formInputs: [],
     usageCount: 0,
 };
@@ -750,7 +751,9 @@ const AdminPage = () => {
                     subCategory_en: { type: Type.STRING },
                     subCategory_ar: { type: Type.STRING },
                     category: { type: Type.STRING, enum: categoryIds.length > 0 ? categoryIds : Object.values(ServiceCategory) },
-                    icon: { type: Type.STRING, enum: iconNames },
+                    icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
+                    systemInstruction_en: { type: Type.STRING, description: "A detailed system instruction for the AI model in English. It should define the AI's role and task, e.g., 'You are a legal expert specializing in drafting commercial contracts...'" },
+                    systemInstruction_ar: { type: Type.STRING, description: "The Arabic translation of the system instruction." },
                     formInputs: {
                         type: Type.ARRAY,
                         items: {
@@ -765,7 +768,7 @@ const AdminPage = () => {
                         }
                     }
                 },
-                required: ['id', 'title_en', 'title_ar', 'description_en', 'description_ar', 'subCategory_en', 'subCategory_ar', 'category', 'icon', 'formInputs']
+                required: ['id', 'title_en', 'title_ar', 'description_en', 'description_ar', 'subCategory_en', 'subCategory_ar', 'category', 'icon', 'systemInstruction_en', 'systemInstruction_ar', 'formInputs']
             };
             const prompt = `You are a meticulous AI assistant specializing in creating structured JSON configurations for a legal tech platform. Your task is to generate a complete service configuration based on the provided service name.
 
@@ -774,6 +777,7 @@ const AdminPage = () => {
 **CRITICAL INSTRUCTIONS:**
 1.  **Output Format:** Your entire response MUST be a single, valid JSON object. Do NOT include any text, explanations, or markdown formatting (like \`\`\`json) outside of the JSON object itself.
 2.  **Language Separation:** This is the most important rule. You MUST provide accurate Arabic translations for all fields ending in \`_ar\`. Fields ending in \`_en\` must contain English text. DO NOT use English text in an \`_ar\` field under any circumstances.
+3.  **System Instruction:** Create a detailed, professional system instruction for the AI. This instruction defines the AI's persona and primary goal for this specific task. It must be specific and helpful.
 
 **EXAMPLE of a PERFECT OUTPUT:**
 If the service name was "Review a real estate lease", the output should be this exact JSON format:
@@ -787,6 +791,8 @@ If the service name was "Review a real estate lease", the output should be this 
   "subCategory_ar": "قانون العقارات",
   "category": "specialized-consultations",
   "icon": "Home",
+  "systemInstruction_en": "You are a legal expert specializing in Saudi real estate law. Your task is to meticulously review the uploaded lease agreement, identify clauses that are disadvantageous to the tenant, and suggest specific amendments.",
+  "systemInstruction_ar": "أنت خبير قانوني متخصص في قانون العقارات السعودي. مهمتك هي مراجعة عقد الإيجار المرفق بدقة، وتحديد البنود التي تضر بمصالح المستأجر، واقتراح تعديلات محددة.",
   "formInputs": [
     {
       "name": "lease_agreement_file",
@@ -806,18 +812,11 @@ If the service name was "Review a real estate lease", the output should be this 
 Now, based on the service name **"${aiServiceName}"**, generate a new JSON object following the same structure and adhering strictly to all rules.
 
 **DETAILS TO GENERATE:**
-- **id:** A unique, URL-friendly ID in kebab-case.
-- **title_en / title_ar:** The service title in English and Arabic.
-- **description_en / description_ar:** A concise description in English and Arabic.
-- **subCategory_en / subCategory_ar:** A logical sub-category in English and Arabic (e.g., "Corporate Law" / "قانون الشركات").
+- **systemInstruction_en / systemInstruction_ar:** A detailed instruction telling the AI its role for this specific service.
 - **category:** Must be one of: ${categoryIds.length > 0 ? categoryIds.join(', ') : Object.values(ServiceCategory).join(', ')}.
-- **icon:** Choose the most appropriate icon from this list: [${iconNames.join(', ')}].
-- **formInputs:** An array of 2-4 input fields. Each must have:
-  - **name:** snake_case identifier.
-  - **label_en / label_ar:** User-friendly labels in English and Arabic.
-  - **type:** Must be one of: 'text', 'textarea', 'date', 'file', 'select'.
+- **icon:** Choose the most appropriate icon. The value must be a valid icon name provided in the schema definition.
 
-**FINAL REMINDER:** The separation of English (\`_en\`) and Arabic (\`_ar\`) is mandatory. Your response will be parsed automatically, and any error in language placement will cause a failure.`;
+**FINAL REMINDER:** The separation of English (\`_en\`) and Arabic (\`_ar\`) and the quality of the system instruction are mandatory.`;
             
             const response = await generateServiceConfigWithAI(prompt, schema);
 
@@ -837,6 +836,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                 subCategory: { en: generatedData.subCategory_en || '', ar: generatedData.subCategory_ar || '' },
                 icon: generatedData.icon || 'FileText',
                 geminiModel: 'gemini-2.5-flash',
+                systemInstruction: { en: generatedData.systemInstruction_en || '', ar: generatedData.systemInstruction_ar || '' },
                 usageCount: 0,
                 formInputs: (generatedData.formInputs || []).map((input: any) => {
                     const formInput: FormInput = {
@@ -893,7 +893,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                         items: {
                             type: Type.OBJECT,
                             properties: {
-                                icon: { type: Type.STRING, enum: iconNames },
+                                icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
                                 title_en: { type: Type.STRING },
                                 title_ar: { type: Type.STRING },
                                 description_en: { type: Type.STRING },
@@ -916,7 +916,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                - Highlight Title: A short, powerful phrase (e.g., "Powered by AI").
                - Subtitle: A compelling 2-sentence value proposition.
             3. **Features:** Generate exactly 9 distinct features related to the topic.
-               - Icon: Choose the most relevant icon name from: ${iconNames.join(', ')}.
+               - Icon: Choose the most relevant icon name. The value must be a valid icon name provided in the schema definition.
                - Color: Provide valid Tailwind CSS gradient classes (e.g., 'from-purple-400 to-pink-600', 'from-blue-500 to-cyan-400', 'from-emerald-400 to-teal-600'). Make them varied and bright.
             4. **Output:** Pure JSON only. No markdown.
             `;
@@ -1011,12 +1011,11 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         }
     };
     
-    // ... (handleServiceInputChange, handleNestedServiceInputChange, etc. are standard logic, reused)
     const handleServiceInputChange = (field: keyof Service, value: any) => {
         setNewService(prev => ({ ...prev, [field]: value }));
     };
     
-    const handleNestedServiceInputChange = (field: 'title' | 'description' | 'subCategory', lang: 'en' | 'ar', value: string) => {
+    const handleNestedServiceInputChange = (field: 'title' | 'description' | 'subCategory' | 'systemInstruction', lang: 'en' | 'ar', value: string) => {
         setNewService(prev => ({
             ...prev,
             [field]: { ...prev[field], [lang]: value }
@@ -1374,7 +1373,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                     id: { type: Type.STRING, description: 'A unique, URL-friendly ID in kebab-case based on the English title.' },
                     title_en: { type: Type.STRING },
                     title_ar: { type: Type.STRING },
-                    icon: { type: Type.STRING, enum: iconNames },
+                    icon: { type: Type.STRING, description: `Must be one of the following values: ${iconNames.join(', ')}` },
                     order: { type: Type.INTEGER, description: 'A number for sorting, suggest a high number like 99.' }
                 },
                 required: ['id', 'title_en', 'title_ar', 'icon', 'order']
@@ -1385,7 +1384,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
             **Instructions:**
             1.  **Output JSON only:** Your response must be a single, valid JSON object. No extra text or markdown.
             2.  **Bilingual:** Provide accurate Arabic translations for fields ending in \`_ar\`. English for fields ending in \`_en\`.
-            3.  **Icon:** Choose the most suitable icon from this list: [${iconNames.join(', ')}].
+            3.  **Icon:** Choose the most suitable icon name. The value must be a valid icon name provided in the schema definition.
             4.  **Order:** Set the order to 99.
             5.  **ID:** Create a URL-friendly kebab-case ID from the English title.
             
@@ -1727,6 +1726,20 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
                              ))}
                          </select>
                      </div>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h4 className="font-bold mb-2 text-gray-800 dark:text-white">System Instruction</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Instruction (English)</label>
+                                 <textarea value={newService.systemInstruction?.en} onChange={e => handleNestedServiceInputChange('systemInstruction', 'en', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" rows={4}/>
+                             </div>
+                             <div>
+                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Instruction (Arabic)</label>
+                                 <textarea value={newService.systemInstruction?.ar} onChange={e => handleNestedServiceInputChange('systemInstruction', 'ar', e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 text-right" rows={4}/>
+                             </div>
+                        </div>
+                    </div>
 
                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                          <h4 className="font-bold mb-2 text-gray-800 dark:text-white">{t('formInputs')}</h4>
@@ -2512,7 +2525,7 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         { id: 'services', label: t('manageServices'), icon: PlusSquare },
         { id: 'categories', label: t('manageCategories'), icon: LayoutGrid },
         { id: 'subscriptions', label: t('subscriptionManagement'), icon: CreditCard },
-        { id: 'plans', label: t('planManagement'), icon: Star },
+        { id: 'plans', label: t('planManagement'), icon: Archive },
         { id: 'settings', label: t('siteSettings'), icon: Cog },
         { id: 'landing', label: t('landingPage'), icon: LayoutTemplate },
         { id: 'marketing', label: t('marketing'), icon: BarChart },
@@ -2520,75 +2533,62 @@ Now, based on the service name **"${aiServiceName}"**, generate a new JSON objec
         { id: 'notifications', label: t('notifications'), icon: Bell },
     ];
 
-    return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-4">{t('adminPanel')}</h1>
-            
-            <div className="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200
-                                ${activeTab === tab.id
-                                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
-                                }
-                            `}
-                        >
-                            <tab.icon size={16} />
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
-            
-            <div>
-                {activeTab === 'users' && renderUserManagementContent()}
-                {activeTab === 'services' && renderServiceManagementContent()}
-                {activeTab === 'categories' && renderCategoryManagementContent()}
-                {activeTab === 'subscriptions' && renderSubscriptionManagementContent()}
-                {activeTab === 'plans' && renderPlanManagementContent()}
-                {activeTab === 'settings' && renderSiteSettingsContent()}
-                {activeTab === 'landing' && renderLandingPageGenerator()}
-                {activeTab === 'marketing' && renderMarketingContent()}
-                {activeTab === 'support' && renderSupportContent()}
-                {activeTab === 'notifications' && renderNotificationsContent()}
-            </div>
-            
-            <ServiceExecutionModal 
-                isOpen={isExecutionModalOpen}
-                onClose={() => setIsExecutionModalOpen(false)}
-                service={selectedService}
-            />
+    useEffect(() => {
+        if(selectedTicket && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages]);
 
-            {isTokenModalOpen && selectedUserForAction && (
-                <AddTokenModal
-                    isOpen={isTokenModalOpen}
-                    onClose={() => setIsTokenModalOpen(false)}
-                    userId={selectedUserForAction.id}
-                    userEmail={selectedUserForAction.email}
-                    onSuccess={fetchUsers}
-                />
-            )}
-            
-            {isGrantModalOpen && (
-                <GrantSubscriptionModal
-                    isOpen={isGrantModalOpen}
-                    onClose={() => {
-                        setIsGrantModalOpen(false);
-                        setSelectedUserForAction(null);
-                    }}
-                    users={users}
-                    plans={plans}
-                    onGrant={fetchUsersWithSubscriptions}
-                    initialUserId={selectedUserForAction?.id}
-                />
-            )}
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'users': return renderUserManagementContent();
+            case 'services': return renderServiceManagementContent();
+            case 'categories': return renderCategoryManagementContent();
+            case 'subscriptions': return renderSubscriptionManagementContent();
+            case 'plans': return renderPlanManagementContent();
+            case 'settings': return renderSiteSettingsContent();
+            case 'landing': return renderLandingPageGenerator();
+            case 'marketing': return renderMarketingContent();
+            case 'support': return renderSupportContent();
+            case 'notifications': return renderNotificationsContent();
+            default: return renderUserManagementContent();
+        }
+    };
+    
+    return (
+        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+                    <aside className="lg:col-span-1 xl:col-span-1">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-2 sticky top-24">
+                            {tabs.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-bold transition-all text-sm ${isActive ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+                                    >
+                                        <Icon size={20} className="flex-shrink-0" />
+                                        <span className="flex-grow">{tab.label}</span>
+                                        {isActive && <ArrowRight size={16} className="text-primary-500 rtl:hidden" />}
+                                        {isActive && <ArrowLeft size={16} className="text-primary-500 ltr:hidden" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </aside>
+                    <main className="lg:col-span-3 xl:col-span-4">
+                        {renderContent()}
+                    </main>
+                </div>
+            </div>
+             {isGrantModalOpen && <GrantSubscriptionModal isOpen={isGrantModalOpen} onClose={() => { setIsGrantModalOpen(false); setSelectedUserForAction(null); }} users={users} plans={plans} onGrant={fetchUsersWithSubscriptions} initialUserId={selectedUserForAction?.id} />}
+            {isTokenModalOpen && selectedUserForAction && <AddTokenModal isOpen={isTokenModalOpen} onClose={() => { setIsTokenModalOpen(false); setSelectedUserForAction(null); }} userId={selectedUserForAction.id} userEmail={selectedUserForAction.email} onSuccess={fetchUsers} />}
+            {isExecutionModalOpen && <ServiceExecutionModal isOpen={isExecutionModalOpen} onClose={() => setIsExecutionModalOpen(false)} service={selectedService} />}
         </div>
     );
 };
 
-// FIX: Added default export for the component.
 export default AdminPage;

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, Volume2, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -545,11 +543,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 geminiConfig = { ...geminiConfig, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 1024 } };
             }
 
+            let finalSystemInstruction = '';
+            const serviceSystemInstruction = selectedService.systemInstruction?.[outputLanguage] || selectedService.systemInstruction?.[language] || '';
+            
             if (outputLanguage === Language.AR) {
-                geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystem };
+                finalSystemInstruction = `${serviceSystemInstruction}\n\n---\n\n${professionalOutputInstructionSystem}`.trim();
             } else {
-                geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystemEN };
+                finalSystemInstruction = `${serviceSystemInstruction}\n\n---\n\n${professionalOutputInstructionSystemEN}`.trim();
             }
+            
+            geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
+
 
             const response = await runGemini(selectedService.geminiModel, promptText, file, handleRetry, geminiConfig);
             setResult(response.text);
@@ -740,34 +744,61 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 ) : sidebarCategories.map(cat => {
                     const isActive = selectedCategory === cat.id;
                     const IconComponent = cat.icon;
+                    const isSpecialCategory = cat.id === 'creative-services';
+
+                    let buttonClasses = `font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group`;
+                
+                    if (isSpecialCategory) {
+                        if (isActive) {
+                            buttonClasses += ' bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg ring-2 ring-offset-2 ring-offset-gray-50 dark:ring-offset-slate-900 ring-orange-400';
+                        } else {
+                            buttonClasses += ' bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:shadow-amber-500/10 hover:shadow-md';
+                        }
+                    } else {
+                        if (isActive) {
+                            buttonClasses += ' bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm';
+                        } else {
+                            buttonClasses += ' text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60';
+                        }
+                    }
 
                     return (
                         <button
                             key={cat.id}
                             onClick={() => {
                                 setSelectedCategory(cat.id);
-                                setSelectedService(null); // Reset service when category changes
+                                setSelectedService(null);
                             }}
-                            className={`font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group ${
-                                isActive
-                                    ? 'bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm' // Active style
-                                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60' // Inactive style
-                            }`}
+                            className={buttonClasses}
                         >
-                            {/* RTL Layout: Chevron, Text, Icon */}
                             {language === 'ar' ? (
                                 <>
                                     <div className="w-4">{isActive && <ArrowLeft size={16} />}</div>
                                     <span className="flex-grow text-right">{cat.label}</span>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
-                                        <IconComponent size={20} className={isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`} />
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${
+                                        isSpecialCategory
+                                            ? (isActive ? 'bg-white/20' : 'bg-amber-100 dark:bg-amber-900/30')
+                                            : (isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800')
+                                    }`}>
+                                        <IconComponent size={20} className={
+                                            isSpecialCategory 
+                                                ? (isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400')
+                                                : (isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`)
+                                        } />
                                     </div>
                                 </>
                             ) : (
-                            // LTR Layout: Icon, Text, Chevron
                                 <>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
-                                        <IconComponent size={20} className={isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`} />
+                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${
+                                        isSpecialCategory
+                                            ? (isActive ? 'bg-white/20' : 'bg-amber-100 dark:bg-amber-900/30')
+                                            : (isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800')
+                                    }`}>
+                                        <IconComponent size={20} className={
+                                            isSpecialCategory 
+                                                ? (isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400')
+                                                : (isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`)
+                                        } />
                                     </div>
                                     <span className="flex-grow text-left">{cat.label}</span>
                                     <div className="w-4">{isActive && <ChevronRightIcon size={16} />}</div>

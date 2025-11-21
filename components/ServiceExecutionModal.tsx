@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { X, File, Loader2, Printer, Volume2, Copy, Check } from 'lucide-react';
 import { Service, Language } from '../types';
@@ -225,11 +223,16 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             geminiConfig = { ...geminiConfig, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 1024 } };
         }
         
+        let finalSystemInstruction = '';
+        const serviceSystemInstruction = service.systemInstruction?.[outputLanguage] || service.systemInstruction?.[language] || '';
+
         if (outputLanguage === Language.AR) {
-            geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystem };
+            finalSystemInstruction = `${serviceSystemInstruction}\n\n---\n\n${professionalOutputInstructionSystem}`.trim();
         } else {
-            geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystemEN };
+            finalSystemInstruction = `${serviceSystemInstruction}\n\n---\n\n${professionalOutputInstructionSystemEN}`.trim();
         }
+
+        geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
         const response = await runGemini(service.geminiModel, prompt, file, handleRetry, geminiConfig);
         const resultText = response.text;
