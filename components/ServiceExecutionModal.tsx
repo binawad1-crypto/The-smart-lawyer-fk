@@ -210,15 +210,15 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             {/* Form Section */}
             <div className="lg:col-span-1 flex flex-col">
                 <form onSubmit={handleSubmit} className="space-y-4 flex flex-col flex-grow">
-                    <div className="flex-grow space-y-4">
+                    <div className="flex-grow space-y-5">
                         {service.formInputs.map(input => (
                             <div key={input.name}>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{input.label[language]}</label>
-                            {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
-                            {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
-                            {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />}
+                            <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-2">{input.label[language]}</label>
+                            {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-base border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" />}
+                            {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" />}
+                            {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none" />}
                             {input.type === 'select' && (
-                                <select name={input.name} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600">
+                                <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
                                 <option value="">{`Select ${input.label[language]}`}</option>
                                 {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                 </select>
@@ -242,7 +242,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                     </div>
                     
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-                        <button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2 px-4 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center">
+                        <button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary-600 text-white font-bold py-2.5 px-6 rounded-md hover:bg-primary-700 disabled:bg-primary-300 flex items-center justify-center shadow-lg">
                             {isLoading && <Loader2 className="animate-spin mr-2" size={20} />}
                             {t('executeTask')}
                         </button>
@@ -333,7 +333,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         ) : (
                              <pre 
                                 className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
-                                style={{ fontSize: '14px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                style={{ fontSize: '18px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
                             >
                                 {result}
                             </pre>

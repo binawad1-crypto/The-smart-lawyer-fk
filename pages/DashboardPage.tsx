@@ -50,7 +50,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
-    const [fontSize, setFontSize] = useState(14);
+    const [fontSize, setFontSize] = useState(18);
     
     // Search and Filter States
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -638,12 +638,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                              <div className="space-y-4">
                                  {selectedService.formInputs.map(input => (
                                      <div key={input.name}>
-                                         <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
-                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2 uppercase tracking-wide">{input.label[language]}</label>
+                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
                                          {input.type === 'select' && (
-                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm">
+                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm">
                                                  <option value="">{`Select ${input.label[language]}`}</option>
                                                  {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                              </select>
