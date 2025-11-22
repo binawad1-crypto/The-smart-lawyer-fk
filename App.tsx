@@ -12,13 +12,14 @@ import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
 import ProfilePage from './pages/ProfilePage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import PaymentSuccessPage from './components/PaymentSuccessPage';
 import MobileBottomNav from './components/MobileBottomNav';
 import PixelTracker from './components/PixelTracker';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import SupportPanel from './components/SupportModal';
 import ChatWidget from './components/ChatWidget';
 
-export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support';
+export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support' | 'payment-success';
 
 // Helper to update or create a meta tag
 const updateMetaTag = (attribute: 'name' | 'property', key: string, content: string) => {
@@ -39,6 +40,15 @@ const App: React.FC = () => {
   const [initialAuthView, setInitialAuthView] = useState<'login' | 'signup'>('login');
   const [view, setView] = useState<View>('dashboard');
   const [isChatWidgetOpen, setIsChatWidgetOpen] = useState(false);
+
+  // Check for Payment Success on Load
+  useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      if (sessionId) {
+          setView('payment-success');
+      }
+  }, []);
 
   useEffect(() => {
     if (settings) {
@@ -93,6 +103,14 @@ const App: React.FC = () => {
           setView('dashboard');
           return;
       }
+      
+      // If navigating away from payment success, clean URL
+      if (view === 'payment-success') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('session_id');
+          window.history.replaceState({}, '', url);
+      }
+
       setView(newView);
   }
 
@@ -135,6 +153,8 @@ const App: React.FC = () => {
             return <ProfilePage onNavigate={handleNavigate} />;
         case 'subscriptions':
             return <SubscriptionPage />;
+        case 'payment-success':
+            return <PaymentSuccessPage onGoToDashboard={() => handleNavigate('dashboard')} />;
         case 'support':
             return (
                 <div className="flex flex-col flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6 h-[calc(100vh-64px)]">
