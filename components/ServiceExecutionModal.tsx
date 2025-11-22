@@ -7,6 +7,8 @@ import { useAuth } from '../hooks/useAuth';
 import { runGemini } from '../services/geminiService';
 import { doc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
+// @ts-ignore
+import mammoth from 'mammoth';
 
 interface ServiceExecutionModalProps {
   isOpen: boolean;
@@ -32,6 +34,53 @@ IMPORTANT INSTRUCTIONS:
 
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
+
+// Helper to extract text from Word/Text files
+const extractTextFromFile = async (file: File): Promise<string | null> => {
+    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+    } else if (file.type === "text/plain") {
+        return await file.text();
+    }
+    return null;
+};
+
+// Helper to format error messages
+const formatErrorMessage = (error: any, language: Language): string => {
+    const msg = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    
+    if (msg.includes('400') || msg.includes('INVALID_ARGUMENT') || msg.includes('Unsupported MIME type')) {
+        return language === 'ar' 
+            ? 'عذراً، نوع الملف المرفق غير مدعوم مباشرة. يرجى التأكد من أن الملف نصي، صورة، أو PDF. (للملفات غير المدعومة، حاول نسخ النص ولصقه مباشرة).'
+            : 'Sorry, the attached file type is not supported directly. Please ensure the file is an image, PDF, or text. (For unsupported files, try copying and pasting the text directly).';
+    }
+    if (msg.includes('429') || msg.includes('QUOTA_EXHAUSTED') || msg.includes('Resource has been exhausted')) {
+        return language === 'ar'
+            ? 'عذراً، الخدمة مشغولة جداً حالياً أو تم استنفاد الحصة. يرجى الانتظار قليلاً والمحاولة مرة أخرى.'
+            : 'Sorry, the service is currently very busy or the quota has been exhausted. Please wait a moment and try again.';
+    }
+    if (msg.includes('500') || msg.includes('503') || msg.includes('internal')) {
+        return language === 'ar'
+            ? 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
+            : 'A server error occurred. Please try again later.';
+    }
+    
+    // Try to parse JSON error if possible
+    try {
+        if (msg.startsWith('{')) {
+            const jsonObj = JSON.parse(msg);
+            if (jsonObj.error?.message) {
+                return `${language === 'ar' ? 'خطأ من النظام: ' : 'System Error: '} ${jsonObj.error.message}`;
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg}` : `An unexpected error occurred: ${msg}`;
+};
 
 const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, onClose, service }) => {
   const { language, t } = useLanguage();
@@ -67,7 +116,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     }
   };
 
-  const constructPrompt = useCallback(() => {
+  const constructPrompt = useCallback((extractedText: string = '') => {
     if (!service) return '';
     let prompt = `Service: ${service.title.en}.\n`;
     for (const key in formData) {
@@ -76,6 +125,9 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
     }
     
+    // Add extracted text from files
+    prompt += extractedText;
+
     // Inject Location Context from Profile
     const userLocation = currentUser?.location;
     if (userLocation) {
@@ -99,9 +151,23 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     setIsSaved(false);
     setShowSaveMessage(false);
 
-    const prompt = constructPrompt();
     const fileInput = service.formInputs.find(i => i.type === 'file');
     const file = fileInput ? formData[fileInput.name] as File : undefined;
+
+    let extractedTextFromFiles = '';
+    let fileToSend: File | undefined = undefined;
+
+    // Check file type and extract if needed
+    if (file) {
+        const extractedText = await extractTextFromFile(file);
+        if (extractedText) {
+            extractedTextFromFiles = `\n\n[ATTACHED DOCUMENT CONTENT]:\n${extractedText}\n[END OF DOCUMENT]\n`;
+        } else {
+            fileToSend = file;
+        }
+    }
+
+    const prompt = constructPrompt(extractedTextFromFiles);
 
     const handleRetry = (attempt: number, maxRetries: number) => {
       const message = t('modelIsBusyRetrying')
@@ -142,7 +208,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             modelToUse = 'gemini-2.5-flash';
         }
 
-        const response = await runGemini(modelToUse, prompt, file, handleRetry, geminiConfig);
+        const response = await runGemini(modelToUse, prompt, fileToSend, handleRetry, geminiConfig);
         const resultText = response.text;
         setResult(resultText);
 
@@ -158,11 +224,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             }
         }
     } catch (error) {
-        let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        if (errorMessage.includes('QUOTA_EXHAUSTED')) {
-             errorMessage = t('quotaExhaustedMessage');
-        }
-        setResult(`${t('serviceSavedError')}: ${errorMessage}`);
+        setResult(`${t('serviceSavedError')}: ${formatErrorMessage(error, language)}`);
     } finally {
         setIsLoading(false);
         setRetryMessage('');

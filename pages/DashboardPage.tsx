@@ -10,6 +10,8 @@ import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc,
 import { db } from '../services/firebase';
 import { runGemini } from '../services/geminiService';
 import { iconMap } from '../constants';
+// @ts-ignore
+import mammoth from 'mammoth';
 
 interface DashboardPageProps {
     onNavigate: (view: 'dashboard' | 'admin' | 'profile' | 'subscriptions') => void;
@@ -33,6 +35,53 @@ IMPORTANT INSTRUCTIONS:
 
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
+
+// Helper to extract text from Word/Text files
+const extractTextFromFile = async (file: File): Promise<string | null> => {
+    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+    } else if (file.type === "text/plain") {
+        return await file.text();
+    }
+    return null;
+};
+
+// Helper to format error messages
+const formatErrorMessage = (error: any, language: Language): string => {
+    const msg = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
+    
+    if (msg.includes('400') || msg.includes('INVALID_ARGUMENT') || msg.includes('Unsupported MIME type')) {
+        return language === 'ar' 
+            ? 'عذراً، نوع الملف المرفق غير مدعوم مباشرة. يرجى التأكد من أن الملف نصي، صورة، أو PDF. (للملفات غير المدعومة، حاول نسخ النص ولصقه مباشرة).'
+            : 'Sorry, the attached file type is not supported directly. Please ensure the file is an image, PDF, or text. (For unsupported files, try copying and pasting the text directly).';
+    }
+    if (msg.includes('429') || msg.includes('QUOTA_EXHAUSTED') || msg.includes('Resource has been exhausted')) {
+        return language === 'ar'
+            ? 'عذراً، الخدمة مشغولة جداً حالياً أو تم استنفاد الحصة. يرجى الانتظار قليلاً والمحاولة مرة أخرى.'
+            : 'Sorry, the service is currently very busy or the quota has been exhausted. Please wait a moment and try again.';
+    }
+    if (msg.includes('500') || msg.includes('503') || msg.includes('internal')) {
+        return language === 'ar'
+            ? 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
+            : 'A server error occurred. Please try again later.';
+    }
+    
+    // Try to parse JSON error if possible
+    try {
+        if (msg.startsWith('{')) {
+            const jsonObj = JSON.parse(msg);
+            if (jsonObj.error?.message) {
+                return `${language === 'ar' ? 'خطأ من النظام: ' : 'System Error: '} ${jsonObj.error.message}`;
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg}` : `An unexpected error occurred: ${msg}`;
+};
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const { t, language, dir } = useLanguage();
@@ -339,11 +388,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             }
 
         } catch (error) {
-            let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
-                 errorMessage = t('quotaExhaustedMessage');
-            }
-            setResult(`${t('serviceSavedError')}: ${errorMessage}`);
+            setResult(formatErrorMessage(error, language));
         } finally {
             setIsGenerating(false);
             setRetryMessage('');
@@ -399,6 +444,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsSaved(false);
         setShowSaveMessage(false);
     
+        let extractedTextFromFiles = '';
+        let fileToSend: File | undefined = undefined;
+
+        const fileInput = selectedService.formInputs.find(i => i.type === 'file');
+        const file = fileInput ? formData[fileInput.name] as File : undefined;
+
+        // Check if the file needs text extraction (Word or Text)
+        if (file) {
+            const extractedText = await extractTextFromFile(file);
+            if (extractedText) {
+                // It's a document that we extracted text from
+                extractedTextFromFiles = `\n\n[ATTACHED DOCUMENT CONTENT]:\n${extractedText}\n[END OF DOCUMENT]\n`;
+            } else {
+                // It's likely an image or PDF, send as binary to Gemini
+                fileToSend = file;
+            }
+        }
+
         const constructPromptForService = () => {
             if (!selectedService) return '';
             let prompt = `Service: ${selectedService.title.en}.\n`;
@@ -407,6 +470,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const inputConfig = selectedService.formInputs.find(i => i.name === key);
                 prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
             }
+            
+            // Append extracted text from Word/Txt files if any
+            prompt += extractedTextFromFiles;
+
             const userLocation = currentUser?.location;
             if (userLocation) {
                 prompt += `\nCONTEXT: The user is located in ${userLocation}. Apply the laws and regulations of ${userLocation}.`;
@@ -419,8 +486,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         };
     
         const promptText = constructPromptForService();
-        const fileInput = selectedService.formInputs.find(i => i.type === 'file');
-        const file = fileInput ? formData[fileInput.name] as File : undefined;
     
         const handleRetry = (attempt: number, maxRetries: number) => {
             const message = t('modelIsBusyRetrying').replace('${attempt}', String(attempt)).replace('${maxRetries}', String(maxRetries));
@@ -460,7 +525,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 modelToUse = 'gemini-2.5-flash';
             }
 
-            const response = await runGemini(modelToUse, promptText, file, handleRetry, geminiConfig);
+            const response = await runGemini(modelToUse, promptText, fileToSend, handleRetry, geminiConfig);
             setResult(response.text);
 
             const isSuccess = !!response.text;
@@ -490,11 +555,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 }
             }
         } catch (error) {
-            let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            if (errorMessage.includes('QUOTA_EXHAUSTED')) {
-                 errorMessage = t('quotaExhaustedMessage');
-            }
-            setResult(`${t('serviceSavedError')}: ${errorMessage}`);
+            setResult(formatErrorMessage(error, language));
         } finally {
             setIsGenerating(false);
             setRetryMessage('');
