@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
+import { ChatProvider } from './contexts/ChatContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -19,7 +20,9 @@ root.render(
       <LanguageProvider>
         <AuthProvider>
           <SiteSettingsProvider>
-            <App />
+            <ChatProvider>
+              <App />
+            </ChatProvider>
           </SiteSettingsProvider>
         </AuthProvider>
       </LanguageProvider>

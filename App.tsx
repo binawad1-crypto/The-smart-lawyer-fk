@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useLanguage } from './hooks/useLanguage';
 import { useSiteSettings } from './hooks/useSiteSettings';
+import { useChat } from './hooks/useChat';
 import Header from './components/Header';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
-// FIX: The error "has no default export" is fixed by adding `export default` to AdminPage.tsx. No change is needed here.
 import AdminPage from './pages/AdminPage';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
@@ -37,10 +37,11 @@ const App: React.FC = () => {
   const { currentUser, loading: authLoading } = useAuth();
   const { t, language, dir } = useLanguage();
   const { settings, loading: settingsLoading } = useSiteSettings();
+  const { isOpen: isChatOpen, setIsOpen: setIsChatOpen } = useChat();
+  
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [initialAuthView, setInitialAuthView] = useState<'login' | 'signup'>('login');
   const [view, setView] = useState<View>('dashboard');
-  const [isChatWidgetOpen, setIsChatWidgetOpen] = useState(false);
 
   // Check for Payment Success on Load
   useEffect(() => {
@@ -172,13 +173,6 @@ const App: React.FC = () => {
             return <DashboardPage onNavigate={handleNavigate} />;
     }
   };
-
-  // If email is not verified, do not show the main app shell (Header/Footer/Nav)
-  // Just show the clean verification page to avoid distraction, 
-  // OR keep the header but remove navigation. 
-  // Based on request "cannot enter site", it's cleaner to block fully or show a minimal shell.
-  // I'll use a minimal approach: Header is fine (allows logout), but MobileNav should probably be hidden if blocked.
-  // Actually, renderContent handles the view switching.
   
   const isBlocked = currentUser && !currentUser.emailVerified;
 
@@ -210,11 +204,11 @@ const App: React.FC = () => {
           <MobileBottomNav 
             currentView={view} 
             onNavigate={handleNavigate}
-            onAssistantClick={() => setIsChatWidgetOpen(true)} 
+            onAssistantClick={() => setIsChatOpen(true)} 
           />
           <ChatWidget 
-            isOpen={isChatWidgetOpen}
-            onClose={() => setIsChatWidgetOpen(false)}
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
           />
         </>
       )}

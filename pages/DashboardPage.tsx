@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2 } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
+import { useChat } from '../hooks/useChat';
 import { Service, Translations, Language, Category, ServiceHistoryEntry } from '../types';
 import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc, serverTimestamp, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -37,6 +38,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const { t, language, dir } = useLanguage();
     const { currentUser } = useAuth();
     const { settings } = useSiteSettings();
+    const { openChatWithContext } = useChat(); // Hook for Chat Context
+
     const [services, setServices] = useState<Service[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingServices, setLoadingServices] = useState(true);
@@ -319,6 +322,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry, geminiConfig);
             setResult(response.text);
+            // PUSH TO CHAT CONTEXT (Wait for result to settle)
             if (response.text) {
                 setIsResultModalOpen(true);
             }
@@ -442,9 +446,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
-            // ---------------------------------------------------------------------------
-            // AUTO-FIX: Check for deprecated models
-            // ---------------------------------------------------------------------------
             let modelToUse = selectedService.geminiModel;
             const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
             
@@ -538,6 +539,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setResult('');
         setIsSaved(false);
         setShowSaveMessage(false);
+    };
+
+    const handleDiscussResult = () => {
+        if (result) {
+            openChatWithContext(result);
+            if (window.innerWidth < 1024) {
+                // Close modal on mobile if open, so chat can be seen
+                setIsResultModalOpen(false);
+            }
+        }
     };
 
     const handleZoomIn = () => setFontSize(s => Math.min(s + 1, 32));
@@ -1021,6 +1032,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         )}
                     </button>
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
+                    {/* Discuss Button */}
+                    {result && (
+                        <button 
+                            onClick={handleDiscussResult}
+                            title={language === 'ar' ? 'ناقش النتيجة مع المساعد' : 'Discuss result with AI'}
+                            className="p-1.5 rounded text-yellow-200 hover:bg-white/10 hover:text-yellow-100 transition-colors animate-pulse"
+                        >
+                            <MessageCircle size={16} />
+                        </button>
+                    )}
+                    <div className="w-px h-4 bg-white/20 mx-1"></div>
+                    
                     <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
                     <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
                     {currentUser && (
@@ -1126,6 +1149,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {t('results')}
                     </h3>
                     <div className="flex items-center gap-1">
+                        {/* Discuss Button for Mobile Modal */}
+                        {result && (
+                            <button 
+                                onClick={handleDiscussResult}
+                                title={language === 'ar' ? 'ناقش النتيجة مع المساعد' : 'Discuss result with AI'}
+                                className="p-1.5 rounded text-yellow-200 hover:bg-white/10 hover:text-yellow-100 transition-colors animate-pulse"
+                            >
+                                <MessageCircle size={16} />
+                            </button>
+                        )}
+                        <div className="w-px h-4 bg-white/20 mx-1"></div>
                         <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
                         <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
                         {currentUser && (
