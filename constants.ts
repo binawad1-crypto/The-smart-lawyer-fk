@@ -57,7 +57,24 @@ export const translations: Translations = {
     passwordsDontMatch: { en: 'Passwords do not match.', ar: 'كلمات المرور غير متطابقة.' },
     dontHaveAccount: { en: "Don't have an account?", ar: 'ليس لديك حساب؟' },
     alreadyHaveAccount: { en: 'Already have an account?', ar: 'لديك حساب بالفعل؟' },
+    verificationEmailSent: { en: 'A verification email has been sent to your address. Please verify your account.', ar: 'تم إرسال رابط التحقق إلى بريدك الإلكتروني. يرجى تفعيل حسابك.' },
+    forgotPassword: { en: 'Forgot Password?', ar: 'هل نسيت كلمة المرور؟' },
+    resetPassword: { en: 'Reset Password', ar: 'إعادة تعيين كلمة المرور' },
+    sendResetLink: { en: 'Send Reset Link', ar: 'إرسال رابط إعادة التعيين' },
+    backToLogin: { en: 'Back to Login', ar: 'العودة لتسجيل الدخول' },
+    resetEmailSent: { en: 'Password reset link sent! Check your inbox.', ar: 'تم إرسال رابط إعادة تعيين كلمة المرور! تحقق من بريدك الوارد.' },
     
+    // Email Verification Page
+    verifyEmailTitle: { en: 'Verify Your Email', ar: 'تأكيد البريد الإلكتروني' },
+    verifyEmailMessage: { en: 'We have sent a verification link to', ar: 'لقد قمنا بإرسال رابط تحقق إلى' },
+    verifyEmailInstruction: { en: 'Please check your inbox (and spam folder) and click the link to activate your account.', ar: 'يرجى التحقق من صندوق الوارد والنقر على الرابط لتفعيل حسابك.' },
+    checkSpamHint: { en: 'If you do not see the email, please check your Spam or Junk folder.', ar: '⚠️ ملاحظة هامة: إذا لم تجد الرسالة في صندوق الوارد، يرجى التحقق من مجلد "الرسائل غير المرغوب فيها" (Spam) أو (Junk).' },
+    resendEmail: { en: 'Resend Verification Email', ar: 'إعادة إرسال رابط التحقق' },
+    emailSentSuccess: { en: 'Verification email sent!', ar: 'تم إرسال رابط التحقق!' },
+    emailSentError: { en: 'Failed to send email. Please try again later.', ar: 'فشل إرسال البريد. يرجى المحاولة لاحقاً.' },
+    iHaveVerified: { en: 'I have verified my email', ar: 'لقد قمت بتفعيل البريد' },
+    refreshStatus: { en: 'Refresh Status', ar: 'تحديث الحالة' },
+
     // Service Card
     runService: { en: 'Run', ar: 'تشغيل' },
     

@@ -18,6 +18,7 @@ import PixelTracker from './components/PixelTracker';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import SupportPanel from './components/SupportModal';
 import ChatWidget from './components/ChatWidget';
+import EmailVerificationPage from './components/EmailVerificationPage';
 
 export type View = 'landing' | 'dashboard' | 'admin' | 'profile' | 'subscriptions' | 'support' | 'payment-success';
 
@@ -143,6 +144,11 @@ const App: React.FC = () => {
           setIsAuthModalOpen(true);
       }} />;
     }
+
+    // Email Verification Check - Block access if not verified
+    if (currentUser && !currentUser.emailVerified) {
+        return <EmailVerificationPage />;
+    }
     
     switch(view) {
         case 'landing':
@@ -167,27 +173,39 @@ const App: React.FC = () => {
     }
   };
 
+  // If email is not verified, do not show the main app shell (Header/Footer/Nav)
+  // Just show the clean verification page to avoid distraction, 
+  // OR keep the header but remove navigation. 
+  // Based on request "cannot enter site", it's cleaner to block fully or show a minimal shell.
+  // I'll use a minimal approach: Header is fine (allows logout), but MobileNav should probably be hidden if blocked.
+  // Actually, renderContent handles the view switching.
+  
+  const isBlocked = currentUser && !currentUser.emailVerified;
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg font-sans flex flex-col">
       <PixelTracker />
-      <Header 
-        onLoginClick={() => {
-            setInitialAuthView('login');
-            setIsAuthModalOpen(true);
-        }} 
-        onAdminClick={() => handleNavigate(view === 'admin' ? 'dashboard' : 'admin')} 
-        onLogoClick={handleLogoClick}
-        onProfileClick={() => handleNavigate('profile')}
-        onSupportClick={() => handleNavigate('support')}
-        onHomeClick={() => setView('landing')}
-        onServicesClick={() => setView('dashboard')}
-        view={view}
-      />
+      {!isBlocked && (
+          <Header 
+            onLoginClick={() => {
+                setInitialAuthView('login');
+                setIsAuthModalOpen(true);
+            }} 
+            onAdminClick={() => handleNavigate(view === 'admin' ? 'dashboard' : 'admin')} 
+            onLogoClick={handleLogoClick}
+            onProfileClick={() => handleNavigate('profile')}
+            onSupportClick={() => handleNavigate('support')}
+            onHomeClick={() => setView('landing')}
+            onServicesClick={() => setView('dashboard')}
+            view={view}
+          />
+      )}
+      
       <main className="flex-grow flex flex-col pb-16 md:pb-0">
         {renderContent()}
       </main>
       
-      {currentUser && (
+      {currentUser && !isBlocked && (
         <>
           <MobileBottomNav 
             currentView={view} 
@@ -206,9 +224,12 @@ const App: React.FC = () => {
         onClose={() => setIsAuthModalOpen(false)} 
         initialView={initialAuthView}
       />
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      
+      {!isBlocked && (
+        <div className="hidden md:block">
+            <Footer />
+        </div>
+      )}
     </div>
   );
 };
