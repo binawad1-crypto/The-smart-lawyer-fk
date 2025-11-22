@@ -1,3 +1,4 @@
+
 // FIX: Import React to make React.ComponentType available.
 import React from 'react';
 import { Translations, Plan } from './types';
@@ -28,7 +29,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
     // General
     appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    appSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
+    appSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
     home: { en: 'Home', ar: 'الرئيسية' },
     services: { en: 'Services', ar: 'الخدمات' },
     support: { en: 'Support', ar: 'الدعم الفني' },
@@ -88,7 +89,7 @@ export const translations: Translations = {
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    heroTitleHighlight: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
+    heroTitleHighlight: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
     heroSubtitle: { en: 'Automate legal drafting, analyze case files in seconds, and manage your practice with unparalleled efficiency. Focus on winning cases, and let AI handle the routine tasks.', ar: 'أتمتة صياغة المذكرات، وحلل ملفات القضايا في ثوانٍ، وأدر مكتبك بكفاءة لا مثيل لها. ركز على كسب قضاياك، ودع الذكاء الاصطناعي يتولى المهام الروتينية.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
     goToDashboard: { en: 'Go to Dashboard', ar: 'الذهاب إلى لوحة التحكم' },

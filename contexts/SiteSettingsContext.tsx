@@ -8,8 +8,8 @@ export const SiteSettingsContext = createContext<SiteSettingsContextType | undef
 
 const defaultSettings: SiteSettings = {
     siteName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    siteSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماه والاستشارات القانونية' },
-    metaDescription: { en: 'The Smart Assistant for Law Practice: An AI-powered platform that provides specialized services for lawyers and legal consultants.', ar: 'المساعد الذكي للمحاماه: منصة مدعومة بالذكاء الاصطناعي تقدم خدمات متخصصة للمحامين والمستشارين القانونيين.' },
+    siteSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
+    metaDescription: { en: 'The Smart Assistant for Law Practice: An AI-powered platform that provides specialized services for lawyers and legal consultants.', ar: 'المساعد الذكي للمحاماة: منصة مدعومة بالذكاء الاصطناعي تقدم خدمات متخصصة للمحامين والمستشارين القانونيين.' },
     seoKeywords: { en: 'law, legal, ai, lawyer, assistant, drafting, cases, lawtech, attorney', ar: 'محاماه, قانون, ذكاء اصطناعي, محامي, مساعد, صياغة, قضايا, تقنية قانونية' },
     logoUrl: '',
     faviconUrl: '',

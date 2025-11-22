@@ -497,7 +497,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // Updated to be Dark (Night) mode always, even in Day mode.
     const renderSidebar = () => {
         const siteName = settings?.siteName[language] || (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant');
-        const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماه والاستشارات القانونية' : 'For Law and Legal Consulting');
+        const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law and Legal Consulting');
 
         return (
         <div className="flex flex-col h-full rounded-2xl bg-[#1c1c1e] shadow-lg border border-white/10 overflow-hidden w-full min-w-0">
