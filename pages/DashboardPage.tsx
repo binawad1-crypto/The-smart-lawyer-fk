@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -146,18 +146,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         fetchCategories();
     }, [t, language]);
 
-    // Helper function to determine card color theme based on category - NOW UNIFIED TO GOLD
-    const getServiceColorTheme = (categoryId: string) => {
-        // All categories now use the Gold theme
-        return { 
-            border: 'bg-primary-500', 
-            iconBg: 'bg-primary-50', 
-            iconColor: 'text-primary-600',
-            darkIconBg: 'dark:bg-primary-900/20',
-            darkIconColor: 'dark:text-primary-400'
-        };
-    };
-
     const filteredServices = useMemo(() => {
         let filtered = services;
 
@@ -194,6 +182,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         });
     
         return [
+            // Note: 'all' is handled specially in render
             { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
             { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-primary-400' },
             ...dynamicCategories
@@ -358,8 +347,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
             // ---------------------------------------------------------------------------
-            // AUTO-FIX: Check for deprecated models (specifically 1.5-pro-latest which causes 404s)
-            // This logic ensures that old services with deprecated model names still work.
+            // AUTO-FIX: Check for deprecated models
             // ---------------------------------------------------------------------------
             let modelToUse = selectedService.geminiModel;
             const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
@@ -511,7 +499,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
     
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
-    // Updated to be Dark (Night) mode always, even in Day mode.
     const renderSidebar = () => {
         const siteName = settings?.siteName[language] || (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant');
         const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law and Legal Consulting');
@@ -545,14 +532,56 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Categories Navigation */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1 w-full min-w-0">
+            <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2 w-full min-w-0">
                 {loadingCategories ? (
                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
                 ) : sidebarCategories.map(cat => {
                     const isActive = selectedCategory === cat.id;
-                    const IconComponent = cat.icon;
-                    const isSpecialCategory = cat.id === 'favorites'; 
+                    
+                    // SPECIAL HANDLING FOR 'all' (The "Smart Assistant" button)
+                    if (cat.id === 'all') {
+                        return (
+                            <button
+                                key={cat.id}
+                                onClick={() => {
+                                    setSelectedCategory(cat.id);
+                                    setSelectedService(null);
+                                }}
+                                className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
+                                    isActive 
+                                    ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]' 
+                                    : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
+                                } border`}
+                            >
+                                {/* Background Pattern */}
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
 
+                                {/* Icon Container */}
+                                <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
+                                    {/* Animated Icon: Sparkles with pulse effect and Gold color */}
+                                    <Sparkles size={24} className="animate-pulse text-yellow-300" fill={isActive ? "#FDE047" : "none"} />
+                                </div>
+
+                                {/* Text Content */}
+                                <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
+                                    <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
+                                        المساعد الذكي
+                                    </span>
+                                    <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
+                                        للمحاماة والاستشارات القانونية
+                                    </span>
+                                </div>
+                                
+                                {/* Active Indicator */}
+                                {isActive && (
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
+                                )}
+                            </button>
+                        );
+                    }
+
+                    const IconComponent = cat.icon;
                     let buttonClasses = `font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group`;
                 
                     if (isActive) {
@@ -627,7 +656,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     ) : (
                         <div className="flex items-center justify-between w-full">
                             <h3 className="font-cairo font-bold text-white text-lg">
-                                {sidebarCategories.find(c => c.id === selectedCategory)?.label}
+                                {selectedCategory === 'all' ? (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant') : sidebarCategories.find(c => c.id === selectedCategory)?.label}
                             </h3>
                             <button
                                 onClick={handleToggleServices}
