@@ -2,16 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin } from 'lucide-react';
+import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin, History, Clock, FileText, ArrowRight, ArrowLeft, Copy, Printer, Trash2, LifeBuoy } from 'lucide-react';
 // @ts-ignore: Suppressing missing type definitions for firebase/functions
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '../services/firebase';
-import { collection, getDocs, query, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, where, orderBy, onSnapshot, limit, deleteDoc } from 'firebase/firestore';
 import { View } from '../App';
-import { Plan } from '../types';
+import { Plan, ServiceHistoryEntry } from '../types';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword, signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import SupportPanel from '../components/SupportModal';
+import { iconMap } from '../constants';
 
 interface ProfilePageProps {
   onNavigate: (view: View) => void;
@@ -82,10 +83,106 @@ const ReauthModal: React.FC<{
     );
 };
 
+const HistoryModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    entry: ServiceHistoryEntry | null;
+}> = ({ isOpen, onClose, entry }) => {
+    const { t, language } = useLanguage();
+    const [isCopied, setIsCopied] = useState(false);
+
+    if (!isOpen || !entry) return null;
+
+    const copyToClipboard = () => {
+        const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
+        navigator.clipboard.writeText(stripHtml(entry.result));
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    const handlePrint = () => {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            const contentToPrint = entry.result.trim().startsWith('<section')
+                ? entry.result
+                : `<pre style="font-family: Calibri, sans-serif;">${entry.result}</pre>`;
+
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>${entry.serviceTitle[language] || 'Print'}</title>
+                  <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+                    body { font-family: 'Calibri', 'Noto Naskh Arabic', 'Tajawal', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                    pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
+                  </style>
+                </head>
+                <body>${contentToPrint}</body>
+              </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[85vh] transform transition-all scale-100 border border-gray-200 dark:border-dark-border overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
+                    <div>
+                        <h3 className="font-bold text-lg text-gray-900 dark:text-white">{entry.serviceTitle[language]}</h3>
+                        <p className="text-xs text-gray-500">{new Date(entry.createdAt.seconds * 1000).toLocaleDateString()} - {new Date(entry.createdAt.seconds * 1000).toLocaleTimeString()}</p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+                <div className="flex-grow overflow-y-auto p-6 bg-[#fcfaf6] dark:bg-slate-900/50">
+                    {entry.result.trim().startsWith('<section') ? (
+                        <div dangerouslySetInnerHTML={{ __html: entry.result }} className="text-gray-800 dark:text-gray-200" />
+                    ) : (
+                        <pre className="whitespace-pre-wrap leading-loose text-left rtl:text-right font-sans text-gray-800 dark:text-gray-200">
+                            {entry.result}
+                        </pre>
+                    )}
+                </div>
+                <div className="p-4 border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card-bg flex justify-end gap-3">
+                    <button onClick={copyToClipboard} className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                        {isCopied ? <CheckCircle size={16} className="text-green-500" /> : <Copy size={16} />}
+                        {isCopied ? t('copied') : t('copy')}
+                    </button>
+                    <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                        <Printer size={16} />
+                        {t('print')}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SupportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[80] flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden relative animate-fade-in-up border border-gray-200 dark:border-dark-border">
+                 <button onClick={onClose} className="absolute top-4 right-4 rtl:right-auto rtl:left-4 z-20 p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm">
+                    <X size={20} className="text-gray-600 dark:text-gray-300" />
+                </button>
+                 <SupportPanel className="h-full border-0 shadow-none" />
+            </div>
+        </div>
+    );
+};
+
 const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const { currentUser, loading } = useAuth();
   const { t, language } = useLanguage();
   
+  const [activeTab, setActiveTab] = useState<'info' | 'security' | 'history'>('info');
+
   // States for forms
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
   const [location, setLocation] = useState(currentUser?.location || '');
@@ -98,12 +195,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
+  // History State
+  const [history, setHistory] = useState<ServiceHistoryEntry[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<ServiceHistoryEntry | null>(null);
+
   // Re-authentication state
   const [reauth, setReauth] = useState({
     isOpen: false,
     action: null as 'email' | 'password' | null,
     error: null as string | null
   });
+
+  // Support Modal State
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // Data fetching
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -133,27 +238,46 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
       fetchPlans();
   }, []);
 
+  useEffect(() => {
+      if (!currentUser || activeTab !== 'history') return;
+      setLoadingHistory(true);
+      
+      const historyRef = collection(db, 'service_history');
+      const q = query(
+          historyRef, 
+          where('userId', '==', currentUser.uid),
+          orderBy('createdAt', 'desc'),
+          limit(50)
+      );
+
+      // Using onSnapshot for real-time updates and better auth state handling
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+          const historyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceHistoryEntry));
+          setHistory(historyData);
+          setLoadingHistory(false);
+      }, (error) => {
+          console.error("Error fetching history:", error);
+          setLoadingHistory(false);
+      });
+
+      return () => unsubscribe();
+  }, [currentUser, activeTab]);
+
   const showFeedback = (type: 'success' | 'error', message: string) => {
     setFeedback({ type, message });
-    setTimeout(() => setFeedback(null), 6000); // Increased timeout for visibility
+    setTimeout(() => setFeedback(null), 6000);
   };
   
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Use auth.currentUser specifically for SDK operations to avoid "i.getIdToken is not a function"
     if (!auth.currentUser) return;
     
     setIsUpdatingProfile(true);
     setFeedback(null);
     try {
-        // FIX: Use auth.currentUser instead of currentUser context object
         await updateProfile(auth.currentUser, { displayName });
-        
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        await updateDoc(userDocRef, { 
-            displayName,
-            location: location 
-        });
+        await updateDoc(userDocRef, { displayName, location });
         showFeedback('success', t('profileUpdatedSuccess'));
     } catch (error) {
         console.error("Error updating profile:", error);
@@ -169,12 +293,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     try {
         const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
         await reauthenticateWithCredential(auth.currentUser, credential);
-        // On success, trigger the intended action
-        if (reauth.action === 'email') {
-            await performEmailUpdate();
-        } else if (reauth.action === 'password') {
-            await performPasswordUpdate();
-        }
+        if (reauth.action === 'email') await performEmailUpdate();
+        else if (reauth.action === 'password') await performPasswordUpdate();
         setReauth({ isOpen: false, action: null, error: null });
     } catch (error) {
         console.error("Reauth error:", error);
@@ -183,11 +303,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
 
   const triggerReauth = (action: 'email' | 'password') => {
-      setReauth({
-          isOpen: true,
-          action: action,
-          error: null
-      });
+      setReauth({ isOpen: true, action: action, error: null });
   };
 
   const performEmailUpdate = async () => {
@@ -222,7 +338,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   };
   
   const redirectToCustomerPortal = async () => {
-    // Prevent redirect for manually granted subscriptions
     if (currentUser?.subscription?.isManual) {
         const msg = language === 'ar' 
             ? 'عذراً، هذا الاشتراك تم منحه يدوياً ولا يمكن إدارته عبر بوابة الدفع الإلكترونية. يرجى التواصل مع الإدارة.' 
@@ -244,7 +359,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     } catch (error) {
       console.error("Error redirecting to customer portal:", error);
       let errorMessage = (error as any).message || 'Unknown error';
-      // User-friendly mapping for common errors
       if (errorMessage.includes('internal')) errorMessage = 'System error (Internal). Check console.';
       if (errorMessage.includes('permission')) errorMessage = 'Permission denied.';
       
@@ -252,6 +366,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
     } finally {
       setIsPortalLoading(false);
     }
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+      if (!window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا السجل؟' : 'Are you sure you want to delete this history item?')) {
+          return;
+      }
+      try {
+          await deleteDoc(doc(db, 'service_history', id));
+          // No need to manually update state as onSnapshot will handle it
+      } catch (error) {
+          console.error("Error deleting history:", error);
+          alert('Failed to delete history item.');
+      }
   };
 
   const handleLogout = async () => {
@@ -280,7 +407,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const isPlanActive = subscription?.status === 'active' || subscription?.status === 'trialing';
 
   return (
-    <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 space-y-8 relative min-h-[80vh]">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -412,169 +539,262 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                 </div>
             </div>
 
-            {/* Right Column: Settings Forms */}
-            <div className="lg:col-span-2 space-y-8">
+            {/* Right Column: Tabbed Interface */}
+            <div className="lg:col-span-2 space-y-6">
                 
-                {/* Personal Information */}
-                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <User className="text-primary-600" size={20}/>
-                            {t('editProfile')}
-                        </h2>
-                    </div>
-                    <div className="p-6">
-                        <form onSubmit={handleUpdateProfile} className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="space-y-1.5">
-                                    <label htmlFor="displayName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('fullName')}</label>
-                                    <div className="relative">
-                                        <User className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input
-                                            type="text"
-                                            id="displayName"
-                                            value={displayName}
-                                            onChange={(e) => setDisplayName(e.target.value)}
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
-                                            placeholder="John Doe"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('email')}</label>
-                                     <div className="relative">
-                                        <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input 
-                                            type="email" 
-                                            value={currentUser.email || ''} 
-                                            readOnly 
-                                            disabled
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label htmlFor="location" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('location')}</label>
-                                    <div className="relative">
-                                        <MapPin className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input
-                                            type="text"
-                                            id="location"
-                                            value={location}
-                                            onChange={(e) => setLocation(e.target.value)}
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
-                                            placeholder={t('locationPlaceholder')}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex justify-end pt-2">
-                                <button 
-                                    type="submit" 
-                                    disabled={isUpdatingProfile} 
-                                    className="px-6 py-2.5 bg-gray-900 dark:bg-primary-600 text-white font-medium rounded-xl hover:bg-black dark:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                                >
-                                    {isUpdatingProfile ? <Loader2 className="animate-spin" size={18}/> : <Edit2 size={18} />}
-                                    {t('saveChanges')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                {/* Tabs Navigation */}
+                <div className="flex space-x-2 rtl:space-x-reverse overflow-x-auto pb-1">
+                    <button
+                        onClick={() => setActiveTab('info')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'info' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-dark-card-bg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                        <User size={16} /> {t('editProfile')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('security')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'security' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-dark-card-bg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                        <Shield size={16} /> {t('security')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'history' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-dark-card-bg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                        <History size={16} /> {t('requestHistory')}
+                    </button>
                 </div>
 
-                {/* Security Settings */}
-                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Shield className="text-primary-600" size={20}/>
-                            {t('security')}
-                        </h2>
-                    </div>
-                    <div className="p-6 space-y-8">
-                        
-                        {/* Change Email */}
-                        <form onSubmit={(e) => { e.preventDefault(); triggerReauth('email'); }} className="space-y-4">
-                            <div className="flex flex-col md:flex-row md:items-end gap-4">
-                                <div className="flex-grow space-y-1.5">
-                                    <label htmlFor="newEmail" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('changeEmail')}</label>
-                                    <div className="relative">
-                                        <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input 
-                                            type="email" 
-                                            id="newEmail" 
-                                            value={newEmail} 
-                                            onChange={e => setNewEmail(e.target.value)} 
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
-                                            placeholder={t('newEmail')}
-                                        />
+                {/* Tab Content */}
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden min-h-[400px]">
+                    
+                    {activeTab === 'info' && (
+                        <div className="p-6 animate-fade-in-up">
+                            <div className="mb-6 pb-4 border-b border-gray-100 dark:border-dark-border">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('editProfile')}</h3>
+                            </div>
+                            <form onSubmit={handleUpdateProfile} className="space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-1.5">
+                                        <label htmlFor="displayName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('fullName')}</label>
+                                        <div className="relative">
+                                            <User className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                            <input
+                                                type="text"
+                                                id="displayName"
+                                                value={displayName}
+                                                onChange={(e) => setDisplayName(e.target.value)}
+                                                className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                                                placeholder="John Doe"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('email')}</label>
+                                        <div className="relative">
+                                            <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                            <input 
+                                                type="email" 
+                                                value={currentUser.email || ''} 
+                                                readOnly 
+                                                disabled
+                                                className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label htmlFor="location" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('location')}</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                            <input
+                                                type="text"
+                                                id="location"
+                                                value={location}
+                                                onChange={(e) => setLocation(e.target.value)}
+                                                className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
+                                                placeholder={t('locationPlaceholder')}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <button 
-                                    type="submit" 
-                                    disabled={isUpdatingSecurity || !newEmail} 
-                                    className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                >
-                                    {t('updateEmail')}
-                                </button>
-                            </div>
-                        </form>
-
-                        <div className="border-t border-gray-100 dark:border-gray-700"></div>
-
-                        {/* Change Password */}
-                        <form onSubmit={(e) => { e.preventDefault(); triggerReauth('password'); }} className="space-y-4">
-                             <div>
-                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t('changePassword')}</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="relative">
-                                        <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input 
-                                            type="password" 
-                                            id="newPassword" 
-                                            value={passwords.newPassword} 
-                                            onChange={e => setPasswords(p => ({...p, newPassword: e.target.value}))} 
-                                            placeholder={t('newPassword')}
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
-                                        />
-                                    </div>
-                                    <div className="relative">
-                                        <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
-                                        <input 
-                                            type="password" 
-                                            id="confirmNewPassword" 
-                                            value={passwords.confirmNewPassword} 
-                                            onChange={e => setPasswords(p => ({...p, confirmNewPassword: e.target.value}))} 
-                                            placeholder={t('confirmNewPassword')}
-                                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
-                                        />
-                                    </div>
+                                <div className="flex justify-end pt-2">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isUpdatingProfile} 
+                                        className="px-6 py-2.5 bg-gray-900 dark:bg-primary-600 text-white font-medium rounded-xl hover:bg-black dark:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                    >
+                                        {isUpdatingProfile ? <Loader2 className="animate-spin" size={18}/> : <Edit2 size={18} />}
+                                        {t('saveChanges')}
+                                    </button>
                                 </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {activeTab === 'security' && (
+                        <div className="p-6 animate-fade-in-up">
+                            <div className="mb-6 pb-4 border-b border-gray-100 dark:border-dark-border">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('security')}</h3>
                             </div>
-                            <div className="flex justify-end">
-                                <button 
-                                    type="submit" 
-                                    disabled={isUpdatingSecurity || !passwords.newPassword || passwords.newPassword !== passwords.confirmNewPassword} 
-                                    className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                                >
-                                    {t('updatePassword')}
-                                </button>
+                            <div className="space-y-8">
+                                <form onSubmit={(e) => { e.preventDefault(); triggerReauth('email'); }} className="space-y-4">
+                                    <div className="flex flex-col md:flex-row md:items-end gap-4">
+                                        <div className="flex-grow space-y-1.5">
+                                            <label htmlFor="newEmail" className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('changeEmail')}</label>
+                                            <div className="relative">
+                                                <Mail className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                                <input 
+                                                    type="email" 
+                                                    id="newEmail" 
+                                                    value={newEmail} 
+                                                    onChange={e => setNewEmail(e.target.value)} 
+                                                    className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                                    placeholder={t('newEmail')}
+                                                />
+                                            </div>
+                                        </div>
+                                        <button 
+                                            type="submit" 
+                                            disabled={isUpdatingSecurity || !newEmail} 
+                                            className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                        >
+                                            {t('updateEmail')}
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <div className="border-t border-gray-100 dark:border-gray-700"></div>
+
+                                <form onSubmit={(e) => { e.preventDefault(); triggerReauth('password'); }} className="space-y-4">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t('changePassword')}</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="relative">
+                                                <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                                <input 
+                                                    type="password" 
+                                                    id="newPassword" 
+                                                    value={passwords.newPassword} 
+                                                    onChange={e => setPasswords(p => ({...p, newPassword: e.target.value}))} 
+                                                    placeholder={t('newPassword')}
+                                                    className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                                />
+                                            </div>
+                                            <div className="relative">
+                                                <KeyRound className="absolute top-3 left-3 rtl:right-3 rtl:left-auto text-gray-400" size={18} />
+                                                <input 
+                                                    type="password" 
+                                                    id="confirmNewPassword" 
+                                                    value={passwords.confirmNewPassword} 
+                                                    onChange={e => setPasswords(p => ({...p, confirmNewPassword: e.target.value}))} 
+                                                    placeholder={t('confirmNewPassword')}
+                                                    className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button 
+                                            type="submit" 
+                                            disabled={isUpdatingSecurity || !passwords.newPassword || passwords.newPassword !== passwords.confirmNewPassword} 
+                                            className="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                                        >
+                                            {t('updatePassword')}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'history' && (
+                        <div className="p-6 animate-fade-in-up h-full flex flex-col">
+                            <div className="mb-4 pb-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('requestHistory')}</h3>
+                            </div>
+                            
+                            {loadingHistory ? (
+                                <div className="flex justify-center py-20">
+                                    <Loader2 className="animate-spin text-primary-600" size={32} />
+                                </div>
+                            ) : history.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-full mb-4">
+                                        <History size={32} className="text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500 dark:text-gray-400">{t('noHistory')}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {history.map(entry => {
+                                        const Icon = iconMap[entry.serviceIcon || 'FileText'] || FileText;
+                                        return (
+                                            <div key={entry.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-md transition-all group">
+                                                <div className="flex items-center gap-4 overflow-hidden">
+                                                    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg text-primary-600 dark:text-primary-400 border border-gray-100 dark:border-gray-600 flex-shrink-0">
+                                                        <Icon size={24} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-gray-900 dark:text-white truncate">{entry.serviceTitle[language]}</h4>
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            <Clock size={12} />
+                                                            <span>
+                                                                {entry.createdAt?.seconds ? new Date(entry.createdAt.seconds * 1000).toLocaleDateString() : ''}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 flex-shrink-0">
+                                                    <button 
+                                                        onClick={() => setSelectedHistoryEntry(entry)}
+                                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-200 transition-all flex items-center gap-2"
+                                                    >
+                                                        {t('viewResult')}
+                                                        {language === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteHistory(entry.id)}
+                                                        className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                        title={t('delete')}
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
-            </div>
-            
-            {/* Support Panel - Full Width */}
-            <div className="lg:col-span-3">
-               <SupportPanel className="h-[600px]" />
             </div>
         </div>
+
+        {/* Floating Support Button */}
+        <button
+            onClick={() => setIsSupportModalOpen(true)}
+            className="fixed bottom-24 left-6 rtl:left-auto rtl:right-6 md:bottom-8 z-40 flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-full shadow-lg hover:scale-110 hover:shadow-xl transition-all duration-300 group"
+            title={t('support')}
+        >
+            <LifeBuoy size={28} className="group-hover:rotate-12 transition-transform" />
+            <span className="absolute left-full ml-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none rtl:left-auto rtl:right-full rtl:mr-3 rtl:ml-0">
+                {t('support')}
+            </span>
+        </button>
+
+        <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
 
         <ReauthModal 
             isOpen={reauth.isOpen}
             onClose={() => setReauth(prev => ({...prev, isOpen: false, error: null}))}
             onConfirm={handleReauthentication}
             error={reauth.error}
+        />
+
+        <HistoryModal 
+            isOpen={!!selectedHistoryEntry}
+            onClose={() => setSelectedHistoryEntry(null)}
+            entry={selectedHistoryEntry}
         />
     </div>
   );

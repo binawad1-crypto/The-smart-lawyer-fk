@@ -16,6 +16,7 @@ export interface AppUser extends FirebaseUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  emailVerified: boolean;
   
   isAdmin?: boolean;
   status?: 'active' | 'disabled';
@@ -187,4 +188,16 @@ export interface SystemNotification {
   targetAudience: 'all' | 'admins';
   isActive: boolean;
   createdAt: any;
+}
+
+// History System
+export interface ServiceHistoryEntry {
+  id: string;
+  userId: string;
+  serviceId: string;
+  serviceTitle: Record<Language, string>;
+  serviceIcon?: string;
+  inputs: Record<string, any>; // We store processed inputs (no File objects)
+  result: string;
+  createdAt: any; // Timestamp
 }

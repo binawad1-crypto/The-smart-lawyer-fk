@@ -3,7 +3,7 @@
 import React from 'react';
 import { Translations, Plan } from './types';
 import { FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
-    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature } from 'lucide-react';
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature, History, Clock } from 'lucide-react';
 
 export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
@@ -19,7 +19,7 @@ export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1
 // FIX: Export iconMap for use in components
 export const iconMap: { [key: string]: React.ComponentType<any> } = {
     FileText, Gavel, Briefcase, Shield, Scale, BookOpen, Building2, Home, Copyright, Handshake, Fingerprint, Banknote, Landmark, Users, Ship, Plane, PersonStanding, Percent, Leaf, Swords, Library, UserCheck, ShieldCheck, Gem, Factory, DollarSign, Recycle, HeartHandshake, Plus, Trash2, Edit, Loader2, Play, Workflow, Archive, Server, ClipboardCheck, HeartCrack, UserX, KeyRound, ScanEye, FlaskConical, Wand2, Search, Film, MapPin, Image, Ratio, ScanLine, AudioLines, Volume2, BrainCircuit, Video, ArrowLeft, ArrowRight, File, User, CreditCard, Star, CheckCircle2, Cog, LayoutDashboard, BarChart, LifeBuoy, MessageSquare, Send, Inbox, Tag, Sparkles, Sliders, Settings2, Bell, LayoutTemplate, Sun, Moon, Globe, LogOut, ChevronDown, Info, AlertTriangle, CheckCircle, PlusSquare, X, Coins, Gift, Ban, RefreshCw, Activity, Filter, MoreVertical, ChevronRight, Copy, Check, Printer, ZoomIn, ZoomOut, LayoutGrid, Maximize2, Minimize2,
-    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature
+    Calculator, Receipt, TrendingUp, PiggyBank, BarChart3, FileSignature, History, Clock
 };
 
 // FIX: Export iconNames for use in AdminPage AI generator
@@ -29,7 +29,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
     // General
     appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    appSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
+    appSubtitle: { en: 'For Law', ar: 'للمحاماة' },
     home: { en: 'Home', ar: 'الرئيسية' },
     services: { en: 'Services', ar: 'الخدمات' },
     support: { en: 'Support', ar: 'الدعم الفني' },
@@ -103,6 +103,9 @@ export const translations: Translations = {
         en: 'Service unavailable due to high traffic or quota limits. Please try again later or check your billing status.', 
         ar: 'الخدمة غير متاحة حالياً بسبب ضغط الاستخدام أو نفاد الحصة. يرجى المحاولة لاحقاً أو التحقق من حالة الفوترة.' 
     },
+    saveToHistory: { en: 'Save to History', ar: 'حفظ في السجل' },
+    saved: { en: 'Saved', ar: 'تم الحفظ' },
+    savedSuccessfully: { en: 'Saved successfully to history', ar: 'تم الحفظ في السجل بنجاح' },
 
     // Landing Page
     heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
@@ -391,6 +394,12 @@ export const translations: Translations = {
     currentPassword: { en: 'Current Password', ar: 'كلمة المرور الحالية' },
     authenticate: { en: 'Authenticate', ar: 'مصادقة' },
     authenticationError: { en: 'Authentication failed. Please check your password.', ar: 'فشلت المصادقة. يرجى التحقق من كلمة المرور.' },
+    
+    // History
+    requestHistory: { en: 'Request History', ar: 'سجل الطلبات' },
+    viewResult: { en: 'View Result', ar: 'عرض النتيجة' },
+    noHistory: { en: 'No previous requests found.', ar: 'لا توجد طلبات سابقة.' },
+    date: { en: 'Date', ar: 'التاريخ' },
 
     // Chat Widget
     aiAssistant: { en: 'AI Assistant', ar: 'المساعد الذكي' },

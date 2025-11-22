@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { Service, Translations, Language, Category } from '../types';
-import { collection, getDocs, query, doc, updateDoc, increment, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { runGemini } from '../services/geminiService';
 import { iconMap } from '../constants';
@@ -50,7 +50,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [fontSize, setFontSize] = useState(18);
+    const [showSaveMessage, setShowSaveMessage] = useState(false);
     
     // Search and Filter States
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -88,6 +90,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setOutputLanguage(language);
     }, [language]);
     
+    useEffect(() => {
+        setIsSaved(false);
+        setShowSaveMessage(false);
+    }, [result]);
+
     // Reset page number when filters change
     useEffect(() => {
         setCurrentPage(0);
@@ -200,6 +207,43 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         localStorage.setItem('favoriteServices', JSON.stringify(newFavs));
     };
 
+    const handleSave = async () => {
+        if (!currentUser || !result || isSaved) return;
+        
+        try {
+            // Construct inputs for history
+            const safeInputs: Record<string, any> = {};
+            if (selectedService) {
+                Object.entries(formData).forEach(([key, value]) => {
+                    if (value === undefined || value === null) return; // Skip null/undefined
+                    if (value instanceof File) {
+                        safeInputs[key] = `[File: ${value.name}]`;
+                    } else {
+                        safeInputs[key] = value;
+                    }
+                });
+            } else {
+                safeInputs['prompt'] = prompt;
+            }
+
+            await addDoc(collection(db, 'service_history'), {
+                userId: currentUser.uid,
+                serviceId: selectedService ? selectedService.id : 'custom-prompt',
+                serviceTitle: selectedService ? selectedService.title : { en: 'Custom Request', ar: 'طلب خاص' },
+                serviceIcon: selectedService ? (selectedService.icon || 'Sparkles') : 'Sparkles',
+                inputs: safeInputs,
+                result: result,
+                createdAt: serverTimestamp()
+            });
+            setIsSaved(true);
+            setShowSaveMessage(true);
+            setTimeout(() => setShowSaveMessage(false), 3000);
+        } catch (historyError) {
+            console.error("Failed to save request history:", historyError);
+            alert("Error saving to history. Please try again.");
+        }
+    };
+
     const handleExecutePrompt = async () => {
         if (!prompt.trim()) return;
 
@@ -211,6 +255,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsGenerating(true);
         setResult('');
         setRetryMessage('');
+        setIsSaved(false);
+        setShowSaveMessage(false);
 
         const handleRetry = (attempt: number, maxRetries: number) => {
             const message = t('modelIsBusyRetrying').replace('${attempt}', String(attempt)).replace('${maxRetries}', String(maxRetries));
@@ -270,6 +316,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setSelectedService(service);
         setFormData({});
         setResult('');
+        setIsSaved(false);
+        setShowSaveMessage(false);
     };
 
     const handleBackToServices = () => {
@@ -298,6 +346,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsGenerating(true);
         setResult('');
         setRetryMessage('');
+        setIsSaved(false);
+        setShowSaveMessage(false);
     
         const constructPromptForService = () => {
             if (!selectedService) return '';
@@ -440,6 +490,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const handleClear = () => {
         setResult('');
+        setIsSaved(false);
+        setShowSaveMessage(false);
     };
 
     const handleZoomIn = () => setFontSize(s => Math.min(s + 1, 32));
@@ -698,7 +750,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-dark-border border-dashed rounded-xl bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer relative">
                                                  <input id={input.name} name={input.name} type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleInputChange} />
                                                  <div className="space-y-1 text-center">
-                                                     <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-primary-500 transition-colors"/>
+                                                     <FileIcon className="mx-auto h-10 w-10 text-gray-400 group-hover:text-primary-500 transition-colors"/>
                                                      <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
                                                          <span className="font-bold text-primary-600 dark:text-primary-400">{t('uploadFile')}</span>
                                                      </div>
@@ -815,7 +867,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0">
+        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0 relative">
              <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
                     <Sparkles size={16} className="text-yellow-200"/>
@@ -836,6 +888,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
                     <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
                     <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                    {currentUser && (
+                        <button 
+                            onClick={handleSave} 
+                            title={isSaved ? t('saved') : t('saveToHistory')} 
+                            className={`p-1.5 rounded transition-colors ${isSaved ? 'text-green-400 cursor-default' : 'text-primary-100 hover:bg-white/10 disabled:text-gray-400 disabled:cursor-not-allowed'}`}
+                            disabled={isSaved || !result}
+                        >
+                            {isSaved ? <Check size={16} /> : <Save size={16} />}
+                        </button>
+                    )}
                     
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
                     
@@ -850,6 +912,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
              {/* Output Content */}
              <div className="flex-grow overflow-auto custom-scrollbar relative p-4 w-full min-w-0">
+                {showSaveMessage && (
+                    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
+                        <CheckCircle2 size={22} />
+                        {t('savedSuccessfully')}
+                    </div>
+                )}
                 {isGenerating ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <div className="relative">
@@ -910,6 +978,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     const renderResultModal = () => (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 lg:hidden">
+            {showSaveMessage && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
+                    <CheckCircle2 size={22} />
+                    {t('savedSuccessfully')}
+                </div>
+            )}
             <div className="bg-white dark:bg-dark-bg rounded-2xl shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]">
                 <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
                     <h3 className="font-bold text-sm text-white flex items-center gap-2">
@@ -919,6 +993,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     <div className="flex items-center gap-1">
                         <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
                         <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                        {currentUser && (
+                            <button 
+                                onClick={handleSave} 
+                                title={isSaved ? t('saved') : t('saveToHistory')} 
+                                className={`p-1.5 rounded transition-colors ${isSaved ? 'text-green-400 cursor-default' : 'text-primary-100 hover:bg-white/10 disabled:text-gray-400 disabled:cursor-not-allowed'}`}
+                                disabled={isSaved || !result}
+                            >
+                                {isSaved ? <Check size={16} /> : <Save size={16} />}
+                            </button>
+                        )}
                         <div className="w-px h-4 bg-white/20 mx-1"></div>
                         <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
                         <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>

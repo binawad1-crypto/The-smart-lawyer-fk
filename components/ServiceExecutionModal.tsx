@@ -1,11 +1,11 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File, Loader2, Printer, Copy, Check } from 'lucide-react';
+import { X, File as FileIcon, Loader2, Printer, Copy, Check, Save, CheckCircle2 } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { runGemini } from '../services/geminiService';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 interface ServiceExecutionModalProps {
@@ -41,12 +41,21 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [isLoading, setIsLoading] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
+  const [showSaveMessage, setShowSaveMessage] = useState(false);
   
   useEffect(() => {
       setOutputLanguage(language);
   }, [language]);
+
+  useEffect(() => {
+      if (isOpen) {
+          setIsSaved(false);
+          setShowSaveMessage(false);
+      }
+  }, [isOpen, result]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -87,6 +96,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     setIsLoading(true);
     setResult('');
     setRetryMessage('');
+    setIsSaved(false);
+    setShowSaveMessage(false);
 
     const prompt = constructPrompt();
     const fileInput = service.formInputs.find(i => i.type === 'file');
@@ -118,15 +129,9 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
         geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
-        // ---------------------------------------------------------------------------
-        // AUTO-FIX: Check for deprecated or invalid models and force a valid one.
-        // This ensures that even if the database record is old, the execution works.
-        // ---------------------------------------------------------------------------
         let modelToUse = service.geminiModel;
         const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
         
-        // If the model contains "1.5" or "pro-002" or is not one of the recommended newer models,
-        // we safely default to 'gemini-2.5-flash' for speed and reliability.
         if (
             !modelToUse ||
             modelToUse.includes('1.5') ||
@@ -141,8 +146,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
         const resultText = response.text;
         setResult(resultText);
 
-        // Increment usage count in Firestore if the call was successful
         if (resultText && service?.id) {
+            // 1. Increment Usage
             try {
                 const serviceRef = doc(db, 'services', service.id);
                 await updateDoc(serviceRef, {
@@ -150,7 +155,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                 });
             } catch (error) {
                 console.error("Failed to update usage count:", error);
-                // This is a non-critical error, so we don't show it to the user.
             }
         }
     } catch (error) {
@@ -165,11 +169,48 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     }
   };
   
+  const handleSave = async () => {
+      if (!currentUser || !service || !result || isSaved) return;
+      
+      try {
+          const safeInputs: Record<string, any> = {};
+          Object.entries(formData).forEach(([key, value]) => {
+              // Strict undefined check to prevent Firestore crash
+              if (value === undefined || value === null) return; 
+              
+              // Handle File objects gracefully
+              if (value instanceof File) {
+                  safeInputs[key] = `[File: ${value.name}]`;
+              } else {
+                  safeInputs[key] = value;
+              }
+          });
+
+          await addDoc(collection(db, 'service_history'), {
+              userId: currentUser.uid,
+              serviceId: service.id,
+              serviceTitle: service.title || { en: 'Unknown', ar: 'غير معروف' },
+              serviceIcon: service.icon || 'FileText',
+              inputs: safeInputs,
+              result: result,
+              createdAt: serverTimestamp()
+          });
+          setIsSaved(true);
+          setShowSaveMessage(true);
+          setTimeout(() => setShowSaveMessage(false), 3000);
+      } catch (historyError) {
+          console.error("Failed to save request history:", historyError);
+          alert("Error saving to history. Please try again.");
+      }
+  };
+
   const handleClose = () => {
     setFormData({});
     setResult('');
     setIsLoading(false);
     setRetryMessage('');
+    setIsSaved(false);
+    setShowSaveMessage(false);
     onClose();
   }
 
@@ -210,13 +251,21 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
   const handleClear = () => {
     setResult('');
+    setIsSaved(false);
+    setShowSaveMessage(false);
   };
 
   if (!isOpen || !service) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-xl w-full max-w-6xl flex flex-col max-h-[90vh]">
+      {showSaveMessage && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
+              <CheckCircle2 size={22} />
+              {t('savedSuccessfully')}
+          </div>
+      )}
+      <div className="bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-xl w-full max-w-6xl flex flex-col max-h-[90vh] relative">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">{service.title[language]}</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -245,7 +294,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                             {input.type === 'file' && (
                                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
                                     <div className="space-y-1 text-center">
-                                        <File className="mx-auto h-12 w-12 text-gray-400"/>
+                                        <FileIcon className="mx-auto h-12 w-12 text-gray-400"/>
                                         <div className="flex text-sm text-gray-600 dark:text-gray-400">
                                             <label htmlFor={input.name} className="relative cursor-pointer bg-white dark:bg-dark-card-bg rounded-md font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
                                                 <span>{t('uploadFile')}</span>
@@ -321,7 +370,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
 
             {/* Result Section */}
-            <div className="lg:col-span-2 bg-[#fcfaf6] dark:bg-slate-900 rounded-lg flex flex-col">
+            <div className="lg:col-span-2 bg-[#fcfaf6] dark:bg-slate-900 rounded-lg flex flex-col relative">
               {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full">
                       <Loader2 className="animate-spin text-primary-500" size={32}/>
@@ -331,14 +380,25 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                  <div className="flex flex-col w-full h-full">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
                         <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600 dark:text-gray-300">
-                             <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
+                             <button onClick={copyToClipboard} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors" title={t('copy')}>
                                 {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                                 <span className="hidden sm:inline">{isCopied ? t('copied') : t('copy')}</span>
                             </button>
-                            <button onClick={handlePrint} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors">
+                            <button onClick={handlePrint} className="flex items-center gap-1.5 hover:text-primary-500 transition-colors" title={t('print')}>
                                 <Printer size={16} />
                                 <span className="hidden sm:inline">{t('print')}</span>
                             </button>
+                            {currentUser && (
+                                <button 
+                                    onClick={handleSave} 
+                                    className={`flex items-center gap-1.5 transition-colors ${isSaved ? 'text-green-600 cursor-default' : 'hover:text-primary-500 disabled:text-gray-400 disabled:cursor-not-allowed'}`} 
+                                    title={isSaved ? t('saved') : t('saveToHistory')}
+                                    disabled={isSaved || !result}
+                                >
+                                    {isSaved ? <Check size={16} /> : <Save size={16} />}
+                                    <span className="hidden sm:inline">{isSaved ? t('saved') : t('save')}</span>
+                                </button>
+                            )}
                         </div>
                         <div className="flex items-center gap-2">
                              <button onClick={handleClear} className="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20">
