@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin } from 'lucide-react';
+// @ts-ignore: Suppressing missing type definitions for firebase/functions
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '../services/firebase';
 import { collection, getDocs, query, doc, updateDoc } from 'firebase/firestore';

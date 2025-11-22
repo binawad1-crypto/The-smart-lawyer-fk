@@ -537,16 +537,22 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
     
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
-    const renderSidebar = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
+    const renderSidebar = () => {
+        const siteName = settings?.siteName[language] || (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant');
+        const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماه والاستشارات القانونية' : 'For Law and Legal Consulting');
+
+        return (
+        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden w-full min-w-0">
             {/* Header */}
             <div className="h-auto py-6 min-h-[5rem] flex flex-col justify-center px-6 bg-teal-700 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 shadow-sm text-center">
-                 <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo">
-                    {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
-                </h2>
-                <p className="text-xs text-teal-100 font-bold tracking-wide opacity-90 font-cairo">
-                    {language === 'ar' ? 'للمحاماه والاستشارات القانونية' : 'For Law and Legal Consulting'}
-                </p>
+                 <div className="flex flex-col items-center min-w-0 overflow-hidden text-center w-full">
+                    <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo w-full">
+                        {siteName}
+                    </h2>
+                    <p className="text-[10px] text-teal-100 font-bold tracking-wide opacity-90 font-cairo w-full">
+                        {siteSubtitle}
+                    </p>
+                </div>
             </div>
 
             {/* Search */}
@@ -564,7 +570,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Categories Navigation */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1">
+            <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-1 w-full min-w-0">
                 {loadingCategories ? (
                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
                 ) : sidebarCategories.map(cat => {
@@ -635,7 +641,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 })}
             </div>
         </div>
-    );
+        );
+    };
 
     // -------------------- FRAME 2: SERVICES & INPUT (MIDDLE) --------------------
     const renderMainContent = () => {
@@ -646,7 +653,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         );
 
         return (
-            <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative">
+            <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative w-full min-w-0">
                  {/* Header for Main Content */}
                  <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
                     {selectedService ? (
@@ -669,7 +676,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 title={isExpanded ? t('collapse') : t('expand')}
                             >
                                 {dir === 'rtl' ? (
-                                    isExpanded ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />
+                                    isExpanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />
                                 ) : (
                                     isExpanded ? <PanelRightOpen size={20} /> : <PanelRightClose size={20} />
                                 )}
@@ -678,7 +685,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     )}
                  </div>
 
-                 <div className="flex-grow overflow-y-auto custom-scrollbar p-4">
+                 <div className="flex-grow overflow-y-auto custom-scrollbar p-4 w-full min-w-0">
                      {selectedService ? (
                          /* Active Service Form */
                          <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
@@ -821,7 +828,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden w-full min-w-0">
              <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 justify-between shadow-sm relative z-10">
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
                     <Sparkles size={16} className="text-yellow-400"/>
@@ -855,7 +862,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
              </div>
 
              {/* Output Content */}
-             <div className="flex-grow overflow-auto custom-scrollbar relative p-4">
+             <div className="flex-grow overflow-auto custom-scrollbar relative p-4 w-full min-w-0">
                 {isGenerating ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <div className="relative">
@@ -865,7 +872,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         <p className="text-gray-500 text-center font-medium mt-4 animate-pulse">{retryMessage || t('generatingResponse')}</p>
                     </div>
                 ) : result ? (
-                    <div className="max-w-none">
+                    <div className="max-w-none w-full min-w-0">
                         {result.trim().startsWith('<section') ? (
                             <div style={{ fontSize: `${fontSize}px` }}>
                                 <div dangerouslySetInnerHTML={{ __html: result }} />
@@ -968,14 +975,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8">
              <div className="w-[90%] mx-auto h-full">
                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-                    <div className="lg:col-span-1 h-full">{renderSidebar()}</div>
+                    <div className="lg:col-span-1 h-full w-full min-w-0">{renderSidebar()}</div>
                     <div className={`${
                         isOutputExpanded
                             ? 'hidden'
                             : isExpanded
                             ? 'lg:col-span-3'
                             : 'lg:col-span-2'
-                    } h-full transition-all duration-300`}>
+                    } h-full transition-all duration-300 w-full min-w-0`}>
                         {renderMainContent()}
                     </div>
                     <div className={`${
@@ -984,7 +991,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             : isOutputExpanded
                             ? 'lg:col-span-3'
                             : 'lg:col-span-1'
-                    } h-full transition-all duration-300 hidden lg:flex`}>
+                    } h-full transition-all duration-300 hidden lg:flex w-full min-w-0`}>
                         {renderOutputPanel()}
                     </div>
                 </div>

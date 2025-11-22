@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Database, Upload, Monitor } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Database, Upload, Monitor, Sparkles, FileInput, Calendar, Type as TypeIcon, Split, Layers, List, CheckSquare, Save } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -42,6 +42,11 @@ const initialServiceState: Service = {
     systemInstruction: { en: '', ar: '' },
     formInputs: [],
     usageCount: 0,
+    longDescription: { en: '', ar: '' },
+    serviceType: 'Consultation',
+    includedTasks: { en: [], ar: [] },
+    internalNotes: '',
+    keywords: [],
 };
 
 const initialPlanState: Plan = {
@@ -463,12 +468,10 @@ const AdminPage = () => {
     const [serviceError, setServiceError] = useState<string|null>(null);
     const [newService, setNewService] = useState<Service>(initialServiceState);
     const [isEditingService, setIsEditingService] = useState(false);
-    const [aiServiceName, setAiServiceName] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
     const [showServiceForm, setShowServiceForm] = useState(false);
-    // Service execution modal state
-    const [selectedService, setSelectedService] = useState<Service | null>(null);
-    const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+    // AI Generator State
+    const [aiTopic, setAiTopic] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Category management state
     const [categories, setCategories] = useState<Category[]>([]);
@@ -477,15 +480,7 @@ const AdminPage = () => {
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [isEditingCategory, setIsEditingCategory] = useState(false);
-    const [aiCategoryName, setAiCategoryName] = useState('');
-    const [isGeneratingCategory, setIsGeneratingCategory] = useState(false);
     
-    // Filtering state for services
-    const [filterCategory, setFilterCategory] = useState<string | 'all'>('all');
-
-    // Selection state
-    const [selectedServices, setSelectedServices] = useState<string[]>([]);
-    const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
     // Subscription management state
     const [usersWithSub, setUsersWithSub] = useState<UserWithSubscription[]>([]);
     const [loadingSubs, setLoadingSubs] = useState(true);
@@ -505,10 +500,6 @@ const AdminPage = () => {
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [faviconFile, setFaviconFile] = useState<File | null>(null);
     
-    // Landing Page Generator State
-    const [landingPagePrompt, setLandingPagePrompt] = useState('');
-    const [isGeneratingLanding, setIsGeneratingLanding] = useState(false);
-
     // Support System State
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -786,43 +777,64 @@ const AdminPage = () => {
         }
     };
 
-    const handleGenerateService = async () => {
-        if (!aiServiceName) {
-            alert(t('enterServiceName'));
+    // AI Helper for Service Data Generation
+    const handleGenerateServiceData = async () => {
+        if (!aiTopic.trim()) {
+            alert(t('enterServiceName')); // reusing translation key
             return;
         }
         setIsGenerating(true);
         try {
-            const prompt = `Create a legal service configuration for: "${aiServiceName}".
-            Return ONLY a JSON object with the following schema:
-            {
-              "id": "kebab-case-id",
-              "title": { "en": "Title EN", "ar": "Title AR" },
-              "description": { "en": "Desc EN", "ar": "Desc AR" },
-              "category": "litigation-and-pleadings",
-              "subCategory": { "en": "Sub Cat EN", "ar": "Sub Cat AR" },
-              "icon": "IconName (from Lucide React)",
-              "geminiModel": "gemini-2.5-flash",
-              "systemInstruction": { "en": "System instructions for AI...", "ar": "System instructions AR..." },
-              "formInputs": [
-                { "name": "input_name", "label": { "en": "Label EN", "ar": "Label AR" }, "type": "text|textarea|date|file|select", "options": [{"value": "val", "label": {"en": "Opt EN", "ar": "Opt AR"}}] }
-              ]
-            }
-            Available categories: ${categories.map(c => c.id).join(', ')}.
-            Available icons: ${iconNames.join(', ')}.
+            const prompt = `
+            You are an expert Legal Service Architect and Translator.
+            The user wants to create a new legal service based on this description: "${aiTopic}".
+
+            TASK:
+            Generate a COMPLETE, PRODUCTION-READY configuration for this service.
+            CRITICAL: All text fields MUST be provided in BOTH English ('en') and Arabic ('ar'). The Arabic must be professional legal terminology.
+
+            1. **Service Identity**:
+               - Title: Professional legal title.
+               - Short Description: 2 lines summary.
+               - Long Description: Detailed explanation of what the service covers.
+               - Service Type: e.g., Consultation, Review, Drafting.
+               - Category: Select the most fitting ID from: ${categories.map(c => c.id).join(', ')}.
+
+            2. **Requirements (Form Inputs)**:
+               - INTELLIGENTLY determine exactly what information or documents a lawyer would need from the client to perform this specific service.
+               - Generate a list of 'formInputs'.
+               - Use 'file' type for documents (e.g., contracts, evidence, ID).
+               - Use 'date' for deadlines or event dates.
+               - Use 'text' or 'textarea' for names, descriptions, or specific details.
+               - Use 'select' for choices (e.g., Jurisdiction, Contract Type).
+               - Labels MUST be bilingual (En/Ar).
+
+            3. **Deliverables**:
+               - includedTasks: A list of 3-5 specific bullets of what the client gets (En/Ar).
+
+            4. **AI Configuration**:
+               - System Instruction: A detailed prompt for the AI model that will actually execute this service for the end-user. It should tell the AI how to act (e.g., "Act as a commercial lawyer..."), what to analyze in the user's input, and how to format the output. This MUST be bilingual (provide an English prompt version and an Arabic prompt version).
+
+            5. **Metadata**:
+               - Keywords: 5-10 SEO keywords.
+               - Internal Notes: Brief summary of the generation logic.
+               - Icon: Choose a suitable Lucide icon name (e.g., FileText, Gavel, Scale, Handshake, Shield, Building2).
+
+            Output JSON format matching the Service interface exactly.
             `;
-            
+
             const response = await generateServiceConfigWithAI(prompt, {
                 type: Type.OBJECT,
                 properties: {
                     id: { type: Type.STRING },
                     title: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
                     description: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    longDescription: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
                     category: { type: Type.STRING },
-                    subCategory: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
-                    icon: { type: Type.STRING },
-                    geminiModel: { type: Type.STRING },
-                    systemInstruction: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    serviceType: { type: Type.STRING },
+                    includedTasks: { type: Type.OBJECT, properties: { en: { type: Type.ARRAY, items: { type: Type.STRING } }, ar: { type: Type.ARRAY, items: { type: Type.STRING } } } },
+                    internalNotes: { type: Type.STRING },
+                    keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
                     formInputs: { 
                         type: Type.ARRAY, 
                         items: { 
@@ -834,22 +846,68 @@ const AdminPage = () => {
                                 options: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { value: {type: Type.STRING}, label: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } } } } }
                             }
                         } 
-                    }
+                    },
+                    systemInstruction: { type: Type.OBJECT, properties: { en: {type: Type.STRING}, ar: {type: Type.STRING} } },
+                    icon: { type: Type.STRING },
+                    geminiModel: { type: Type.STRING }
                 }
             });
 
             if (response.text) {
-                const generatedService = JSON.parse(response.text);
-                setNewService({ ...initialServiceState, ...generatedService });
-                setShowServiceForm(true);
-                setIsEditingService(false);
+                let cleanText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+                // Basic JSON extraction in case of extra text
+                const firstOpen = cleanText.indexOf('{');
+                const lastClose = cleanText.lastIndexOf('}');
+                if(firstOpen !== -1 && lastClose !== -1) {
+                    cleanText = cleanText.substring(firstOpen, lastClose + 1);
+                }
+
+                const generatedData = JSON.parse(cleanText);
+                setNewService(prev => ({
+                    ...prev,
+                    ...generatedData,
+                    // Ensure we don't overwrite existing ID if we are editing (though here we are likely adding new)
+                    id: isEditingService ? prev.id : generatedData.id
+                }));
+                // Clear AI input
+                setAiTopic('');
             }
-        } catch (error) {
-            console.error("AI Generation Error:", error);
-            alert(t('generateServiceError'));
+        } catch (e) {
+            console.error("AI Gen Error", e);
+            alert("Failed to generate data. Please try again.");
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    // Form Builder Helper Functions
+    const addFormInput = () => {
+        setNewService(prev => ({
+            ...prev,
+            formInputs: [...prev.formInputs, { name: `input_${prev.formInputs.length + 1}`, label: { en: 'New Field', ar: 'حقل جديد' }, type: 'text' }]
+        }));
+    };
+
+    const removeFormInput = (index: number) => {
+        setNewService(prev => ({
+            ...prev,
+            formInputs: prev.formInputs.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateFormInput = (index: number, field: keyof FormInput, value: any) => {
+        const updatedInputs = [...newService.formInputs];
+        updatedInputs[index] = { ...updatedInputs[index], [field]: value };
+        setNewService(prev => ({ ...prev, formInputs: updatedInputs }));
+    };
+
+    const updateFormInputLabel = (index: number, lang: 'en' | 'ar', value: string) => {
+        const updatedInputs = [...newService.formInputs];
+        updatedInputs[index] = { 
+            ...updatedInputs[index], 
+            label: { ...updatedInputs[index].label, [lang]: value } 
+        };
+        setNewService(prev => ({ ...prev, formInputs: updatedInputs }));
     };
 
     // --- Categories Handlers ---
@@ -912,12 +970,10 @@ const AdminPage = () => {
 
             if (logoFile) {
                 try {
-                    // Add timestamp and sanitize filename to ensure uniqueness and avoid caching
                     const fileName = `logo-${Date.now()}-${logoFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                     newLogoUrl = await uploadFile(logoFile, `site/${fileName}`);
                 } catch (e) {
                     console.error("Logo upload failed", e);
-                    alert(t('settingsSavedError') + ": Logo upload failed");
                     setSavingSettings(false);
                     return;
                 }
@@ -928,7 +984,6 @@ const AdminPage = () => {
                     newFaviconUrl = await uploadFile(faviconFile, `site/${fileName}`);
                 } catch (e) {
                     console.error("Favicon upload failed", e);
-                    alert(t('settingsSavedError') + ": Favicon upload failed");
                     setSavingSettings(false);
                     return;
                 }
@@ -942,15 +997,12 @@ const AdminPage = () => {
 
             await setDoc(doc(db, 'site_settings', 'main'), updatedSettings);
             setSiteSettings(updatedSettings);
-            
-            // Clear file selections after successful save
             setLogoFile(null);
             setFaviconFile(null);
-            
             alert(t('settingsSavedSuccess'));
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert(t('settingsSavedError') + ": " + (error instanceof Error ? error.message : "Unknown error"));
+            alert(t('settingsSavedError'));
         } finally {
             setSavingSettings(false);
         }
@@ -1054,6 +1106,232 @@ const AdminPage = () => {
         </div>
     );
 
+    const renderServiceManagement = () => (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold dark:text-white">{t('manageServices')}</h2>
+                <button onClick={() => { setNewService(initialServiceState); setShowServiceForm(true); setIsEditingService(false); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                    <Plus size={18}/> {t('add')}
+                </button>
+            </div>
+
+            {/* Service Editor (Create/Edit) */}
+            {showServiceForm && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in-up">
+                    {/* AI Generator Section */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                            <Sparkles size={20} className="text-yellow-300" />
+                            Smart Data Generator
+                        </h3>
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <input 
+                                type="text" 
+                                value={aiTopic} 
+                                onChange={(e) => setAiTopic(e.target.value)}
+                                placeholder="Describe the service you want to create (e.g., 'Commercial Contract Review')" 
+                                className="flex-grow p-3 rounded-xl border-0 bg-white/20 text-white placeholder-white/70 focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                            />
+                            <button 
+                                onClick={handleGenerateServiceData} 
+                                disabled={isGenerating}
+                                className="bg-white text-indigo-600 font-bold py-3 px-6 rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap shadow-lg"
+                            >
+                                {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
+                                Generate Data
+                            </button>
+                        </div>
+                        <p className="text-white/80 text-xs mt-2">
+                            The AI will auto-populate the form below based on your description. You can then edit the details.
+                        </p>
+                    </div>
+
+                    {/* Manual Form Builder */}
+                    <div className="p-6 space-y-8">
+                        
+                        {/* Section 1: Basic Information */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-2">1. Basic Information</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service ID (Auto-generated if empty)</label>
+                                    <input type="text" value={newService.id} onChange={e => setNewService({...newService, id: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="e.g. contract-review" disabled={isEditingService} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Icon Name (Lucide React)</label>
+                                    <input type="text" value={newService.icon} onChange={e => setNewService({...newService, icon: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="FileText" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service Name (EN)</label>
+                                    <input type="text" value={newService.title.en} onChange={e => setNewService({...newService, title: {...newService.title, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">اسم الخدمة (AR)</label>
+                                    <input type="text" value={newService.title.ar} onChange={e => setNewService({...newService, title: {...newService.title, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Category</label>
+                                    <select value={newService.category} onChange={e => setNewService({...newService, category: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white">
+                                        <option value="">Select Category</option>
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.title[language]}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service Type</label>
+                                    <input type="text" value={newService.serviceType || ''} onChange={e => setNewService({...newService, serviceType: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="Consultation, Drafting, etc." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Gemini Model</label>
+                                    <select
+                                        value={newService.geminiModel}
+                                        onChange={e => setNewService({...newService, geminiModel: e.target.value})}
+                                        className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="gemini-2.5-flash">gemini-2.5-flash (Default)</option>
+                                        <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
+                                        <option value="models/gemini-1.5-pro-002">models/gemini-1.5-pro-002</option>
+                                        <option value="models/gemini-1.5-flash-002">models/gemini-1.5-flash-002</option>
+                                        <option value="models/gemini-1.5-flash-lite">models/gemini-1.5-flash-lite</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Short Description (EN)</label>
+                                    <textarea value={newService.description.en} onChange={e => setNewService({...newService, description: {...newService.description, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={2} />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">وصف قصير (AR)</label>
+                                    <textarea value={newService.description.ar} onChange={e => setNewService({...newService, description: {...newService.description, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={2} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Detailed Info */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-2">2. Detailed Information</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Full Description (EN)</label>
+                                    <textarea value={newService.longDescription?.en || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {ar:''}), en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={4} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">وصف كامل (AR)</label>
+                                    <textarea value={newService.longDescription?.ar || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {en:''}), ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={4} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Internal Notes</label>
+                                    <textarea value={newService.internalNotes || ''} onChange={e => setNewService({...newService, internalNotes: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={2} placeholder="Workflow details, active status..." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">SEO Keywords (Comma separated)</label>
+                                    <input type="text" value={newService.keywords?.join(', ') || ''} onChange={e => setNewService({...newService, keywords: e.target.value.split(',').map(s => s.trim())})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="law, contract, review..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Smart Form Builder (Inputs) */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2">
+                                <h4 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400">3. Client Requirements (Form Inputs)</h4>
+                                <button type="button" onClick={addFormInput} className="text-xs bg-primary-100 text-primary-700 px-3 py-1 rounded-full hover:bg-primary-200 font-bold flex items-center gap-1">
+                                    <Plus size={14}/> Add Field
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-3 bg-gray-50 dark:bg-gray-900 p-4 rounded-xl">
+                                {newService.formInputs.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No inputs defined. Add one manually or use the AI generator.</p>}
+                                {newService.formInputs.map((input, idx) => (
+                                    <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-4 items-start">
+                                        <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                                            <div>
+                                                <label className="text-xs text-gray-500 font-semibold">Field Name (ID)</label>
+                                                <input type="text" value={input.name} onChange={e => updateFormInput(idx, 'name', e.target.value)} className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-600" placeholder="e.g. contract_file" />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-500 font-semibold">Label (EN)</label>
+                                                <input type="text" value={input.label.en} onChange={e => updateFormInputLabel(idx, 'en', e.target.value)} className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-600" placeholder="Label English" />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-500 font-semibold text-right block">Label (AR)</label>
+                                                <input type="text" value={input.label.ar} onChange={e => updateFormInputLabel(idx, 'ar', e.target.value)} className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-600 text-right" placeholder="تسمية الحقل" />
+                                            </div>
+                                            <div className="md:col-span-3 flex gap-4">
+                                                <div className="w-1/3">
+                                                    <label className="text-xs text-gray-500 font-semibold">Input Type</label>
+                                                    <select value={input.type} onChange={e => updateFormInput(idx, 'type', e.target.value)} className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-600">
+                                                        <option value="text">Text Input</option>
+                                                        <option value="textarea">Text Area</option>
+                                                        <option value="date">Date Picker</option>
+                                                        <option value="file">File Upload</option>
+                                                        <option value="select">Dropdown Select</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => removeFormInput(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded self-center md:self-start mt-4 md:mt-0">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Section 4: System Instructions */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-2">4. AI System Instructions (Prompt)</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Instruction (EN)</label>
+                                    <textarea value={newService.systemInstruction?.en || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm" rows={6} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">Instruction (AR)</label>
+                                    <textarea value={newService.systemInstruction?.ar || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm text-right" rows={6} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button onClick={() => setShowServiceForm(false)} className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-200 transition-colors">{t('cancel')}</button>
+                            <button onClick={handleSaveService} className="px-6 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 shadow-lg flex items-center gap-2">
+                                <Save size={18} />
+                                {t('save')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Service List */}
+            {!showServiceForm && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {services.map(service => (
+                        <div key={service.id} className="group relative p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="p-2.5 bg-primary-50 dark:bg-primary-900/20 rounded-xl text-primary-600 dark:text-primary-400">
+                                    {React.createElement(iconMap[service.icon] || LayoutTemplate, { size: 22 })}
+                                </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => { setNewService(service); setShowServiceForm(true); setIsEditingService(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit size={18}/></button>
+                                    <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button>
+                                </div>
+                            </div>
+                            <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1 line-clamp-1">{service.title[language]}</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 h-10 mb-3">{service.description[language]}</p>
+                            <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-600 dark:text-gray-300 truncate max-w-[120px]">{service.category}</span>
+                                <div className="flex items-center gap-1 text-xs text-gray-400">
+                                    <Activity size={12} />
+                                    {service.usageCount || 0}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
     return (
         <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -1135,63 +1413,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {activeTab === 'services' && (
-                        <div className="space-y-6">
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                <h2 className="text-xl font-bold dark:text-white">{t('manageServices')}</h2>
-                                <div className="flex gap-2">
-                                    <div className="relative">
-                                        <input type="text" placeholder={t('enterServiceName')} value={aiServiceName} onChange={(e) => setAiServiceName(e.target.value)} className="pl-3 pr-10 py-2 border rounded-lg text-sm w-64 bg-white dark:bg-gray-700 text-slate-900 dark:text-white dark:border-gray-600" />
-                                        <button onClick={handleGenerateService} disabled={isGenerating} className="absolute right-1 top-1 p-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-purple-400"><Wand2 size={16}/></button>
-                                    </div>
-                                    <button onClick={() => { setNewService(initialServiceState); setShowServiceForm(true); setIsEditingService(false); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700"><Plus size={18}/> {t('add')}</button>
-                                </div>
-                            </div>
-
-                            {showServiceForm && (
-                                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 space-y-4">
-                                    <h3 className="font-bold text-lg dark:text-white">{isEditingService ? t('editService') : t('serviceDetails')}</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <input type="text" placeholder="ID" value={newService.id} onChange={e => setNewService({...newService, id: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" disabled={isEditingService} />
-                                        <select value={newService.category} onChange={e => setNewService({...newService, category: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white">
-                                            <option value="">Select Category</option>
-                                            {categories.map(c => <option key={c.id} value={c.id}>{c.title[language]}</option>)}
-                                        </select>
-                                        <input type="text" placeholder="Title (EN)" value={newService.title.en} onChange={e => setNewService({...newService, title: {...newService.title, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
-                                        <input type="text" placeholder="Title (AR)" value={newService.title.ar} onChange={e => setNewService({...newService, title: {...newService.title, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
-                                        <textarea placeholder="Description (EN)" value={newService.description.en} onChange={e => setNewService({...newService, description: {...newService.description, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" rows={2} />
-                                        <textarea placeholder="Description (AR)" value={newService.description.ar} onChange={e => setNewService({...newService, description: {...newService.description, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" rows={2} />
-                                    </div>
-                                    <div className="flex justify-end gap-3">
-                                        <button onClick={() => setShowServiceForm(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">{t('cancel')}</button>
-                                        <button onClick={handleSaveService} className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">{t('save')}</button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {services.map(service => (
-                                    <div key={service.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-primary-600">
-                                                {React.createElement(iconMap[service.icon] || LayoutTemplate, { size: 20 })}
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button onClick={() => { setNewService(service); setShowServiceForm(true); setIsEditingService(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16}/></button>
-                                                <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
-                                            </div>
-                                        </div>
-                                        <h4 className="font-bold dark:text-white truncate">{service.title[language]}</h4>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{service.description[language]}</p>
-                                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between text-xs text-gray-500">
-                                            <span>{service.category}</span>
-                                            <span>Used: {service.usageCount || 0}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    {activeTab === 'services' && renderServiceManagement()}
 
                     {activeTab === 'categories' && (
                         <div className="space-y-6">

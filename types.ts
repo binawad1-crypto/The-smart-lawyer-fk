@@ -96,6 +96,13 @@ export interface Service {
   id: string;
   title: Record<Language, string>;
   description: Record<Language, string>;
+  // New Fields for the "Service Creation System"
+  longDescription?: Record<Language, string>;
+  serviceType?: string; // Consultation, Review, etc.
+  includedTasks?: Record<Language, string[]>; // List of deliverables/tasks
+  internalNotes?: string;
+  keywords?: string[];
+  
   category: string; // This is now the ID of the category document
   subCategory: Record<Language, string>;
   icon: string; // Changed from React.ComponentType to string
