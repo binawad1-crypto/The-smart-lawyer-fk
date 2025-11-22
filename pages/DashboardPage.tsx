@@ -38,12 +38,16 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
 
 // Helper to extract text from Word/Text files
 const extractTextFromFile = async (file: File): Promise<string | null> => {
-    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        return result.value;
-    } else if (file.type === "text/plain") {
-        return await file.text();
+    try {
+        if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        } else if (file.type === "text/plain") {
+            return await file.text();
+        }
+    } catch (error) {
+        console.error("Error extracting text:", error);
     }
     return null;
 };
@@ -52,14 +56,35 @@ const extractTextFromFile = async (file: File): Promise<string | null> => {
 const formatErrorMessage = (error: any, language: Language): string => {
     const msg = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
     
+    // JSON Parse attempt for cleaner messages
+    try {
+        if (msg.includes('{')) {
+            const startIndex = msg.indexOf('{');
+            const jsonPart = msg.substring(startIndex);
+            const jsonObj = JSON.parse(jsonPart);
+            
+            if (jsonObj.error?.message) {
+                const serverMsg = jsonObj.error.message;
+                if (serverMsg.includes('MIME type') || serverMsg.includes('openxmlformats')) {
+                     return language === 'ar' 
+                        ? 'عذراً، حدث خطأ في قراءة الملف. يرجى التأكد من أن الملف غير تالف. يمكنك محاولة نسخ النص ولصقه مباشرة.'
+                        : 'Error reading file. Please ensure the file is valid or try copying and pasting the text directly.';
+                }
+                return `${language === 'ar' ? 'تفاصيل الخطأ: ' : 'Error Details: '} ${serverMsg}`;
+            }
+        }
+    } catch (e) {
+        // Fallback to regex checks if JSON parse fails
+    }
+
     if (msg.includes('400') || msg.includes('INVALID_ARGUMENT') || msg.includes('Unsupported MIME type')) {
         return language === 'ar' 
-            ? 'عذراً، نوع الملف المرفق غير مدعوم مباشرة. يرجى التأكد من أن الملف نصي، صورة، أو PDF. (للملفات غير المدعومة، حاول نسخ النص ولصقه مباشرة).'
-            : 'Sorry, the attached file type is not supported directly. Please ensure the file is an image, PDF, or text. (For unsupported files, try copying and pasting the text directly).';
+            ? 'عذراً، نوع الملف المرفق غير مدعوم مباشرة. المساعد يدعم الصور، PDF، وملفات الوورد (.docx). تأكد من سلامة الملف.'
+            : 'Sorry, the attached file type is not supported directly. Supported formats: Images, PDF, Word (.docx).';
     }
     if (msg.includes('429') || msg.includes('QUOTA_EXHAUSTED') || msg.includes('Resource has been exhausted')) {
         return language === 'ar'
-            ? 'عذراً، الخدمة مشغولة جداً حالياً أو تم استنفاد الحصة. يرجى الانتظار قليلاً والمحاولة مرة أخرى.'
+            ? 'عذراً، الخدمة مشغولة جداً حالياً أو تم استنفاد الحصة اليومية. يرجى الانتظار قليلاً والمحاولة مرة أخرى.'
             : 'Sorry, the service is currently very busy or the quota has been exhausted. Please wait a moment and try again.';
     }
     if (msg.includes('500') || msg.includes('503') || msg.includes('internal')) {
@@ -67,27 +92,15 @@ const formatErrorMessage = (error: any, language: Language): string => {
             ? 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
             : 'A server error occurred. Please try again later.';
     }
-    
-    // Try to parse JSON error if possible
-    try {
-        if (msg.startsWith('{')) {
-            const jsonObj = JSON.parse(msg);
-            if (jsonObj.error?.message) {
-                return `${language === 'ar' ? 'خطأ من النظام: ' : 'System Error: '} ${jsonObj.error.message}`;
-            }
-        }
-    } catch (e) {
-        // ignore
-    }
 
-    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg}` : `An unexpected error occurred: ${msg}`;
+    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg.substring(0, 100)}...` : `An unexpected error occurred: ${msg.substring(0, 100)}...`;
 };
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const { t, language, dir } = useLanguage();
     const { currentUser } = useAuth();
     const { settings } = useSiteSettings();
-    const { openChatWithContext } = useChat(); // Hook for Chat Context
+    const { openChatWithContext } = useChat();
 
     const [services, setServices] = useState<Service[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -205,7 +218,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const servicesList = servicesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Service));
                 
                 servicesList.sort((a, b) => {
-                    // Sort by Title EN to keep it consistent within categories
                     return (a.title.en || '').localeCompare(b.title.en || '');
                 });
 
@@ -223,7 +235,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 const catRef = collection(db, 'service_categories');
                 const q = query(catRef, orderBy('order'));
                 const snapshot = await getDocs(q);
-                // FIX: Spread doc.id to ensure the ID is available
                 const cats = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Category));
                 setCategories(cats);
             } catch (e) {
@@ -239,17 +250,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const filteredServices = useMemo(() => {
         let filtered = services;
 
-        // 1. Filter by Category
         if (selectedCategory === 'favorites') {
             filtered = filtered.filter(s => favorites.includes(s.id));
         } else if (selectedCategory === 'history') {
-            // Special case: Do not filter services, main content will render history items
             return []; 
         } else if (selectedCategory !== 'all') {
             filtered = filtered.filter(s => s.category === selectedCategory);
         }
 
-        // 2. Filter by Search Query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(s => 
@@ -270,12 +278,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 id: cat.id,
                 label: cat.title[language],
                 icon: IconComponent,
-                color: 'text-primary-600' // Unified color
+                color: 'text-primary-600'
             };
         });
     
         return [
-            // Note: 'all' and 'history' are handled specially in render
             { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
             { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-primary-400' },
             ...dynamicCategories
@@ -284,7 +291,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
 
     const toggleFavorite = (e: React.MouseEvent, serviceId: string) => {
-        e.stopPropagation(); // Prevent opening the service when clicking star
+        e.stopPropagation();
         const newFavs = favorites.includes(serviceId)
             ? favorites.filter(id => id !== serviceId)
             : [...favorites, serviceId];
@@ -297,11 +304,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (!currentUser || !result || isSaved) return;
         
         try {
-            // Construct inputs for history
             const safeInputs: Record<string, any> = {};
             if (selectedService) {
                 Object.entries(formData).forEach(([key, value]) => {
-                    if (value === undefined || value === null) return; // Skip null/undefined
+                    if (value === undefined || value === null) return;
                     if (value instanceof File) {
                         safeInputs[key] = `[File: ${value.name}]`;
                     } else {
@@ -327,6 +333,31 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         } catch (historyError) {
             console.error("Failed to save request history:", historyError);
             alert("Error saving to history. Please try again.");
+        }
+    };
+
+    const deductTokens = async (response: any, promptLength: number) => {
+        if (currentUser && !currentUser.isAdmin) {
+            try {
+                let tokensConsumed = response.usageMetadata?.totalTokens;
+                
+                // Fallback: Estimate tokens if metadata is missing (approx 4 chars per token)
+                if (!tokensConsumed) {
+                    const responseLength = response.text ? response.text.length : 0;
+                    tokensConsumed = Math.ceil((promptLength + responseLength) / 4);
+                    console.warn("Usage metadata missing. Estimated tokens:", tokensConsumed);
+                }
+
+                if (tokensConsumed > 0) {
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await updateDoc(userRef, {
+                        tokenBalance: increment(-tokensConsumed),
+                        tokensUsed: increment(tokensConsumed)
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to update token balance:", e);
+            }
         }
     };
 
@@ -371,20 +402,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry, geminiConfig);
             setResult(response.text);
-            // PUSH TO CHAT CONTEXT (Wait for result to settle)
+            
             if (response.text) {
                 setIsResultModalOpen(true);
-            }
-
-            if (currentUser && !currentUser.isAdmin) {
-                const tokensConsumed = response.usageMetadata?.totalTokens || 0;
-                if (tokensConsumed > 0) {
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await updateDoc(userRef, {
-                        tokenBalance: increment(-tokensConsumed),
-                        tokensUsed: increment(tokensConsumed)
-                    });
-                }
+                await deductTokens(response, finalPrompt.length);
             }
 
         } catch (error) {
@@ -454,7 +475,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (file) {
             const extractedText = await extractTextFromFile(file);
             if (extractedText) {
-                // It's a document that we extracted text from
                 extractedTextFromFiles = `\n\n[ATTACHED DOCUMENT CONTENT]:\n${extractedText}\n[END OF DOCUMENT]\n`;
             } else {
                 // It's likely an image or PDF, send as binary to Gemini
@@ -512,8 +532,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
             let modelToUse = selectedService.geminiModel;
+            // Fallback logic for models
             const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
-            
             if (
                 !modelToUse ||
                 modelToUse.includes('1.5') || 
@@ -521,7 +541,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 modelToUse.includes('latest') ||
                 (!modelToUse.includes('2.5') && !modelToUse.includes('3-pro') && !modelToUse.includes('veo') && !modelToUse.includes('imagen'))
             ) {
-                console.warn(`[Dashboard] Deprecated model detected: ${modelToUse}. Switching to gemini-2.5-flash.`);
                 modelToUse = 'gemini-2.5-flash';
             }
 
@@ -543,16 +562,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     }
                 }
 
-                if (currentUser && !currentUser.isAdmin) {
-                    const tokensConsumed = response.usageMetadata?.totalTokens || 0;
-                     if (tokensConsumed > 0) {
-                        const userRef = doc(db, 'users', currentUser.uid);
-                        await updateDoc(userRef, {
-                            tokenBalance: increment(-tokensConsumed),
-                            tokensUsed: increment(tokensConsumed)
-                        });
-                    }
-                }
+                await deductTokens(response, promptText.length);
             }
         } catch (error) {
             setResult(formatErrorMessage(error, language));
@@ -606,7 +616,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (result) {
             openChatWithContext(result);
             if (window.innerWidth < 1024) {
-                // Close modal on mobile if open, so chat can be seen
                 setIsResultModalOpen(false);
             }
         }

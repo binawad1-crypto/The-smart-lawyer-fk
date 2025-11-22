@@ -37,12 +37,16 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
 
 // Helper to extract text from Word/Text files
 const extractTextFromFile = async (file: File): Promise<string | null> => {
-    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        return result.value;
-    } else if (file.type === "text/plain") {
-        return await file.text();
+    try {
+        if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        } else if (file.type === "text/plain") {
+            return await file.text();
+        }
+    } catch (e) {
+        console.error("Text extraction failed", e);
     }
     return null;
 };
@@ -51,6 +55,27 @@ const extractTextFromFile = async (file: File): Promise<string | null> => {
 const formatErrorMessage = (error: any, language: Language): string => {
     const msg = typeof error === 'string' ? error : (error?.message || JSON.stringify(error));
     
+    // Try to parse JSON error if possible
+    try {
+        if (msg.includes('{')) {
+            const startIndex = msg.indexOf('{');
+            const jsonPart = msg.substring(startIndex);
+            const jsonObj = JSON.parse(jsonPart);
+            
+            if (jsonObj.error?.message) {
+                const serverMsg = jsonObj.error.message;
+                if (serverMsg.includes('MIME type') || serverMsg.includes('openxmlformats')) {
+                     return language === 'ar' 
+                        ? 'عذراً، حدث خطأ في قراءة الملف. يرجى التأكد من أن الملف غير تالف. يمكنك محاولة نسخ النص ولصقه مباشرة.'
+                        : 'Error reading file. Please ensure the file is valid or try copying and pasting the text directly.';
+                }
+                return `${language === 'ar' ? 'تفاصيل الخطأ: ' : 'Error Details: '} ${serverMsg}`;
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
     if (msg.includes('400') || msg.includes('INVALID_ARGUMENT') || msg.includes('Unsupported MIME type')) {
         return language === 'ar' 
             ? 'عذراً، نوع الملف المرفق غير مدعوم مباشرة. يرجى التأكد من أن الملف نصي، صورة، أو PDF. (للملفات غير المدعومة، حاول نسخ النص ولصقه مباشرة).'
@@ -66,20 +91,8 @@ const formatErrorMessage = (error: any, language: Language): string => {
             ? 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.'
             : 'A server error occurred. Please try again later.';
     }
-    
-    // Try to parse JSON error if possible
-    try {
-        if (msg.startsWith('{')) {
-            const jsonObj = JSON.parse(msg);
-            if (jsonObj.error?.message) {
-                return `${language === 'ar' ? 'خطأ من النظام: ' : 'System Error: '} ${jsonObj.error.message}`;
-            }
-        }
-    } catch (e) {
-        // ignore
-    }
 
-    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg}` : `An unexpected error occurred: ${msg}`;
+    return language === 'ar' ? `حدث خطأ غير متوقع: ${msg.substring(0, 100)}...` : `An unexpected error occurred: ${msg.substring(0, 100)}...`;
 };
 
 const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, onClose, service }) => {
@@ -141,6 +154,31 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
     return prompt;
   }, [formData, service, outputLanguage, currentUser]);
 
+  const deductTokens = async (response: any, promptLength: number) => {
+    if (currentUser && !currentUser.isAdmin) {
+        try {
+            let tokensConsumed = response.usageMetadata?.totalTokens;
+            
+            // Fallback: Estimate tokens if metadata is missing (approx 4 chars per token)
+            if (!tokensConsumed) {
+                const responseLength = response.text ? response.text.length : 0;
+                tokensConsumed = Math.ceil((promptLength + responseLength) / 4);
+                console.warn("Usage metadata missing. Estimated tokens:", tokensConsumed);
+            }
+
+            if (tokensConsumed > 0) {
+                const userRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userRef, {
+                    tokenBalance: increment(-tokensConsumed),
+                    tokensUsed: increment(tokensConsumed)
+                });
+            }
+        } catch (e) {
+            console.error("Failed to update token balance:", e);
+        }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!service) return;
@@ -196,15 +234,14 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
         geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
         let modelToUse = service.geminiModel;
+        // Fallback logic for models
         const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
-        
         if (
             !modelToUse ||
             modelToUse.includes('1.5') ||
-            modelToUse.includes('gemini-pro') || // old alias
+            modelToUse.includes('gemini-pro') ||
             (!validModels.includes(modelToUse) && !modelToUse.includes('2.5') && !modelToUse.includes('3-pro'))
         ) {
-            console.warn(`Deprecated model detected: ${modelToUse}. Switching to gemini-2.5-flash.`);
             modelToUse = 'gemini-2.5-flash';
         }
 
@@ -222,6 +259,9 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             } catch (error) {
                 console.error("Failed to update usage count:", error);
             }
+
+            // 2. Deduct Tokens
+            await deductTokens(response, prompt.length);
         }
     } catch (error) {
         setResult(`${t('serviceSavedError')}: ${formatErrorMessage(error, language)}`);
