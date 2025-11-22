@@ -797,6 +797,7 @@ const AdminPage = () => {
                - Keywords: 5-10 SEO keywords.
                - Internal Notes: Brief summary of the generation logic.
                - Icon: Choose a suitable Lucide icon name (e.g., FileText, Gavel, Scale, Handshake, Shield, Building2).
+               - Gemini Model: MUST be either 'gemini-2.5-flash' or 'gemini-3-pro-preview'. Default to 'gemini-2.5-flash'. Do NOT use 'gemini-1.5-pro' or any older models.
 
             Output JSON format matching the Service interface exactly.
             `;
@@ -1157,10 +1158,7 @@ const AdminPage = () => {
                                         className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="gemini-2.5-flash">gemini-2.5-flash (Default)</option>
-                                        <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
-                                        <option value="models/gemini-1.5-pro-002">models/gemini-1.5-pro-002</option>
-                                        <option value="models/gemini-1.5-flash-002">models/gemini-1.5-flash-002</option>
-                                        <option value="models/gemini-1.5-flash-lite">models/gemini-1.5-flash-lite</option>
+                                        <option value="gemini-3-pro-preview">gemini-3-pro-preview (Advanced)</option>
                                     </select>
                                 </div>
                                 <div className="md:col-span-2">

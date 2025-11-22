@@ -357,8 +357,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
+            // ---------------------------------------------------------------------------
+            // AUTO-FIX: Check for deprecated models (specifically 1.5-pro-latest which causes 404s)
+            // This logic ensures that old services with deprecated model names still work.
+            // ---------------------------------------------------------------------------
+            let modelToUse = selectedService.geminiModel;
+            const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
+            
+            if (
+                !modelToUse ||
+                modelToUse.includes('1.5') || 
+                modelToUse.includes('gemini-pro') ||
+                modelToUse.includes('latest') ||
+                (!modelToUse.includes('2.5') && !modelToUse.includes('3-pro') && !modelToUse.includes('veo') && !modelToUse.includes('imagen'))
+            ) {
+                console.warn(`[Dashboard] Deprecated model detected: ${modelToUse}. Switching to gemini-2.5-flash.`);
+                modelToUse = 'gemini-2.5-flash';
+            }
 
-            const response = await runGemini(selectedService.geminiModel, promptText, file, handleRetry, geminiConfig);
+            const response = await runGemini(modelToUse, promptText, file, handleRetry, geminiConfig);
             setResult(response.text);
 
             const isSuccess = !!response.text;

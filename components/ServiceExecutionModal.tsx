@@ -118,7 +118,26 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
         geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
-        const response = await runGemini(service.geminiModel, prompt, file, handleRetry, geminiConfig);
+        // ---------------------------------------------------------------------------
+        // AUTO-FIX: Check for deprecated or invalid models and force a valid one.
+        // This ensures that even if the database record is old, the execution works.
+        // ---------------------------------------------------------------------------
+        let modelToUse = service.geminiModel;
+        const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
+        
+        // If the model contains "1.5" or "pro-002" or is not one of the recommended newer models,
+        // we safely default to 'gemini-2.5-flash' for speed and reliability.
+        if (
+            !modelToUse ||
+            modelToUse.includes('1.5') ||
+            modelToUse.includes('gemini-pro') || // old alias
+            (!validModels.includes(modelToUse) && !modelToUse.includes('2.5') && !modelToUse.includes('3-pro'))
+        ) {
+            console.warn(`Deprecated model detected: ${modelToUse}. Switching to gemini-2.5-flash.`);
+            modelToUse = 'gemini-2.5-flash';
+        }
+
+        const response = await runGemini(modelToUse, prompt, file, handleRetry, geminiConfig);
         const resultText = response.text;
         setResult(resultText);
 
