@@ -227,7 +227,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                       {ticket.unreadUser && <div className="absolute top-0 right-0 rtl:left-0 w-2 h-full bg-primary-500"></div>}
                       <div className="flex justify-between items-start mb-2">
                         <h3 className={`font-bold text-sm truncate pr-2 rtl:pl-2 ${ticket.unreadUser ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{ticket.subject}</h3>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap border ${ticket.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' : ticket.status === 'answered' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap border ${ticket.status === 'open' ? 'bg-primary-50 text-primary-700 border-primary-200' : ticket.status === 'answered' ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                           {t(ticket.status)}
                         </span>
                       </div>

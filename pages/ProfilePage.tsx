@@ -38,7 +38,7 @@ const ReauthModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex justify-center items-center p-4 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+            <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100 border border-gray-200 dark:border-dark-border">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Shield className="text-primary-600" size={24} />
@@ -46,7 +46,7 @@ const ReauthModal: React.FC<{
                     </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"><X size={24} /></button>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg border border-gray-100 dark:border-dark-border">
                     {t('reAuthMessage')}
                 </p>
                 <form onSubmit={handleSubmit}>
@@ -63,7 +63,7 @@ const ReauthModal: React.FC<{
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder={t('currentPassword')}
-                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-3 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-3 border rounded-xl bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             required
                         />
                     </div>
@@ -301,8 +301,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
         {/* Feedback Toast */}
         {feedback && (
-            <div className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${feedback.type === 'success' ? 'bg-white dark:bg-gray-800 border-green-500 text-green-700 dark:text-green-400' : 'bg-white dark:bg-gray-800 border-red-500 text-red-700 dark:text-red-400'} animate-fade-in-down`}>
-                {feedback.type === 'success' ? <CheckCircle size={24} className="text-green-500"/> : <AlertCircle size={24} className="text-red-500"/>}
+            <div className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${feedback.type === 'success' ? 'bg-white dark:bg-dark-card-bg border-primary-500 text-primary-700 dark:text-primary-400' : 'bg-white dark:bg-dark-card-bg border-red-500 text-red-700 dark:text-red-400'} animate-fade-in-down`}>
+                {feedback.type === 'success' ? <CheckCircle size={24} className="text-primary-500"/> : <AlertCircle size={24} className="text-red-500"/>}
                 <span className="font-medium">{feedback.message}</span>
             </div>
         )}
@@ -314,7 +314,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             <div className="space-y-6 lg:col-span-1">
                 
                 {/* User Identity Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center gap-4">
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border p-6 flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center text-primary-600 dark:text-primary-300 text-2xl font-bold shadow-inner">
                         {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : <User size={32} />}
                     </div>
@@ -324,7 +324,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{currentUser.email}</p>
                         <div className="flex items-center gap-2 mt-2">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${currentUser.isAdmin ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${currentUser.isAdmin ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
                                 {currentUser.isAdmin ? <Shield size={10}/> : <User size={10}/>}
                                 {currentUser.isAdmin ? 'Admin' : 'User'}
                             </span>
@@ -333,19 +333,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Token Balance Card */}
-                <div className="bg-gradient-to-br from-primary-600 to-blue-700 rounded-2xl shadow-lg shadow-blue-900/20 p-6 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-lg shadow-primary-900/20 p-6 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-2 -translate-y-2">
                         <Gem size={120} />
                     </div>
                     <div className="relative z-10">
-                        <p className="text-blue-100 font-medium flex items-center gap-2 mb-2">
+                        <p className="text-primary-100 font-medium flex items-center gap-2 mb-2">
                             <Gem size={18} />
                             {t('tokenBalance')}
                         </p>
                         <h3 className="text-4xl font-black tracking-tight">
                             {currentUser.tokenBalance?.toLocaleString() || 0}
                         </h3>
-                        <p className="text-blue-200 text-sm mt-2">Tokens Available</p>
+                        <p className="text-primary-200 text-sm mt-2">Tokens Available</p>
                         
                         <button 
                             onClick={() => onNavigate('subscriptions')}
@@ -357,11 +357,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Subscription Card */}
-                <div className={`rounded-2xl p-6 relative overflow-hidden border transition-all ${isPlanActive ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-transparent shadow-lg shadow-teal-900/20' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                <div className={`rounded-2xl p-6 relative overflow-hidden border transition-all ${isPlanActive ? 'bg-gradient-to-br from-primary-700 to-primary-600 text-white border-transparent shadow-lg shadow-primary-900/20' : 'bg-white dark:bg-dark-card-bg border-gray-200 dark:border-dark-border'}`}>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <p className={`text-sm font-medium flex items-center gap-2 ${isPlanActive ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <p className={`text-sm font-medium flex items-center gap-2 ${isPlanActive ? 'text-primary-100' : 'text-gray-500 dark:text-gray-400'}`}>
                                     <CreditCard size={18} />
                                     {t('subscription')}
                                 </p>
@@ -382,7 +382,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                         </div>
 
                         {subscription && (
-                            <div className={`text-sm mb-6 flex items-center gap-2 ${isPlanActive ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                            <div className={`text-sm mb-6 flex items-center gap-2 ${isPlanActive ? 'text-primary-100' : 'text-gray-500 dark:text-gray-400'}`}>
                                 <Calendar size={14} />
                                 {subscription.status === 'canceled' ? t('canceledOn') : t('renewsOn')}: 
                                 <span className="font-mono font-semibold ml-1">
@@ -395,7 +395,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                             <button 
                                 onClick={redirectToCustomerPortal} 
                                 disabled={isPortalLoading}
-                                className="w-full py-2.5 bg-white text-teal-800 font-bold rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                                className="w-full py-2.5 bg-white text-primary-800 font-bold rounded-lg hover:bg-primary-50 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
                             >
                                 {isPortalLoading ? <Loader2 className="animate-spin" size={18} /> : null}
                                 {t('manageSubscription')}
@@ -416,10 +416,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             <div className="lg:col-span-2 space-y-8">
                 
                 {/* Personal Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg">
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <User className="text-primary-500" size={20}/>
+                            <User className="text-primary-600" size={20}/>
                             {t('editProfile')}
                         </h2>
                     </div>
@@ -483,10 +483,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Security Settings */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg">
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Shield className="text-primary-500" size={20}/>
+                            <Shield className="text-primary-600" size={20}/>
                             {t('security')}
                         </h2>
                     </div>

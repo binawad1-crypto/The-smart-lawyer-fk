@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { db } from '../services/firebase';
-import { doc, onSnapshot, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { onSnapshot, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { STRIPE_PUBLISHABLE_KEY } from '../constants';
 import { Plan } from '../types';
 import { Loader2, CheckCircle2, Star } from 'lucide-react';
@@ -143,35 +143,20 @@ const SubscriptionPage: React.FC = () => {
                                             {plan.features.map((feature, index) => (
                                                 <li key={index} className="flex items-start">
                                                     <div className="flex-shrink-0">
-                                                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                                                        <CheckCircle2 className="h-6 w-6 text-primary-500" />
                                                     </div>
-                                                    <p className="ml-3 text-base text-gray-700 dark:text-gray-300">{feature[language]}</p>
+                                                    <p className="ml-3 text-base text-gray-500 dark:text-gray-400">{feature[language]}</p>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
-                                    <div className="bg-gray-50 dark:bg-dark-card-bg/50 p-8 rounded-b-lg">
+                                    <div className="bg-light-card-bg dark:bg-dark-card-bg p-8 rounded-b-lg border-t border-gray-200 dark:border-gray-700">
                                         <button
                                             onClick={() => handleCheckout(plan.priceId)}
                                             disabled={loadingPriceId !== null}
-                                            className={`w-full px-6 py-3 text-base font-semibold rounded-md transition-all duration-200 flex items-center justify-center
-                                            ${isProcessing 
-                                                ? 'bg-primary-600 text-white cursor-wait shadow-md ring-2 ring-offset-2 ring-primary-500 dark:ring-offset-gray-800' 
-                                                : isOtherProcessing
-                                                    ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-500 cursor-not-allowed'
-                                                    : plan.isPopular 
-                                                        ? 'bg-primary-600 hover:bg-primary-700 text-white' 
-                                                        : 'bg-gray-700 hover:bg-gray-800 text-white'
-                                            }`}
+                                            className={`w-full block text-center rounded-md py-3 px-6 font-medium text-white shadow hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${plan.isPopular ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600'}`}
                                         >
-                                            {isProcessing ? (
-                                                <>
-                                                <Loader2 className="animate-spin mr-2" />
-                                                {t('redirectingToPayment')}
-                                                </>
-                                            ) : (
-                                                t('choosePlan')
-                                            )}
+                                            {isProcessing ? <Loader2 className="animate-spin inline-block" /> : t('choosePlan')}
                                         </button>
                                     </div>
                                 </div>

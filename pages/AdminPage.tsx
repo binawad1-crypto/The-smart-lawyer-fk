@@ -164,8 +164,8 @@ const GrantSubscriptionModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale-100">
-                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-dark-bg rounded-2xl shadow-2xl w-full max-w-lg transform transition-all scale-100 border border-gray-200 dark:border-dark-border">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-dark-border">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('grantSubscription')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                         <X size={24} />
@@ -276,13 +276,13 @@ const AddTokenModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100">
-                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-dark-bg rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100 border border-gray-200 dark:border-dark-border">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-dark-border">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('addTokens')}</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"><X size={20} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg border border-primary-100 dark:border-primary-800/30">
                         {t('addTokens')} لـ: <br/><b>{userEmail}</b>
                     </p>
                     <div>
@@ -361,7 +361,7 @@ const PlanForm: React.FC<{
     };
 
     return (
-        <form onSubmit={handleFormSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-5 mb-8">
+        <form onSubmit={handleFormSubmit} className="bg-white dark:bg-dark-card-bg p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border space-y-5 mb-8">
             <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4 mb-2">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">{isEditing ? t('editPlan') : t('addNewPlan')}</h3>
             </div>
@@ -455,60 +455,45 @@ const AdminPage = () => {
     const { t, language } = useLanguage();
     const { currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
-    // User management state
     const [users, setUsers] = useState<UserData[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
     const [userError, setUserError] = useState<string | null>(null);
     const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
     const [selectedUserForAction, setSelectedUserForAction] = useState<UserData | null>(null);
-    
-    // Service management state
     const [services, setServices] = useState<Service[]>([]);
     const [loadingServices, setLoadingServices] = useState(true);
     const [serviceError, setServiceError] = useState<string|null>(null);
     const [newService, setNewService] = useState<Service>(initialServiceState);
     const [isEditingService, setIsEditingService] = useState(false);
     const [showServiceForm, setShowServiceForm] = useState(false);
-    // AI Generator State
     const [aiTopic, setAiTopic] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
-
-    // Category management state
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [categoryError, setCategoryError] = useState<string | null>(null);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [isEditingCategory, setIsEditingCategory] = useState(false);
-    
-    // Subscription management state
     const [usersWithSub, setUsersWithSub] = useState<UserWithSubscription[]>([]);
     const [loadingSubs, setLoadingSubs] = useState(true);
     const [subError, setSubError] = useState<string | null>(null);
     const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
-    // Plan management state
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [planError, setPlanError] = useState<string | null>(null);
     const [showPlanForm, setShowPlanForm] = useState(false);
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-
-    // Site Settings State
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(initialSiteSettings);
     const [loadingSettings, setLoadingSettings] = useState(true);
     const [savingSettings, setSavingSettings] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [faviconFile, setFaviconFile] = useState<File | null>(null);
-    
-    // Support System State
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [messages, setMessages] = useState<TicketMessage[]>([]);
     const [replyMessage, setReplyMessage] = useState('');
     const [loadingTickets, setLoadingTickets] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    // Notification System State
     const [notifications, setNotifications] = useState<SystemNotification[]>([]);
     const [loadingNotifications, setLoadingNotifications] = useState(false);
     const [newNotification, setNewNotification] = useState<Partial<SystemNotification>>({
@@ -692,7 +677,6 @@ const AdminPage = () => {
     const fetchTickets = useCallback(async () => {
         setLoadingTickets(true);
         try {
-            // Note: requires index on lastUpdate DESC
             const q = query(collection(db, 'support_tickets'), orderBy('lastUpdate', 'desc'));
             const snapshot = await getDocs(q);
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
@@ -704,7 +688,6 @@ const AdminPage = () => {
         }
     }, []);
 
-    // Auto-fetch based on active tab
     useEffect(() => {
         if (activeTab === 'subscriptions') {
             fetchUsersWithSubscriptions();
@@ -713,7 +696,6 @@ const AdminPage = () => {
         }
     }, [activeTab, fetchUsersWithSubscriptions, fetchTickets]);
 
-    // Initial Fetch for core data
     useEffect(() => {
         fetchUsers();
         fetchServices();
@@ -723,7 +705,6 @@ const AdminPage = () => {
         fetchNotifications();
     }, [fetchUsers, fetchServices, fetchCategories, fetchPlans, fetchSiteSettings, fetchNotifications]);
 
-    // Fetch messages when ticket selected
     useEffect(() => {
         if (!selectedTicket) return;
         const q = query(
@@ -736,7 +717,6 @@ const AdminPage = () => {
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         });
         
-        // Mark as read by admin
         if(selectedTicket.unreadAdmin) {
              updateDoc(doc(db, 'support_tickets', selectedTicket.id), { unreadAdmin: false });
         }
@@ -744,7 +724,6 @@ const AdminPage = () => {
         return () => unsubscribe();
     }, [selectedTicket]);
 
-    // --- Services Handlers ---
     const handleDeleteService = async (serviceId: string) => {
         if (window.confirm(t('deleteConfirm'))) {
             try {
@@ -777,10 +756,9 @@ const AdminPage = () => {
         }
     };
 
-    // AI Helper for Service Data Generation
     const handleGenerateServiceData = async () => {
         if (!aiTopic.trim()) {
-            alert(t('enterServiceName')); // reusing translation key
+            alert(t('enterServiceName'));
             return;
         }
         setIsGenerating(true);
@@ -855,7 +833,6 @@ const AdminPage = () => {
 
             if (response.text) {
                 let cleanText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-                // Basic JSON extraction in case of extra text
                 const firstOpen = cleanText.indexOf('{');
                 const lastClose = cleanText.lastIndexOf('}');
                 if(firstOpen !== -1 && lastClose !== -1) {
@@ -866,10 +843,8 @@ const AdminPage = () => {
                 setNewService(prev => ({
                     ...prev,
                     ...generatedData,
-                    // Ensure we don't overwrite existing ID if we are editing (though here we are likely adding new)
                     id: isEditingService ? prev.id : generatedData.id
                 }));
-                // Clear AI input
                 setAiTopic('');
             }
         } catch (e) {
@@ -880,7 +855,6 @@ const AdminPage = () => {
         }
     };
 
-    // Form Builder Helper Functions
     const addFormInput = () => {
         setNewService(prev => ({
             ...prev,
@@ -910,7 +884,6 @@ const AdminPage = () => {
         setNewService(prev => ({ ...prev, formInputs: updatedInputs }));
     };
 
-    // --- Categories Handlers ---
     const handleSaveCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCategory) return;
@@ -944,7 +917,6 @@ const AdminPage = () => {
         }
     };
 
-    // --- Plans Handlers ---
     const handleSavePlan = async (plan: Plan) => {
         try {
             await setDoc(doc(db, 'subscription_plans', plan.id), plan);
@@ -960,7 +932,6 @@ const AdminPage = () => {
         }
     };
 
-    // --- Settings Handlers ---
     const handleSaveSettings = async (e: React.FormEvent) => {
         e.preventDefault();
         setSavingSettings(true);
@@ -1008,7 +979,6 @@ const AdminPage = () => {
         }
     };
 
-    // --- Notifications Handlers ---
     const handleCreateNotification = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -1042,7 +1012,6 @@ const AdminPage = () => {
         }
     };
 
-    // --- Support Handlers ---
     const handleReplyTicket = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedTicket || !replyMessage.trim()) return;
@@ -1086,16 +1055,16 @@ const AdminPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans.map(plan => (
-                    <div key={plan.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
-                        {plan.isPopular && <div className="absolute top-4 right-4 text-yellow-500"><Star fill="currentColor" size={20}/></div>}
+                    <div key={plan.id} className="bg-white dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border rounded-xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
+                        {plan.isPopular && <div className="absolute top-4 right-4 text-primary-500"><Star fill="currentColor" size={20}/></div>}
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.title[language]}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{plan.id}</p>
                         <div className="text-2xl font-black text-primary-600 dark:text-primary-400 mb-2">{plan.price[language]}</div>
-                        <div className="inline-block bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 mb-4">
+                        <div className="inline-block bg-primary-50 dark:bg-primary-900/20 px-3 py-1 rounded-full text-xs font-bold text-primary-700 dark:text-primary-300 mb-4">
                             {plan.tokens.toLocaleString()} Tokens
                         </div>
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <span className={`text-xs px-2 py-1 rounded-full ${plan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{plan.status}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full ${plan.status === 'active' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>{plan.status}</span>
                             <button onClick={() => { setEditingPlan(plan); setShowPlanForm(true); }} className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1">
                                 <Edit size={16}/> {t('edit')}
                             </button>
@@ -1117,9 +1086,9 @@ const AdminPage = () => {
 
             {/* Service Editor (Create/Edit) */}
             {showServiceForm && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in-up">
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden animate-fade-in-up">
                     {/* AI Generator Section */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
+                    <div className="bg-gradient-to-r from-primary-700 to-primary-600 p-6">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
                             <Sparkles size={20} className="text-yellow-300" />
                             Smart Data Generator
@@ -1135,7 +1104,7 @@ const AdminPage = () => {
                             <button 
                                 onClick={handleGenerateServiceData} 
                                 disabled={isGenerating}
-                                className="bg-white text-indigo-600 font-bold py-3 px-6 rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap shadow-lg"
+                                className="bg-white text-primary-700 font-bold py-3 px-6 rounded-xl hover:bg-primary-50 transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap shadow-lg"
                             >
                                 {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
                                 Generate Data
@@ -1155,37 +1124,37 @@ const AdminPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service ID (Auto-generated if empty)</label>
-                                    <input type="text" value={newService.id} onChange={e => setNewService({...newService, id: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="e.g. contract-review" disabled={isEditingService} />
+                                    <input type="text" value={newService.id} onChange={e => setNewService({...newService, id: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" placeholder="e.g. contract-review" disabled={isEditingService} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Icon Name (Lucide React)</label>
-                                    <input type="text" value={newService.icon} onChange={e => setNewService({...newService, icon: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="FileText" />
+                                    <input type="text" value={newService.icon} onChange={e => setNewService({...newService, icon: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" placeholder="FileText" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service Name (EN)</label>
-                                    <input type="text" value={newService.title.en} onChange={e => setNewService({...newService, title: {...newService.title, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" />
+                                    <input type="text" value={newService.title.en} onChange={e => setNewService({...newService, title: {...newService.title, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">اسم الخدمة (AR)</label>
-                                    <input type="text" value={newService.title.ar} onChange={e => setNewService({...newService, title: {...newService.title, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" />
+                                    <input type="text" value={newService.title.ar} onChange={e => setNewService({...newService, title: {...newService.title, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white text-right" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Category</label>
-                                    <select value={newService.category} onChange={e => setNewService({...newService, category: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white">
+                                    <select value={newService.category} onChange={e => setNewService({...newService, category: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white">
                                         <option value="">Select Category</option>
                                         {categories.map(c => <option key={c.id} value={c.id}>{c.title[language]}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Service Type</label>
-                                    <input type="text" value={newService.serviceType || ''} onChange={e => setNewService({...newService, serviceType: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="Consultation, Drafting, etc." />
+                                    <input type="text" value={newService.serviceType || ''} onChange={e => setNewService({...newService, serviceType: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" placeholder="Consultation, Drafting, etc." />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Gemini Model</label>
                                     <select
                                         value={newService.geminiModel}
                                         onChange={e => setNewService({...newService, geminiModel: e.target.value})}
-                                        className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="gemini-2.5-flash">gemini-2.5-flash (Default)</option>
                                         <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
@@ -1196,11 +1165,11 @@ const AdminPage = () => {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Short Description (EN)</label>
-                                    <textarea value={newService.description.en} onChange={e => setNewService({...newService, description: {...newService.description, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={2} />
+                                    <textarea value={newService.description.en} onChange={e => setNewService({...newService, description: {...newService.description, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" rows={2} />
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">وصف قصير (AR)</label>
-                                    <textarea value={newService.description.ar} onChange={e => setNewService({...newService, description: {...newService.description, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={2} />
+                                    <textarea value={newService.description.ar} onChange={e => setNewService({...newService, description: {...newService.description, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={2} />
                                 </div>
                             </div>
                         </div>
@@ -1211,19 +1180,19 @@ const AdminPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Full Description (EN)</label>
-                                    <textarea value={newService.longDescription?.en || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {ar:''}), en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={4} />
+                                    <textarea value={newService.longDescription?.en || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {ar:''}), en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" rows={4} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">وصف كامل (AR)</label>
-                                    <textarea value={newService.longDescription?.ar || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {en:''}), ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={4} />
+                                    <textarea value={newService.longDescription?.ar || ''} onChange={e => setNewService({...newService, longDescription: {...(newService.longDescription || {en:''}), ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white text-right" rows={4} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Internal Notes</label>
-                                    <textarea value={newService.internalNotes || ''} onChange={e => setNewService({...newService, internalNotes: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" rows={2} placeholder="Workflow details, active status..." />
+                                    <textarea value={newService.internalNotes || ''} onChange={e => setNewService({...newService, internalNotes: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" rows={2} placeholder="Workflow details, active status..." />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">SEO Keywords (Comma separated)</label>
-                                    <input type="text" value={newService.keywords?.join(', ') || ''} onChange={e => setNewService({...newService, keywords: e.target.value.split(',').map(s => s.trim())})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="law, contract, review..." />
+                                    <input type="text" value={newService.keywords?.join(', ') || ''} onChange={e => setNewService({...newService, keywords: e.target.value.split(',').map(s => s.trim())})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white" placeholder="law, contract, review..." />
                                 </div>
                             </div>
                         </div>
@@ -1237,7 +1206,7 @@ const AdminPage = () => {
                                 </button>
                             </div>
                             
-                            <div className="space-y-3 bg-gray-50 dark:bg-gray-900 p-4 rounded-xl">
+                            <div className="space-y-3 bg-gray-50 dark:bg-dark-bg/50 p-4 rounded-xl">
                                 {newService.formInputs.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No inputs defined. Add one manually or use the AI generator.</p>}
                                 {newService.formInputs.map((input, idx) => (
                                     <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-4 items-start">
@@ -1281,11 +1250,11 @@ const AdminPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Instruction (EN)</label>
-                                    <textarea value={newService.systemInstruction?.en || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm" rows={6} />
+                                    <textarea value={newService.systemInstruction?.en || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, en: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm" rows={6} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 text-right">Instruction (AR)</label>
-                                    <textarea value={newService.systemInstruction?.ar || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm text-right" rows={6} />
+                                    <textarea value={newService.systemInstruction?.ar || ''} onChange={e => setNewService({...newService, systemInstruction: {...newService.systemInstruction, ar: e.target.value}})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-dark-bg dark:border-gray-600 text-gray-900 dark:text-white font-mono text-sm text-right" rows={6} />
                                 </div>
                             </div>
                         </div>
@@ -1306,13 +1275,13 @@ const AdminPage = () => {
             {!showServiceForm && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {services.map(service => (
-                        <div key={service.id} className="group relative p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                        <div key={service.id} className="group relative p-5 bg-white dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border rounded-2xl shadow-sm hover:shadow-md transition-all">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="p-2.5 bg-primary-50 dark:bg-primary-900/20 rounded-xl text-primary-600 dark:text-primary-400">
                                     {React.createElement(iconMap[service.icon] || LayoutTemplate, { size: 22 })}
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setNewService(service); setShowServiceForm(true); setIsEditingService(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit size={18}/></button>
+                                    <button onClick={() => { setNewService(service); setShowServiceForm(true); setIsEditingService(true); }} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg"><Edit size={18}/></button>
                                     <button onClick={() => handleDeleteService(service.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button>
                                 </div>
                             </div>
@@ -1333,11 +1302,11 @@ const AdminPage = () => {
     );
 
     return (
-        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6">
+        <div className="bg-light-bg dark:bg-dark-bg min-h-screen p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('adminPanel')}</h1>
                 
-                <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap gap-2 bg-white dark:bg-dark-card-bg p-1 rounded-xl shadow-sm border border-gray-200 dark:border-dark-border">
                     {[
                         { id: 'users', label: 'userManagement', icon: Users },
                         { id: 'services', label: 'manageServices', icon: LayoutTemplate },
@@ -1363,7 +1332,7 @@ const AdminPage = () => {
                     })}
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[600px]">
+                <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-dark-border p-6 min-h-[600px]">
                     {activeTab === 'users' && (
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
@@ -1390,19 +1359,19 @@ const AdminPage = () => {
                                                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                                     <td className="p-4 font-medium dark:text-white">{user.email}</td>
                                                     <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
                                                             {user.role}
                                                         </span>
                                                     </td>
                                                     <td className="p-4">{user.tokenBalance?.toLocaleString()}</td>
                                                     <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'active' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-400'}`}>
                                                             {user.status || 'active'}
                                                         </span>
                                                     </td>
                                                     <td className="p-4 flex justify-end gap-2">
-                                                        <button onClick={() => { setSelectedUserForAction(user); setIsTokenModalOpen(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title={t('addTokens')}><Coins size={18}/></button>
-                                                        <button onClick={() => { setSelectedUserForAction(user); setIsGrantModalOpen(true); fetchUsersWithSubscriptions(); }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title={t('grantSubscription')}><Gift size={18}/></button>
+                                                        <button onClick={() => { setSelectedUserForAction(user); setIsTokenModalOpen(true); }} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg" title={t('addTokens')}><Coins size={18}/></button>
+                                                        <button onClick={() => { setSelectedUserForAction(user); setIsGrantModalOpen(true); fetchUsersWithSubscriptions(); }} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg" title={t('grantSubscription')}><Gift size={18}/></button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -1441,7 +1410,7 @@ const AdminPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {categories.map(cat => (
-                                    <div key={cat.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                                    <div key={cat.id} className="flex items-center justify-between p-4 bg-white dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border rounded-lg shadow-sm">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                                 {React.createElement(iconMap[cat.icon] || LayoutGrid, { size: 20 })}
@@ -1452,7 +1421,7 @@ const AdminPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            <button onClick={() => { setEditingCategory(cat); setShowCategoryForm(true); setIsEditingCategory(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16}/></button>
+                                            <button onClick={() => { setEditingCategory(cat); setShowCategoryForm(true); setIsEditingCategory(true); }} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded"><Edit size={16}/></button>
                                             <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16}/></button>
                                         </div>
                                     </div>
@@ -1490,7 +1459,7 @@ const AdminPage = () => {
                                                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                                     <td className="p-4 font-medium dark:text-white">{user.email}</td>
                                                     <td className="p-4">{user.subscription?.planId}</td>
-                                                    <td className="p-4"><span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{user.subscription?.status}</span></td>
+                                                    <td className="p-4"><span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">{user.subscription?.status}</span></td>
                                                     <td className="p-4">{new Date(user.subscription!.current_period_end * 1000).toLocaleDateString()}</td>
                                                     <td className="p-4">{user.subscription?.isManual ? 'Manual' : 'Stripe'}</td>
                                                     <td className="p-4 text-end">
@@ -1527,19 +1496,19 @@ const AdminPage = () => {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteNameEn')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteNameEn')}</label>
                                     <input type="text" value={siteSettings.siteName.en} onChange={e => setSiteSettings({...siteSettings, siteName: {...siteSettings.siteName, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteNameAr')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteNameAr')}</label>
                                     <input type="text" value={siteSettings.siteName.ar} onChange={e => setSiteSettings({...siteSettings, siteName: {...siteSettings.siteName, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteSubtitleEn')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteSubtitleEn')}</label>
                                     <input type="text" value={siteSettings.siteSubtitle.en} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('siteSubtitleAr')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteSubtitleAr')}</label>
                                     <input type="text" value={siteSettings.siteSubtitle.ar} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
                                 </div>
                             </div>
@@ -1548,7 +1517,7 @@ const AdminPage = () => {
                                 <h3 className="font-bold text-lg dark:text-white">Branding & Images</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-gray-800">{t('logo')}</label>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('logo')}</label>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="flex-1">
@@ -1558,7 +1527,7 @@ const AdminPage = () => {
                                                         onChange={e => setLogoFile(e.target.files?.[0] || null)} 
                                                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
                                                     />
-                                                    {logoFile && <p className="text-xs text-green-600 mt-1 font-semibold">Selected: {logoFile.name}</p>}
+                                                    {logoFile && <p className="text-xs text-primary-600 mt-1 font-semibold">Selected: {logoFile.name}</p>}
                                                 </div>
                                                 {siteSettings.logoUrl && !logoFile && (
                                                     <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
@@ -1569,7 +1538,7 @@ const AdminPage = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-gray-800">{t('favicon')}</label>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('favicon')}</label>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="flex-1">
@@ -1579,7 +1548,7 @@ const AdminPage = () => {
                                                         onChange={e => setFaviconFile(e.target.files?.[0] || null)} 
                                                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
                                                     />
-                                                    {faviconFile && <p className="text-xs text-green-600 mt-1 font-semibold">Selected: {faviconFile.name}</p>}
+                                                    {faviconFile && <p className="text-xs text-primary-600 mt-1 font-semibold">Selected: {faviconFile.name}</p>}
                                                 </div>
                                                 {siteSettings.faviconUrl && !faviconFile && (
                                                     <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
@@ -1595,7 +1564,7 @@ const AdminPage = () => {
                             <div className="pt-4 border-t dark:border-gray-700">
                                 <label className="flex items-center space-x-3 cursor-pointer">
                                     <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => setSiteSettings({...siteSettings, isMaintenanceMode: e.target.checked})} className="h-5 w-5 rounded text-primary-600 focus:ring-primary-500" />
-                                    <span className="font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('enableMaintenance')}</span>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('enableMaintenance')}</span>
                                 </label>
                             </div>
                         </form>
@@ -1607,19 +1576,19 @@ const AdminPage = () => {
                             <p className="text-gray-500 text-sm">{t('adPixelsDesc')}</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('googleTagId')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('googleTagId')}</label>
                                     <input type="text" value={siteSettings.adPixels?.googleTagId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, googleTagId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="G-XXXXXXXXXX" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('facebookPixelId')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('facebookPixelId')}</label>
                                     <input type="text" value={siteSettings.adPixels?.facebookPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, facebookPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="1234567890" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('snapchatPixelId')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('snapchatPixelId')}</label>
                                     <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, snapchatPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">{t('tiktokPixelId')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('tiktokPixelId')}</label>
                                     <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, tiktokPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="CXXXXXXXXXXXX" />
                                 </div>
                             </div>
@@ -1651,14 +1620,14 @@ const AdminPage = () => {
                             <div className="space-y-4">
                                 <h3 className="font-bold dark:text-white">Active Notifications</h3>
                                 {notifications.map(notif => (
-                                    <div key={notif.id} className={`p-4 rounded-lg border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900 opacity-60'}`}>
+                                    <div key={notif.id} className={`p-4 rounded-lg border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-dark-card-bg' : 'bg-gray-100 dark:bg-gray-900 opacity-60'}`}>
                                         <div>
                                             <h4 className="font-bold dark:text-white">{notif.title[language]}</h4>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
                                             <span className="text-xs text-gray-400">{new Date(notif.createdAt.seconds * 1000).toLocaleDateString()}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <button onClick={() => toggleNotificationStatus(notif.id, notif.isActive)} className={`px-3 py-1 rounded-full text-xs ${notif.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
+                                            <button onClick={() => toggleNotificationStatus(notif.id, notif.isActive)} className={`px-3 py-1 rounded-full text-xs ${notif.isActive ? 'bg-primary-100 text-primary-800' : 'bg-gray-200 text-gray-800'}`}>
                                                 {notif.isActive ? t('active') : t('inactive')}
                                             </button>
                                             <button onClick={() => handleDeleteNotification(notif.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><Trash2 size={18}/></button>
@@ -1678,11 +1647,11 @@ const AdminPage = () => {
                                         <div 
                                             key={ticket.id}
                                             onClick={() => setSelectedTicket(ticket)}
-                                            className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${selectedTicket?.id === ticket.id ? 'bg-primary-50 border-primary-500 dark:bg-primary-900/20' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} ${ticket.unreadAdmin ? 'border-l-4 border-l-primary-500' : ''}`}
+                                            className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${selectedTicket?.id === ticket.id ? 'bg-primary-50 border-primary-500 dark:bg-primary-900/20' : 'bg-white dark:bg-dark-card-bg border-gray-200 dark:border-dark-border'} ${ticket.unreadAdmin ? 'border-l-4 border-l-primary-500' : ''}`}
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <h4 className="font-bold text-sm dark:text-white truncate">{ticket.subject}</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>{ticket.status}</span>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-600'}`}>{ticket.status}</span>
                                             </div>
                                             <p className="text-xs text-gray-500 truncate">{ticket.userEmail}</p>
                                             <p className="text-[10px] text-gray-400 mt-2 text-right">{ticket.lastUpdate?.toDate().toLocaleDateString()}</p>
@@ -1693,17 +1662,17 @@ const AdminPage = () => {
                             </div>
 
                             {/* Chat View */}
-                            <div className="lg:col-span-2 flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div className="lg:col-span-2 flex flex-col h-full bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden">
                                 {selectedTicket ? (
                                     <>
-                                        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+                                        <div className="p-4 bg-white dark:bg-dark-card-bg border-b border-gray-200 dark:border-gray-700 shadow-sm">
                                             <h3 className="font-bold dark:text-white">{selectedTicket.subject}</h3>
                                             <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
                                         </div>
                                         <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
                                             {messages.map(msg => (
                                                 <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
+                                                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-dark-card-bg border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
                                                         <p className="whitespace-pre-wrap">{msg.content}</p>
                                                         <p className="text-[10px] opacity-70 mt-1 text-right">{msg.createdAt?.toDate().toLocaleTimeString()}</p>
                                                     </div>
@@ -1711,7 +1680,7 @@ const AdminPage = () => {
                                             ))}
                                             <div ref={messagesEndRef} />
                                         </div>
-                                        <form onSubmit={handleReplyTicket} className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+                                        <form onSubmit={handleReplyTicket} className="p-4 bg-white dark:bg-dark-card-bg border-t border-gray-200 dark:border-gray-700 flex gap-3">
                                             <input 
                                                 type="text" 
                                                 value={replyMessage} 

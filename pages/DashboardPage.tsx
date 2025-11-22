@@ -146,58 +146,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         fetchCategories();
     }, [t, language]);
 
-    // Helper function to determine card color theme based on category
+    // Helper function to determine card color theme based on category - NOW UNIFIED TO GOLD
     const getServiceColorTheme = (categoryId: string) => {
-        switch (categoryId) {
-            case 'litigation-and-pleadings':
-                return { 
-                    border: 'bg-blue-500', 
-                    iconBg: 'bg-blue-50', 
-                    iconColor: 'text-blue-600',
-                    darkIconBg: 'dark:bg-blue-900/20',
-                    darkIconColor: 'dark:text-blue-400'
-                };
-            case 'specialized-consultations':
-                return { 
-                    border: 'bg-purple-500', 
-                    iconBg: 'bg-purple-50', 
-                    iconColor: 'text-purple-600',
-                    darkIconBg: 'dark:bg-purple-900/20',
-                    darkIconColor: 'dark:text-purple-400'
-                };
-            case 'investigations-and-criminal':
-                return { 
-                    border: 'bg-red-500', 
-                    iconBg: 'bg-red-50', 
-                    iconColor: 'text-red-600',
-                    darkIconBg: 'dark:bg-red-900/20',
-                    darkIconColor: 'dark:text-red-400'
-                };
-            case 'corporate-and-compliance':
-                return { 
-                    border: 'bg-emerald-500', 
-                    iconBg: 'bg-emerald-50', 
-                    iconColor: 'text-emerald-600',
-                    darkIconBg: 'dark:bg-emerald-900/20',
-                    darkIconColor: 'dark:text-emerald-400'
-                };
-             case 'creative-services':
-                return { 
-                    border: 'bg-pink-500', 
-                    iconBg: 'bg-pink-50', 
-                    iconColor: 'text-pink-600',
-                    darkIconBg: 'dark:bg-pink-900/20',
-                    darkIconColor: 'dark:text-pink-400'
-                };
-            default:
-                return { 
-                    border: 'bg-gray-500', 
-                    iconBg: 'bg-gray-50', 
-                    iconColor: 'text-gray-600',
-                    darkIconBg: 'dark:bg-gray-800',
-                    darkIconColor: 'dark:text-gray-400'
-                };
-        }
+        // All categories now use the Gold theme
+        return { 
+            border: 'bg-primary-500', 
+            iconBg: 'bg-primary-50', 
+            iconColor: 'text-primary-600',
+            darkIconBg: 'dark:bg-primary-900/20',
+            darkIconColor: 'dark:text-primary-400'
+        };
     };
 
     const filteredServices = useMemo(() => {
@@ -231,14 +189,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 id: cat.id,
                 label: cat.title[language],
                 icon: IconComponent,
-                // The color here is for the inactive state in the sidebar
-                color: getServiceColorTheme(cat.id).darkIconColor.replace('dark:', '') // A bit of a hack to get a representative color
+                color: 'text-primary-600' // Unified color
             };
         });
     
         return [
             { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
-            { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-yellow-400' },
+            { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-primary-400' },
             ...dynamicCategories
         ];
     }, [categories, language, t]);
@@ -487,18 +444,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
                 {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>}
-                <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                <div className="flex bg-gray-200 dark:bg-dark-card-bg rounded-lg p-1 border dark:border-dark-border">
                     <button
                         type="button"
                         onClick={() => setOutputLanguage(Language.AR)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         {t('arabic')}
                     </button>
                     <button
                         type="button"
                         onClick={() => setOutputLanguage(Language.EN)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         {t('english')}
                     </button>
@@ -510,25 +467,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const renderOutputLengthSelector = (showLabel = true) => (
          <div className="flex items-center gap-2">
             {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLength')}</span>}
-            <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+            <div className="flex bg-gray-200 dark:bg-dark-card-bg rounded-lg p-1 border dark:border-dark-border">
                 <button
                     type="button"
                     onClick={() => setOutputLength('short')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 >
                     {t('short')}
                 </button>
                 <button
                     type="button"
                     onClick={() => setOutputLength('medium')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 >
                     {t('medium')}
                 </button>
                  <button
                     type="button"
                     onClick={() => setOutputLength('default')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 >
                     {t('default')}
                 </button>
@@ -537,34 +494,35 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
     
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
+    // Updated to be Dark (Night) mode always, even in Day mode.
     const renderSidebar = () => {
         const siteName = settings?.siteName[language] || (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant');
         const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماه والاستشارات القانونية' : 'For Law and Legal Consulting');
 
         return (
-        <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden w-full min-w-0">
+        <div className="flex flex-col h-full rounded-2xl bg-[#1c1c1e] shadow-lg border border-white/10 overflow-hidden w-full min-w-0">
             {/* Header */}
-            <div className="h-auto py-6 min-h-[5rem] flex flex-col justify-center px-6 bg-teal-700 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 shadow-sm text-center">
+            <div className="h-auto py-6 min-h-[5rem] flex flex-col justify-center px-6 bg-gradient-to-r from-primary-700 to-primary-600 border-b border-primary-600/30 shrink-0 shadow-sm text-center">
                  <div className="flex flex-col items-center min-w-0 overflow-hidden text-center w-full">
                     <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo w-full">
                         {siteName}
                     </h2>
-                    <p className="text-[10px] text-teal-100 font-bold tracking-wide opacity-90 font-cairo w-full">
+                    <p className="text-[10px] text-primary-100 font-bold tracking-wide opacity-90 font-cairo w-full">
                         {siteSubtitle}
                     </p>
                 </div>
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-gray-200 dark:border-slate-800">
+            <div className="p-4 border-b border-white/10">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-500 rtl:right-3 rtl:left-auto" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-3 rtl:left-auto" size={16} />
                     <input
                         type="text"
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm transition-all placeholder-gray-400 dark:placeholder-slate-500"
+                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white/5 text-white border border-white/10 focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm transition-all placeholder-gray-500"
                     />
                 </div>
             </div>
@@ -576,22 +534,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 ) : sidebarCategories.map(cat => {
                     const isActive = selectedCategory === cat.id;
                     const IconComponent = cat.icon;
-                    const isSpecialCategory = cat.id === 'creative-services';
+                    const isSpecialCategory = cat.id === 'favorites'; 
 
                     let buttonClasses = `font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group`;
                 
-                    if (isSpecialCategory) {
-                        if (isActive) {
-                            buttonClasses += ' bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg ring-2 ring-offset-2 ring-offset-gray-50 dark:ring-offset-slate-900 ring-orange-400';
-                        } else {
-                            buttonClasses += ' bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:shadow-amber-500/10 hover:shadow-md';
-                        }
+                    if (isActive) {
+                        buttonClasses += ' bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md';
                     } else {
-                        if (isActive) {
-                            buttonClasses += ' bg-teal-50 text-teal-800 dark:bg-teal-700 dark:text-white shadow-sm';
-                        } else {
-                            buttonClasses += ' text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/60';
-                        }
+                        buttonClasses += ' text-gray-300 hover:bg-white/5';
                     }
 
                     return (
@@ -608,28 +558,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     <div className="w-4">{isActive && <ArrowLeft size={16} />}</div>
                                     <span className="flex-grow text-right">{cat.label}</span>
                                     <div className={`p-2 rounded-lg transition-colors duration-200 ${
-                                        isSpecialCategory
-                                            ? (isActive ? 'bg-white/20' : 'bg-amber-100 dark:bg-amber-900/30')
-                                            : (isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800')
+                                        isActive ? 'bg-white/20' : 'bg-white/5'
                                     }`}>
                                         <IconComponent size={20} className={
-                                            isSpecialCategory 
-                                                ? (isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400')
-                                                : (isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`)
+                                            isActive ? 'text-white' : 'text-primary-400'
                                         } />
                                     </div>
                                 </>
                             ) : (
                                 <>
                                     <div className={`p-2 rounded-lg transition-colors duration-200 ${
-                                        isSpecialCategory
-                                            ? (isActive ? 'bg-white/20' : 'bg-amber-100 dark:bg-amber-900/30')
-                                            : (isActive ? 'bg-teal-100 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800')
+                                        isActive ? 'bg-white/20' : 'bg-white/5'
                                     }`}>
                                         <IconComponent size={20} className={
-                                            isSpecialCategory 
-                                                ? (isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400')
-                                                : (isActive ? 'text-teal-700 dark:text-white' : `${cat.color} dark:${cat.color}`)
+                                            isActive ? 'text-white' : 'text-primary-400'
                                         } />
                                     </div>
                                     <span className="flex-grow text-left">{cat.label}</span>
@@ -653,9 +595,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         );
 
         return (
-            <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden relative w-full min-w-0">
+            <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden relative w-full min-w-0">
                  {/* Header for Main Content */}
-                 <div className="h-16 flex items-center px-6 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 text-white shrink-0 justify-between shadow-sm relative z-10">
+                 <div className="h-16 flex items-center px-6 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border text-white shrink-0 justify-between shadow-sm relative z-10">
                     {selectedService ? (
                         <div className="flex items-center gap-3 w-full">
                              <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
@@ -689,7 +631,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                      {selectedService ? (
                          /* Active Service Form */
                          <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
-                             <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30 text-sm text-blue-800 dark:text-blue-300">
+                             <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-800/30 text-sm text-primary-800 dark:text-primary-300">
                                  {selectedService.description[language]}
                              </div>
                              
@@ -697,22 +639,22 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                  {selectedService.formInputs.map(input => (
                                      <div key={input.name}>
                                          <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
-                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
                                          {input.type === 'select' && (
-                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm">
+                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-sm border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm">
                                                  <option value="">{`Select ${input.label[language]}`}</option>
                                                  {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                              </select>
                                          )}
                                          {input.type === 'file' && (
-                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors group cursor-pointer relative">
+                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-dark-border border-dashed rounded-xl bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer relative">
                                                  <input id={input.name} name={input.name} type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleInputChange} />
                                                  <div className="space-y-1 text-center">
-                                                     <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-teal-500 transition-colors"/>
+                                                     <File className="mx-auto h-10 w-10 text-gray-400 group-hover:text-primary-500 transition-colors"/>
                                                      <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
-                                                         <span className="font-bold text-teal-600 dark:text-teal-400">{t('uploadFile')}</span>
+                                                         <span className="font-bold text-primary-600 dark:text-primary-400">{t('uploadFile')}</span>
                                                      </div>
                                                      <p className="text-[10px] text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
                                                  </div>
@@ -722,9 +664,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                  ))}
                              </div>
                              
-                             <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-900 pt-4 pb-2">
+                             <div className="sticky bottom-0 bg-gray-50 dark:bg-dark-card-bg pt-4 pb-2">
                                 <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                                    <button type="submit" disabled={isGenerating} className="w-full md:w-auto flex-grow bg-teal-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-600/20 transform active:scale-95">
+                                    <button type="submit" disabled={isGenerating} className="w-full md:w-auto flex-grow bg-primary-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/20 transform active:scale-95">
                                         {isGenerating && <Loader2 className="animate-spin" size={20} />}
                                         {t('executeTask')}
                                     </button>
@@ -739,7 +681,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                          /* Services Grid */
                          <>
                             {loadingServices ? (
-                                <div className="text-center p-12"><Loader2 className="animate-spin inline-block text-teal-500" size={32} /></div>
+                                <div className="text-center p-12"><Loader2 className="animate-spin inline-block text-primary-500" size={32} /></div>
                             ) : errorServices ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                     <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
@@ -750,7 +692,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                             ) : filteredServices.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                                    <div className="bg-gray-200 dark:bg-slate-800 p-4 rounded-full mb-4">
+                                    <div className="bg-gray-200 dark:bg-dark-bg p-4 rounded-full mb-4">
                                         <Search size={32} className="text-gray-400" />
                                     </div>
                                     <p className="text-gray-500 font-medium">{t('noServicesFound')}</p>
@@ -761,21 +703,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                         {paginatedServices.map(service => {
                                             const Icon = iconMap[service.icon] || FileText;
                                             const isFav = favorites.includes(service.id);
-                                            const colors = getServiceColorTheme(service.category);
                                             
                                             return (
                                                 <button
                                                     key={service.id}
                                                     onClick={() => handleServiceClick(service)}
-                                                    className="group relative flex flex-col p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-gray-700 transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
+                                                    className="group relative flex flex-col p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
                                                 >
                                                     <div className="flex items-start justify-between w-full mb-4">
-                                                        <div className="p-1 text-gray-300 hover:text-yellow-400 transition-colors" 
+                                                        <div className="p-1 text-gray-300 hover:text-primary-400 transition-colors" 
                                                              onClick={(e) => toggleFavorite(e, service.id)}>
-                                                            <Star size={18} fill={isFav ? "#FACC15" : "none"} className={isFav ? "text-yellow-400" : "text-gray-300"} />
+                                                            <Star size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-primary-400" : "text-gray-300"} />
                                                         </div>
                                                         
-                                                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${colors.iconBg} ${colors.iconColor} ${colors.darkIconBg} ${colors.darkIconColor}`}>
+                                                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400`}>
                                                             <Icon size={24} strokeWidth={1.5} />
                                                         </div>
                                                     </div>
@@ -828,16 +769,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-slate-900 border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden w-full min-w-0">
-             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 justify-between shadow-sm relative z-10">
+        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0">
+             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Sparkles size={16} className="text-yellow-400"/>
+                    <Sparkles size={16} className="text-yellow-200"/>
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
                     <button
                         onClick={handleToggleOutput}
-                        className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"
                         title={isOutputExpanded ? t('collapse') : t('expand')}
                     >
                         {dir === 'rtl' ? (
@@ -847,13 +788,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         )}
                     </button>
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
-                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
-                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
+                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
                     
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
                     
-                    <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
-                    <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                    <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
+                    <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
                     
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
 
@@ -866,8 +807,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 {isGenerating ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-teal-200 rounded-full opacity-20 animate-ping"></div>
-                            <Loader2 className="animate-spin text-teal-600 relative z-10" size={40} />
+                            <div className="absolute inset-0 bg-primary-200 rounded-full opacity-20 animate-ping"></div>
+                            <Loader2 className="animate-spin text-primary-600 relative z-10" size={40} />
                         </div>
                         <p className="text-gray-500 text-center font-medium mt-4 animate-pulse">{retryMessage || t('generatingResponse')}</p>
                     </div>
@@ -888,7 +829,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
-                        <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                        <div className="w-20 h-20 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4">
                             <Sparkles size={36} className="text-gray-400"/>
                         </div>
                         <p className="text-gray-400 font-medium text-sm max-w-[200px]">{t('resultPlaceholder')}</p>
@@ -897,24 +838,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
              </div>
 
              {/* Prompt Input Area */}
-             <div className="p-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
+             <div className="p-4 bg-gray-50 dark:bg-dark-card-bg border-t border-gray-200 dark:border-dark-border">
                 <div className="relative">
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder={t('typeYourRequest')}
-                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none placeholder-gray-500 dark:placeholder-slate-500 text-sm shadow-inner"
+                        className="w-full h-24 p-3 ltr:pl-3 rtl:pr-3 resize-none border border-gray-300 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:outline-none placeholder-gray-500 dark:placeholder-gray-500 text-sm shadow-inner"
                         dir={dir}
                     />
                     <button
                         onClick={handleExecutePrompt}
                         disabled={isGenerating || !prompt.trim()}
-                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center hover:bg-teal-500 disabled:bg-gray-400 dark:disabled:bg-slate-600 transition-colors"
+                        className="absolute bottom-3 ltr:right-3 rtl:left-3 w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center hover:bg-primary-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors"
                     >
                         {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20}/>}
                     </button>
                 </div>
-                <p className="text-center text-[10px] text-gray-400 dark:text-slate-500 mt-2 font-medium tracking-wide">
+                <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-medium tracking-wide">
                     {t('poweredByAI')}
                 </p>
             </div>
@@ -923,27 +864,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     const renderResultModal = () => (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 lg:hidden">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]">
-                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-900 dark:to-teal-800 border-b border-teal-600 dark:border-teal-900 shrink-0 justify-between shadow-sm relative z-10">
+            <div className="bg-white dark:bg-dark-bg rounded-2xl shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]">
+                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
                     <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        <Sparkles size={16} className="text-yellow-400"/>
+                        <Sparkles size={16} className="text-yellow-200"/>
                         {t('results')}
                     </h3>
                     <div className="flex items-center gap-1">
-                        <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-green-400"/> : <Copy size={16} />}</button>
-                        <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                        <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
+                        <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
                         <div className="w-px h-4 bg-white/20 mx-1"></div>
-                        <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
-                        <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-teal-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                        <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
+                        <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
                         <div className="w-px h-4 bg-white/20 mx-1"></div>
                         <button onClick={() => { setIsResultModalOpen(false); }} title={t('cancel')} className="p-1.5 rounded text-red-300 hover:bg-white/10 hover:text-red-400 transition-colors"><X size={16} /></button>
                     </div>
                 </div>
 
-                <div className="flex-grow overflow-y-auto custom-scrollbar bg-[#fcfaf6] dark:bg-slate-900 relative p-4">
+                <div className="flex-grow overflow-y-auto custom-scrollbar bg-[#fcfaf6] dark:bg-dark-bg relative p-4">
                     {isGenerating ? (
                         <div className="flex flex-col items-center justify-center h-full">
-                           <Loader2 className="animate-spin text-teal-600" size={40} />
+                           <Loader2 className="animate-spin text-primary-600" size={40} />
                             <p className="text-gray-500 text-center font-medium mt-4">{retryMessage || t('generatingResponse')}</p>
                         </div>
                     ) : result ? (
@@ -972,7 +913,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
 
     return (
-        <div className="flex-grow bg-slate-100 dark:bg-slate-900/70 py-4 sm:py-6 lg:py-8">
+        <div className="flex-grow bg-light-bg dark:bg-dark-bg py-4 sm:py-6 lg:py-8">
              <div className="w-[90%] mx-auto h-full">
                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
                     <div className="lg:col-span-1 h-full w-full min-w-0">{renderSidebar()}</div>

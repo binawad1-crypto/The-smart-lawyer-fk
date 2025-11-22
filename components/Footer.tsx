@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
         {/* Location Indicator */}
         {currentUser?.location && (
             <div className="mb-6 flex justify-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 text-sm font-medium shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-full text-primary-600 dark:text-primary-400 text-sm font-medium shadow-[0_0_10px_rgba(188,149,92,0.2)]">
                     <MapPin size={14} className="animate-pulse" />
                     <span>{currentUser.location}</span>
                 </div>
