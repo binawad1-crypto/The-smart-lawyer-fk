@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2 } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2 } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
-import { Service, Translations, Language, Category } from '../types';
-import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Service, Translations, Language, Category, ServiceHistoryEntry } from '../types';
+import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc, serverTimestamp, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { runGemini } from '../services/geminiService';
 import { iconMap } from '../constants';
@@ -61,6 +61,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
     
+    // History State
+    const [historyEntries, setHistoryEntries] = useState<ServiceHistoryEntry[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
     const SERVICES_PER_PAGE = 12;
@@ -112,6 +116,33 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         }
     }, []);
 
+    // Fetch History when category is 'history'
+    useEffect(() => {
+        if (selectedCategory === 'history' && currentUser) {
+            setLoadingHistory(true);
+            try {
+                const q = query(
+                    collection(db, 'service_history'),
+                    where('userId', '==', currentUser.uid),
+                    orderBy('createdAt', 'desc'),
+                    limit(50)
+                );
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceHistoryEntry));
+                    setHistoryEntries(entries);
+                    setLoadingHistory(false);
+                }, (error) => {
+                    console.error("Error fetching history:", error);
+                    setLoadingHistory(false);
+                });
+                return () => unsubscribe();
+            } catch (e) {
+                console.error("History query error", e);
+                setLoadingHistory(false);
+            }
+        }
+    }, [selectedCategory, currentUser]);
+
     useEffect(() => {
         const fetchServices = async () => {
             setLoadingServices(true);
@@ -159,6 +190,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         // 1. Filter by Category
         if (selectedCategory === 'favorites') {
             filtered = filtered.filter(s => favorites.includes(s.id));
+        } else if (selectedCategory === 'history') {
+            // Special case: Do not filter services, main content will render history items
+            return []; 
         } else if (selectedCategory !== 'all') {
             filtered = filtered.filter(s => s.category === selectedCategory);
         }
@@ -189,7 +223,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         });
     
         return [
-            // Note: 'all' is handled specially in render
+            // Note: 'all' and 'history' are handled specially in render
             { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
             { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-primary-400' },
             ...dynamicCategories
@@ -309,6 +343,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         } finally {
             setIsGenerating(false);
             setRetryMessage('');
+        }
+    };
+
+    const handleDeleteHistory = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if(window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا السجل؟' : 'Are you sure you want to delete this history item?')) {
+            try {
+                await deleteDoc(doc(db, 'service_history', id));
+            } catch (e) {
+                console.error("Failed to delete", e);
+                alert("Failed to delete history item.");
+            }
         }
     };
 
@@ -593,43 +639,82 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     // SPECIAL HANDLING FOR 'all' (The "Smart Assistant" button)
                     if (cat.id === 'all') {
                         return (
-                            <button
-                                key={cat.id}
-                                onClick={() => {
-                                    setSelectedCategory(cat.id);
-                                    setSelectedService(null);
-                                }}
-                                className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
-                                    isActive 
-                                    ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]' 
-                                    : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
-                                } border`}
-                            >
-                                {/* Background Pattern */}
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+                            <React.Fragment key={cat.id}>
+                                <button
+                                    onClick={() => {
+                                        setSelectedCategory(cat.id);
+                                        setSelectedService(null);
+                                    }}
+                                    className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
+                                        isActive 
+                                        ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]' 
+                                        : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
+                                    } border`}
+                                >
+                                    {/* Background Pattern */}
+                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
 
-                                {/* Icon Container */}
-                                <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
-                                    {/* Animated Icon: Sparkles with pulse effect and Gold color */}
-                                    <Sparkles size={24} className="animate-pulse text-yellow-300" fill={isActive ? "#FDE047" : "none"} />
-                                </div>
+                                    {/* Icon Container */}
+                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
+                                        {/* Animated Icon: Sparkles with pulse effect and Gold color */}
+                                        <Sparkles size={24} className="animate-pulse text-yellow-300" fill={isActive ? "#FDE047" : "none"} />
+                                    </div>
 
-                                {/* Text Content */}
-                                <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
-                                    <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
-                                        المساعد الذكي
-                                    </span>
-                                    <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
-                                        للمحاماة والاستشارات القانونية
-                                    </span>
-                                </div>
-                                
-                                {/* Active Indicator */}
-                                {isActive && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
-                                )}
-                            </button>
+                                    {/* Text Content */}
+                                    <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
+                                        <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
+                                            {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
+                                        </span>
+                                        <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
+                                            {language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law and Legal Consulting'}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Active Indicator */}
+                                    {isActive && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
+                                    )}
+                                </button>
+
+                                {/* NEW: History Button (Same Design) */}
+                                <button
+                                    onClick={() => {
+                                        setSelectedCategory('history');
+                                        setSelectedService(null);
+                                        setResult('');
+                                    }}
+                                    className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group mt-3 ${
+                                        selectedCategory === 'history'
+                                        ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]'
+                                        : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
+                                    } border`}
+                                >
+                                    {/* Background Pattern */}
+                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+
+                                    {/* Icon Container */}
+                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${selectedCategory === 'history' ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
+                                        <History size={24} className="animate-pulse text-yellow-300" />
+                                    </div>
+
+                                    {/* Text Content */}
+                                    <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
+                                        <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
+                                            {language === 'ar' ? 'المحفوظات' : 'Saved History'}
+                                        </span>
+                                        <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
+                                            {language === 'ar' ? 'سجل العمليات السابقة' : 'Previous Log'}
+                                        </span>
+                                    </div>
+
+                                    {/* Active Indicator */}
+                                    {selectedCategory === 'history' && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
+                                    )}
+                                </button>
+                            </React.Fragment>
                         );
                     }
 
@@ -708,7 +793,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     ) : (
                         <div className="flex items-center justify-between w-full">
                             <h3 className="font-cairo font-bold text-white text-lg">
-                                {selectedCategory === 'all' ? (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant') : sidebarCategories.find(c => c.id === selectedCategory)?.label}
+                                {selectedCategory === 'all' ? (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant') 
+                                : selectedCategory === 'history' ? (language === 'ar' ? 'المحفوظات' : 'Saved History')
+                                : sidebarCategories.find(c => c.id === selectedCategory)?.label}
                             </h3>
                             <button
                                 onClick={handleToggleServices}
@@ -775,6 +862,54 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                              </div>
                          </form>
+                     ) : selectedCategory === 'history' ? (
+                         /* History Grid */
+                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-4 animate-fade-in-up">
+                            {loadingHistory ? (
+                                 <div className="col-span-full flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
+                            ) : historyEntries.length === 0 ? (
+                                 <div className="col-span-full text-center p-12 text-gray-500">{t('noHistory')}</div>
+                            ) : (
+                                historyEntries.map(entry => {
+                                    const Icon = iconMap[entry.serviceIcon || 'FileText'] || FileText;
+                                    return (
+                                        <button
+                                            key={entry.id}
+                                            onClick={() => {
+                                                setResult(entry.result);
+                                                if (window.innerWidth < 1024) setIsResultModalOpen(true);
+                                            }}
+                                            className="group relative flex flex-col p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[160px] text-right rtl:text-right ltr:text-left hover:-translate-y-1 ring-1 ring-transparent hover:ring-primary-500/50"
+                                        >
+                                            <div className="flex items-start justify-between w-full mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1 text-xs text-gray-400 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                                        <Clock size={12} />
+                                                        {entry.createdAt?.seconds ? new Date(entry.createdAt.seconds * 1000).toLocaleDateString() : ''}
+                                                    </div>
+                                                    <button 
+                                                        onClick={(e) => handleDeleteHistory(e, entry.id)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                        title={t('delete')}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                                <div className="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                                                    <Icon size={20} />
+                                                </div>
+                                            </div>
+                                            <h3 className="font-cairo text-base font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
+                                                {entry.serviceTitle[language]}
+                                            </h3>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed opacity-80 font-medium w-full">
+                                                {entry.result.substring(0, 150)}...
+                                            </p>
+                                        </button>
+                                    )
+                                })
+                            )}
+                         </div>
                      ) : (
                          /* Services Grid */
                          <>
