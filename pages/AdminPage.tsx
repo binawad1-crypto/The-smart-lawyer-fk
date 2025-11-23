@@ -1351,16 +1351,16 @@ const AdminPage = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {users.map(user => (
-                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                                    <td className="p-4 font-medium dark:text-white">{user.email}</td>
+                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                                    <td className="p-4 font-medium text-gray-900 dark:text-white">{user.email}</td>
                                                     <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
                                                             {user.role}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4">{user.tokenBalance?.toLocaleString()}</td>
+                                                    <td className="p-4 text-gray-700 dark:text-gray-300">{user.tokenBalance?.toLocaleString()}</td>
                                                     <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'active' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-400'}`}>
+                                                        <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'active' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
                                                             {user.status || 'active'}
                                                         </span>
                                                     </td>
@@ -1411,7 +1411,7 @@ const AdminPage = () => {
                                                 {React.createElement(iconMap[cat.icon] || LayoutGrid, { size: 20 })}
                                             </div>
                                             <div>
-                                                <h4 className="font-bold dark:text-white">{cat.title[language]}</h4>
+                                                <h4 className="font-bold text-gray-900 dark:text-white">{cat.title[language]}</h4>
                                                 <p className="text-xs text-gray-500">Order: {cat.order}</p>
                                             </div>
                                         </div>
@@ -1451,12 +1451,12 @@ const AdminPage = () => {
                                             {usersWithSub.filter(u => u.subscription).length === 0 ? (
                                                 <tr><td colSpan={6} className="p-8 text-center text-gray-500">{t('noActiveSubscription')}</td></tr>
                                             ) : usersWithSub.filter(u => u.subscription).map(user => (
-                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                                    <td className="p-4 font-medium dark:text-white">{user.email}</td>
-                                                    <td className="p-4">{user.subscription?.planId}</td>
+                                                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                                    <td className="p-4 font-medium text-gray-900 dark:text-white">{user.email}</td>
+                                                    <td className="p-4 text-gray-700 dark:text-gray-300">{user.subscription?.planId}</td>
                                                     <td className="p-4"><span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">{user.subscription?.status}</span></td>
-                                                    <td className="p-4">{new Date(user.subscription!.current_period_end * 1000).toLocaleDateString()}</td>
-                                                    <td className="p-4">{user.subscription?.isManual ? 'Manual' : 'Stripe'}</td>
+                                                    <td className="p-4 text-gray-700 dark:text-gray-300">{new Date(user.subscription!.current_period_end * 1000).toLocaleDateString()}</td>
+                                                    <td className="p-4 text-gray-700 dark:text-gray-300">{user.subscription?.isManual ? 'Manual' : 'Stripe'}</td>
                                                     <td className="p-4 text-end">
                                                         {user.subscription?.isManual ? (
                                                             <button onClick={async () => {
@@ -1648,7 +1648,7 @@ const AdminPage = () => {
                                 {notifications.map(notif => (
                                     <div key={notif.id} className={`p-4 rounded-lg border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-dark-card-bg' : 'bg-gray-100 dark:bg-gray-900 opacity-60'}`}>
                                         <div>
-                                            <h4 className="font-bold dark:text-white">{notif.title[language]}</h4>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">{notif.title[language]}</h4>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
                                             <span className="text-xs text-gray-400">{new Date(notif.createdAt.seconds * 1000).toLocaleDateString()}</span>
                                         </div>
@@ -1676,7 +1676,7 @@ const AdminPage = () => {
                                             className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${selectedTicket?.id === ticket.id ? 'bg-primary-50 border-primary-500 dark:bg-primary-900/20' : 'bg-white dark:bg-dark-card-bg border-gray-200 dark:border-dark-border'} ${ticket.unreadAdmin ? 'border-l-4 border-l-primary-500' : ''}`}
                                         >
                                             <div className="flex justify-between items-start mb-1">
-                                                <h4 className="font-bold text-sm dark:text-white truncate">{ticket.subject}</h4>
+                                                <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">{ticket.subject}</h4>
                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-600'}`}>{ticket.status}</span>
                                             </div>
                                             <p className="text-xs text-gray-500 truncate">{ticket.userEmail}</p>
@@ -1692,7 +1692,7 @@ const AdminPage = () => {
                                 {selectedTicket ? (
                                     <>
                                         <div className="p-4 bg-white dark:bg-dark-card-bg border-b border-gray-200 dark:border-gray-700 shadow-sm">
-                                            <h3 className="font-bold dark:text-white">{selectedTicket.subject}</h3>
+                                            <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
                                             <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
                                         </div>
                                         <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
