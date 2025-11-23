@@ -703,7 +703,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const renderSidebar = () => {
         // Force specific Arabic text as requested, or default to English settings if not AR.
         const siteName = language === 'ar' ? 'المساعد الذكي' : (settings?.siteName.en || 'Smart Assistant');
-        const siteSubtitle = language === 'ar' ? 'للمحاماة' : (settings?.siteSubtitle.en || 'For Law');
+        const siteSubtitle = language === 'ar' ? 'للمحاماة والاستشارات القانونية' : (settings?.siteSubtitle.en || 'For Law & Legal Consulting');
 
         return (
         <div className="flex flex-col h-full rounded-2xl bg-[#1c1c1e] shadow-lg border border-white/10 overflow-hidden w-full min-w-0">
@@ -772,7 +772,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
                                         </span>
                                         <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
-                                            {language === 'ar' ? 'للمحاماة' : 'For Law'}
+                                            {language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law & Legal Consulting'}
                                         </span>
                                     </div>
                                     

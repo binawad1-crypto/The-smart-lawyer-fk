@@ -14,7 +14,7 @@ export const ADMIN_EMAIL = 'binawad1@gmail.com';
 
 // IMPORTANT: Use your Stripe LIVE Publishable Key here.
 // It MUST start with 'pk_live_'. Do NOT use 'rk_live_' or 'sk_live_'.
-export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQ';
+export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51MHLcOIYFzPtizLNW6GO3QlnhsgSqNz1oTaBnKaFrg0xcoNej1mGufkKgKIP8Vb1CIrXBbHD5tfVVTQo62mgAEmK00dmJQrd28';
 
 // FIX: Export iconMap for use in components
 export const iconMap: { [key: string]: React.ComponentType<any> } = {
@@ -29,7 +29,7 @@ export const iconNames = Object.keys(iconMap);
 export const translations: Translations = {
     // General
     appName: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
-    appSubtitle: { en: 'For Law', ar: 'للمحاماة' },
+    appSubtitle: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
     home: { en: 'Home', ar: 'الرئيسية' },
     services: { en: 'Services', ar: 'الخدمات' },
     support: { en: 'Support', ar: 'الدعم الفني' },

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Database, Upload, Monitor, Sparkles, FileInput, Calendar, Type as TypeIcon, Split, Layers, List, CheckSquare, Save } from 'lucide-react';
+import { Users, PlusSquare, Trash2, Edit, Play, Loader2, Wand2, ChevronDown, Plus, CreditCard, X, Star, Cog, Coins, Gift, Ban, CheckCircle, RefreshCw, Activity, LayoutTemplate, BarChart, LifeBuoy, MessageSquare, Send, Archive, Tag, Search, Filter, MoreVertical, ChevronRight, ChevronLeft, Bell, AlertTriangle, Info, ArrowRight, ArrowLeft, LayoutGrid, Database, Upload, Monitor, Sparkles, FileInput, Calendar, Type as TypeIcon, Split, Layers, List, CheckSquare, Save, Link as LinkIcon } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, getDoc, query, orderBy, doc, setDoc, deleteDoc, updateDoc, writeBatch, increment, where, Timestamp, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -946,8 +946,7 @@ const AdminPage = () => {
                     newLogoUrl = await uploadFile(logoFile, `site/${fileName}`);
                 } catch (e) {
                     console.error("Logo upload failed", e);
-                    setSavingSettings(false);
-                    return;
+                    // Try to continue with current settings, but warn user or just log
                 }
             }
             if (faviconFile) {
@@ -956,8 +955,6 @@ const AdminPage = () => {
                     newFaviconUrl = await uploadFile(faviconFile, `site/${fileName}`);
                 } catch (e) {
                     console.error("Favicon upload failed", e);
-                    setSavingSettings(false);
-                    return;
                 }
             }
 
@@ -1514,9 +1511,11 @@ const AdminPage = () => {
                             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
                                 <h3 className="font-bold text-lg dark:text-white">Branding & Images</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Logo Config */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('logo')}</label>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-3">
+                                            {/* File Upload */}
                                             <div className="flex items-center gap-2">
                                                 <div className="flex-1">
                                                     <input 
@@ -1525,7 +1524,7 @@ const AdminPage = () => {
                                                         onChange={e => setLogoFile(e.target.files?.[0] || null)} 
                                                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
                                                     />
-                                                    {logoFile && <p className="text-xs text-primary-600 mt-1 font-semibold">Selected: {logoFile.name}</p>}
+                                                    {logoFile && <p className="text-xs text-primary-600 mt-1 font-semibold">File selected: {logoFile.name}</p>}
                                                 </div>
                                                 {siteSettings.logoUrl && !logoFile && (
                                                     <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
@@ -1533,11 +1532,27 @@ const AdminPage = () => {
                                                     </div>
                                                 )}
                                             </div>
+                                            {/* URL Input Fallback */}
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <LinkIcon size={14} className="text-gray-400"/>
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    value={siteSettings.logoUrl} 
+                                                    onChange={e => setSiteSettings({...siteSettings, logoUrl: e.target.value})}
+                                                    placeholder="Or paste Logo URL here directly" 
+                                                    className="w-full pl-10 p-2 text-xs border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {/* Favicon Config */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('favicon')}</label>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-3">
+                                            {/* File Upload */}
                                             <div className="flex items-center gap-2">
                                                 <div className="flex-1">
                                                     <input 
@@ -1546,13 +1561,26 @@ const AdminPage = () => {
                                                         onChange={e => setFaviconFile(e.target.files?.[0] || null)} 
                                                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
                                                     />
-                                                    {faviconFile && <p className="text-xs text-primary-600 mt-1 font-semibold">Selected: {faviconFile.name}</p>}
+                                                    {faviconFile && <p className="text-xs text-primary-600 mt-1 font-semibold">File selected: {faviconFile.name}</p>}
                                                 </div>
                                                 {siteSettings.faviconUrl && !faviconFile && (
                                                     <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                                                         <img src={siteSettings.faviconUrl} alt="Current Favicon" className="h-8 w-8 object-contain" />
                                                     </div>
                                                 )}
+                                            </div>
+                                            {/* URL Input Fallback */}
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <LinkIcon size={14} className="text-gray-400"/>
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    value={siteSettings.faviconUrl} 
+                                                    onChange={e => setSiteSettings({...siteSettings, faviconUrl: e.target.value})}
+                                                    placeholder="Or paste Favicon URL here directly" 
+                                                    className="w-full pl-10 p-2 text-xs border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                                                />
                                             </div>
                                         </div>
                                     </div>
