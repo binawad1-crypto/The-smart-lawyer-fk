@@ -116,7 +116,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
-    const [fontSize, setFontSize] = useState(18);
+    const [fontSize, setFontSize] = useState(21); // Updated default font size
     const [showSaveMessage, setShowSaveMessage] = useState(false);
     
     // Search and Filter States
@@ -376,6 +376,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsSaved(false);
         setShowSaveMessage(false);
 
+        // Determine whether to show modal (Mobile) or Side Panel (Desktop)
+        // Using 1024px (lg) as the breakpoint.
+        if (window.innerWidth < 1024) {
+            setIsResultModalOpen(true);
+        } else {
+            // Desktop: Ensure output panel is visible/expanded
+            if (!isOutputExpanded) {
+                setIsOutputExpanded(true);
+                setIsExpanded(false); // Collapse service list if needed
+            }
+        }
+
         const handleRetry = (attempt: number, maxRetries: number) => {
             const message = t('modelIsBusyRetrying').replace('${attempt}', String(attempt)).replace('${maxRetries}', String(maxRetries));
             setRetryMessage(message);
@@ -405,7 +417,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setResult(response.text);
             
             if (response.text) {
-                setIsResultModalOpen(true);
                 await deductTokens(response, finalPrompt.length);
             }
 
@@ -466,8 +477,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setIsSaved(false);
         setShowSaveMessage(false);
         
-        // Open modal immediately to show loading state
-        setIsResultModalOpen(true);
+        // Determine whether to show modal (Mobile) or Side Panel (Desktop)
+        if (window.innerWidth < 1024) {
+            setIsResultModalOpen(true);
+        } else {
+            // Desktop: Switch to output view immediately to show loader
+            if (!isOutputExpanded) {
+                setIsOutputExpanded(true);
+                setIsExpanded(false);
+            }
+        }
     
         let extractedTextFromFiles = '';
         let fileToSend: File | undefined = undefined;
@@ -588,14 +607,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (printWindow) {
             const contentToPrint = result.trim().startsWith('<section')
                 ? result
-                : `<pre style="font-family: Calibri, sans-serif;">${result}</pre>`;
+                : `<pre style="font-family: 'Noto Naskh Arabic', sans-serif;">${result}</pre>`;
             printWindow.document.write(`
               <html>
                 <head>
                   <title>Print Result</title>
                   <style>
                     @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
-                    body { font-family: 'Calibri', 'Noto Naskh+Arabic', 'Tajawal', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                    body { font-family: 'Noto Naskh Arabic', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                     pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
                   </style>
                 </head>
@@ -964,7 +983,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             key={entry.id}
                                             onClick={() => {
                                                 setResult(entry.result);
-                                                setIsResultModalOpen(true);
+                                                if (window.innerWidth < 1024) {
+                                                    setIsResultModalOpen(true);
+                                                } else {
+                                                    setIsOutputExpanded(true);
+                                                    setIsExpanded(false);
+                                                }
                                             }}
                                             className="group relative flex flex-col p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[160px] text-right rtl:text-right ltr:text-left hover:-translate-y-1 ring-1 ring-transparent hover:ring-primary-500/50"
                                         >
@@ -1169,7 +1193,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         ) : (
                              <pre 
                                 className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
-                                style={{ fontSize: `${fontSize}px`, fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                style={{ fontSize: `${fontSize}px`, fontFamily: 'Noto Naskh Arabic, Tajawal, sans-serif' }}
                             >
                                 {result}
                             </pre>
@@ -1211,7 +1235,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
     
     const renderResultModal = () => (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex justify-center items-center p-4 pb-20 md:pb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex justify-center items-center p-4 pb-20 md:pb-4 lg:hidden">
             {showSaveMessage && (
                 <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[120] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
                     <CheckCircle2 size={22} />
@@ -1280,7 +1304,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             ) : (
                                 <pre 
                                     className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 text-gray-800 dark:text-gray-200"
-                                    style={{ fontSize: `${fontSize}px`, fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                    style={{ fontSize: `${fontSize}px`, fontFamily: 'Noto Naskh Arabic, Tajawal, sans-serif' }}
                                 >
                                     {result}
                                 </pre>
