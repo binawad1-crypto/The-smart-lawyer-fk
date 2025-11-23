@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle, Menu, X as XIcon } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -137,6 +137,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isOutputExpanded, setIsOutputExpanded] = useState(false);
     const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Mobile sidebar state
 
     const handleToggleServices = () => {
         const nextState = !isExpanded;
@@ -464,6 +465,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setRetryMessage('');
         setIsSaved(false);
         setShowSaveMessage(false);
+        
+        // Open modal immediately to show loading state
+        setIsResultModalOpen(true);
     
         let extractedTextFromFiles = '';
         let fileToSend: File | undefined = undefined;
@@ -550,7 +554,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             const isSuccess = !!response.text;
     
             if (isSuccess) {
-                setIsResultModalOpen(true);
                 if (selectedService?.id) {
                     try {
                         const serviceRef = doc(db, 'services', selectedService.id);
@@ -711,7 +714,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Categories Navigation */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-2 w-full min-w-0">
+            <div className="flex-grow overflow-y-auto p-3 space-y-2 w-full min-w-0 scrollbar-hide">
                 {loadingCategories ? (
                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
                 ) : sidebarCategories.map(cat => {
@@ -725,6 +728,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     onClick={() => {
                                         setSelectedCategory(cat.id);
                                         setSelectedService(null);
+                                        setIsSidebarCollapsed(true);
                                     }}
                                     className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
                                         isActive 
@@ -764,6 +768,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                         setSelectedCategory('history');
                                         setSelectedService(null);
                                         setResult('');
+                                        setIsSidebarCollapsed(true);
                                     }}
                                     className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group mt-3 ${
                                         selectedCategory === 'history'
@@ -814,6 +819,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             onClick={() => {
                                 setSelectedCategory(cat.id);
                                 setSelectedService(null);
+                                setIsSidebarCollapsed(true);
                             }}
                             className={buttonClasses}
                         >
@@ -880,7 +886,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             </h3>
                             <button
                                 onClick={handleToggleServices}
-                                className="p-2 rounded-full hover:bg-white/20 transition-colors text-white"
+                                className="p-2 rounded-full hover:bg-white/20 transition-colors text-white hidden lg:block"
                                 title={isExpanded ? t('collapse') : t('expand')}
                             >
                                 {dir === 'rtl' ? (
@@ -893,7 +899,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     )}
                  </div>
 
-                 <div className="flex-grow overflow-y-auto custom-scrollbar p-4 w-full min-w-0">
+                 <div className="flex-grow overflow-y-auto custom-scrollbar p-4 w-full min-w-0 scrollbar-hide">
                      {selectedService ? (
                          /* Active Service Form */
                          <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
@@ -958,7 +964,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             key={entry.id}
                                             onClick={() => {
                                                 setResult(entry.result);
-                                                if (window.innerWidth < 1024) setIsResultModalOpen(true);
+                                                setIsResultModalOpen(true);
                                             }}
                                             className="group relative flex flex-col p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[160px] text-right rtl:text-right ltr:text-left hover:-translate-y-1 ring-1 ring-transparent hover:ring-primary-500/50"
                                         >
@@ -1013,7 +1019,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 pb-4">
                                         {paginatedServices.map(service => {
                                             const Icon = iconMap[service.icon] || FileText;
                                             const isFav = favorites.includes(service.id);
@@ -1022,25 +1028,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                                 <button
                                                     key={service.id}
                                                     onClick={() => handleServiceClick(service)}
-                                                    className="group relative flex flex-col p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
+                                                    className="group relative flex flex-col p-4 sm:p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[140px] sm:min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
                                                 >
-                                                    <div className="flex items-start justify-between w-full mb-4">
+                                                    <div className="flex items-start justify-between w-full mb-3 sm:mb-4">
                                                         <div className="p-1 text-gray-300 hover:text-primary-400 transition-colors" 
                                                              onClick={(e) => toggleFavorite(e, service.id)}>
-                                                            <Star size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-primary-400" : "text-gray-300"} />
+                                                            <Star size={16} fill={isFav ? "currentColor" : "none"} className={`sm:w-[18px] sm:h-[18px] ${isFav ? "text-primary-400" : "text-gray-300"}`} />
                                                         </div>
                                                         
-                                                        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400`}>
-                                                            <Icon size={24} strokeWidth={1.5} />
+                                                        <div className={`p-2 sm:p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400`}>
+                                                            <Icon size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5} />
                                                         </div>
                                                     </div>
 
                                                     <div className="flex flex-col justify-between flex-grow w-full">
                                                         <div>
-                                                            <h3 className="font-cairo text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
+                                                            <h3 className="font-cairo text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2">
                                                                 {service.title[language] || service.title['en']}
                                                             </h3>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80">
+                                                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80 hidden sm:block">
                                                                 {service.description[language] || service.description['en']}
                                                             </p>
                                                         </div>
@@ -1139,7 +1145,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
              </div>
 
              {/* Output Content */}
-             <div className="flex-grow overflow-auto custom-scrollbar relative p-4 w-full min-w-0">
+             <div className="flex-grow overflow-auto custom-scrollbar relative p-4 w-full min-w-0 scrollbar-hide">
                 {showSaveMessage && (
                     <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
                         <CheckCircle2 size={22} />
@@ -1205,15 +1211,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
     
     const renderResultModal = () => (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 lg:hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex justify-center items-center p-4 pb-20 md:pb-4">
             {showSaveMessage && (
-                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[120] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in-down text-base font-bold border border-green-400">
                     <CheckCircle2 size={22} />
                     {t('savedSuccessfully')}
                 </div>
             )}
-            <div className="bg-white dark:bg-dark-bg rounded-2xl shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]">
-                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
+            <div 
+                className="bg-white dark:bg-dark-bg rounded-2xl shadow-2xl w-[98%] sm:w-[95%] md:w-[90%] lg:w-[85%] flex flex-col h-[90vh] max-h-[90vh] relative"
+                style={{
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10 rounded-t-2xl">
                     <h3 className="font-bold text-sm text-white flex items-center gap-2">
                         <Sparkles size={16} className="text-yellow-200"/>
                         {t('results')}
@@ -1250,7 +1265,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </div>
                 </div>
 
-                <div className="flex-grow overflow-y-auto custom-scrollbar bg-[#fcfaf6] dark:bg-dark-bg relative p-4">
+                <div className="flex-grow overflow-y-auto custom-scrollbar bg-[#fcfaf6] dark:bg-dark-bg relative p-4 scrollbar-hide">
                     {isGenerating ? (
                         <div className="flex flex-col items-center justify-center h-full">
                            <Loader2 className="animate-spin text-primary-600" size={40} />
@@ -1284,8 +1299,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     return (
         <div className="flex-grow bg-light-bg dark:bg-dark-bg py-4 sm:py-6 lg:py-8">
              <div className="w-[90%] mx-auto h-full">
+                 {/* Mobile Sidebar Toggle */}
+                 <div className="lg:hidden mb-4">
+                    <button
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        className="mb-2 p-2.5 rounded-lg bg-primary-600 text-white shadow-lg hover:bg-primary-700 transition-all active:scale-95 w-full flex items-center justify-between"
+                    >
+                        <span className="font-bold">{isSidebarCollapsed ? (language === 'ar' ? 'إظهار القائمة' : 'Show Menu') : (language === 'ar' ? 'إخفاء القائمة' : 'Hide Menu')}</span>
+                        {isSidebarCollapsed ? <Menu size={20} /> : <XIcon size={20} />}
+                    </button>
+                    
+                    {!isSidebarCollapsed && (
+                        <div className="mb-4 h-96">
+                            {renderSidebar()}
+                        </div>
+                    )}
+                 </div>
+
                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-                    <div className="lg:col-span-1 h-full w-full min-w-0">{renderSidebar()}</div>
+                    <div className="lg:col-span-1 h-full w-full min-w-0 hidden lg:block">{renderSidebar()}</div>
                     <div className={`${
                         isOutputExpanded
                             ? 'hidden'

@@ -193,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
     <header className="bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-dark-border shadow-sm transition-colors duration-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button onClick={onLogoClick} className="flex-shrink flex items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1 min-w-0 max-w-[60%] sm:max-w-none group">
+          <button onClick={onLogoClick} className="flex flex-shrink items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md p-1 -m-1 min-w-0 max-w-[60%] sm:max-w-none group">
              {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt={siteName} className="h-10 w-auto object-contain max-w-full" />
              ) : (
@@ -207,9 +207,12 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
                 </div>
              )}
           </button>
-          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
+          {/* Spacer for mobile/tablet centering if needed, or just allow tools to flex right */}
+          <div className="lg:hidden flex-grow"></div>
+
+          <div className="flex items-center space-x-1 lg:space-x-2 flex-shrink-0">
             {currentUser && onServicesClick && (
-                <div className="hidden md:block">
+                <div className="hidden lg:block">
                     <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors" title={t('services')}>
                         <LayoutDashboard size={20} />
                         <span className="text-sm font-semibold">{t('services')}</span>
@@ -218,7 +221,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
             )}
             {currentUser && !currentUser.isAdmin && (
                 <>
-                    <div className="hidden md:flex items-center gap-1.5 bg-primary-50 dark:bg-dark-card-bg text-primary-700 dark:text-primary-300 px-3 py-1.5 rounded-full text-sm font-semibold border border-primary-100 dark:border-dark-border">
+                    <div className="hidden lg:flex items-center gap-1.5 bg-primary-50 dark:bg-dark-card-bg text-primary-700 dark:text-primary-300 px-3 py-1.5 rounded-full text-sm font-semibold border border-primary-100 dark:border-dark-border">
                         <Gem size={14} className="text-primary-600" />
                         <span>{currentUser.tokenBalance?.toLocaleString() || 0}</span>
                     </div>
@@ -236,12 +239,12 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
                 <span className="ml-2 font-semibold hidden sm:inline">{language === Language.EN ? 'AR' : 'EN'}</span>
              </button>
             {currentUser?.isAdmin && (
-                <button onClick={onAdminClick} className="hidden md:block p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors">
+                <button onClick={onAdminClick} className="hidden lg:block p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors">
                     <Shield size={20} />
                 </button>
             )}
              {currentUser ? (
-                 <div className="hidden md:block">
+                 <div className="hidden lg:block">
                     <UserMenu onProfileClick={onProfileClick} onSupportClick={onSupportClick} onLogout={handleLogout} />
                  </div>
              ) : (

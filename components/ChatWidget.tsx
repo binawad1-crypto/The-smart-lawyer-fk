@@ -135,96 +135,112 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose }) => {
   }
 
   return (
-    <div
-      className={`fixed bottom-24 ${dir === 'rtl' ? 'left-4' : 'right-4'} z-[999] w-[calc(100vw-2rem)] max-w-sm h-[60vh] bg-light-card-bg dark:bg-dark-card-bg rounded-lg shadow-2xl flex flex-col transition-transform duration-300 transform-gpu border border-primary-100 dark:border-dark-border ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
-      aria-modal="true"
-      role="dialog"
-    >
-      <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card-bg rounded-t-lg">
-        <div className="flex flex-col">
-            <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('aiAssistant')}</h3>
-            {chatContext && (
-                <span className="text-[10px] text-primary-600 dark:text-primary-400 flex items-center gap-1">
-                    <MessageSquarePlus size={10} />
-                    {language === 'ar' ? 'مرتبط بالنتيجة الحالية' : 'Linked to current result'}
-                </span>
-            )}
-        </div>
-        <div className="flex items-center gap-2">
-            <button
-                onClick={handleNewChat}
-                className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title={language === 'ar' ? 'محادثة جديدة' : 'New Chat'}
-            >
-                <MessageSquarePlus size={18} />
-            </button>
-            <button
+    <>
+        {/* Overlay */}
+        <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] transition-opacity duration-300"
             onClick={onClose}
-            className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label={t('cancel')}
-            >
-            <X size={20} />
-            </button>
-        </div>
-      </header>
+        />
+        
+        {/* Chat Widget - Centered */}
+        <div
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-[calc(100vw-2rem)] sm:w-[90vw] max-w-md h-[75vh] max-h-[600px] bg-light-card-bg dark:bg-dark-card-bg rounded-2xl shadow-2xl flex flex-col transition-all duration-300 border border-primary-100 dark:border-dark-border"
+            style={{ 
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+            aria-modal="true"
+            role="dialog"
+        >
+            <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card-bg rounded-t-2xl">
+                <div className="flex flex-col">
+                    <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('aiAssistant')}</h3>
+                    {chatContext && (
+                        <span className="text-[10px] text-primary-600 dark:text-primary-400 flex items-center gap-1">
+                            <MessageSquarePlus size={10} />
+                            {language === 'ar' ? 'مرتبط بالنتيجة الحالية' : 'Linked to current result'}
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleNewChat}
+                        className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title={language === 'ar' ? 'محادثة جديدة' : 'New Chat'}
+                    >
+                        <MessageSquarePlus size={18} />
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label={t('cancel')}
+                    >
+                    <X size={20} />
+                    </button>
+                </div>
+            </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark-bg">
-        {messages.length === 0 && (
-            <div className="text-center py-10 opacity-60">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {language === 'ar' ? 'مرحباً! كيف يمكنني مساعدتك اليوم؟' : 'Hello! How can I help you today?'}
-                </p>
-                {chatContext && (
-                    <p className="text-xs text-primary-600 mt-2 bg-primary-50 dark:bg-primary-900/20 p-2 rounded">
-                        {language === 'ar' ? 'يمكنك سؤالي عن المستند الذي تم إنشاؤه.' : 'You can ask me about the generated document.'}
-                    </p>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark-bg">
+                {messages.length === 0 && (
+                    <div className="text-center py-10 opacity-60">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {language === 'ar' ? 'مرحباً! كيف يمكنني مساعدتك اليوم؟' : 'Hello! How can I help you today?'}
+                        </p>
+                        {chatContext && (
+                            <p className="text-xs text-primary-600 mt-2 bg-primary-50 dark:bg-primary-900/20 p-2 rounded">
+                                {language === 'ar' ? 'يمكنك سؤالي عن المستند الذي تم إنشاؤه.' : 'You can ask me about the generated document.'}
+                            </p>
+                        )}
+                    </div>
                 )}
+                {messages.map((msg, index) => (
+                <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                        msg.role === 'user'
+                        ? 'bg-primary-600 text-white rounded-br-none'
+                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700'
+                    }`}
+                    >
+                    <pre className="text-sm whitespace-pre-wrap font-sans">{msg.text}</pre>
+                    </div>
+                </div>
+                ))}
+                {isLoading && (
+                <div className="flex items-end gap-2 justify-start">
+                    <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700">
+                        <Loader2 className="animate-spin text-primary-500" size={20}/>
+                    </div>
+                </div>
+                )}
+                <div ref={messagesEndRef} />
             </div>
-        )}
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-br-none'
-                  : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              <pre className="text-sm whitespace-pre-wrap font-sans">{msg.text}</pre>
-            </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex items-end gap-2 justify-start">
-              <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700">
-                 <Loader2 className="animate-spin text-primary-500" size={20}/>
-              </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card-bg rounded-b-lg">
-        <div className="relative flex items-center gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={t('typeMessage')}
-            className="flex-grow py-2.5 pl-4 pr-4 border rounded-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-transparent focus:border-primary-500 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-0 transition-all"
-            aria-label={t('typeMessage')}
-          />
-          <button
-            type="submit"
-            className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:bg-primary-300 transition-colors shadow-md ${dir === 'rtl' ? '-rotate-180' : ''}`}
-            disabled={isLoading || !inputValue.trim()}
-            aria-label={t('send')}
-          >
-            <Send size={18} />
-          </button>
+            <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card-bg rounded-b-2xl">
+                <div className="relative flex items-center gap-2">
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder={t('typeMessage')}
+                    className="flex-grow py-2.5 pl-4 pr-4 border rounded-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-transparent focus:border-primary-500 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-0 transition-all"
+                    aria-label={t('typeMessage')}
+                />
+                <button
+                    type="submit"
+                    className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:bg-primary-300 transition-colors shadow-md ${dir === 'rtl' ? '-rotate-180' : ''}`}
+                    disabled={isLoading || !inputValue.trim()}
+                    aria-label={t('send')}
+                >
+                    <Send size={18} />
+                </button>
+                </div>
+            </form>
         </div>
-      </form>
-    </div>
+    </>
   );
 };
 

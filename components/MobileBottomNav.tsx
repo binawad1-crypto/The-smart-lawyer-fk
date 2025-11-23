@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, LayoutDashboard, User, CreditCard, Shield, Sparkles } from 'lucide-react';
+import { Home, LayoutDashboard, User, CreditCard, Sparkles } from 'lucide-react';
 import { View } from '../App';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -44,18 +44,8 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, onNaviga
     },
   ];
 
-  if (currentUser.isAdmin) {
-    navItems.push({
-      id: 'admin',
-      label: t('adminPanel'),
-      icon: Shield,
-      view: 'admin' as View,
-    });
-  }
-
-  const midIndex = Math.ceil(navItems.length / 2);
-  const leftItems = navItems.slice(0, midIndex);
-  const rightItems = navItems.slice(midIndex);
+  const leftItems = navItems.slice(0, 2);
+  const rightItems = navItems.slice(2);
 
   const NavItem: React.FC<{ item: typeof navItems[0] }> = ({ item }) => {
     const isActive = currentView === item.view;
@@ -70,8 +60,8 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, onNaviga
             : 'text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-300'
         }`}
       >
-        <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-        <span className="text-[10px] font-medium truncate max-w-[60px]">
+        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+        <span className="text-[10px] sm:text-[11px] font-medium truncate max-w-[60px]">
           {item.label}
         </span>
       </button>
@@ -79,27 +69,27 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, onNaviga
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-dark-bg/90 backdrop-blur-lg border-t border-gray-200 dark:border-dark-border md:hidden pb-safe">
-      <div className="flex justify-around items-center h-16 relative">
-        {leftItems.map((item) => <NavItem key={item.id} item={item} />)}
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-dark-bg/95 backdrop-blur-lg border-t border-gray-200 dark:border-dark-border lg:hidden pb-safe safe-area-inset-bottom">
+      <div className="flex justify-between items-center h-18 min-h-[72px] relative px-2">
+        {/* Left Items */}
+        <div className="flex-1 flex justify-around">
+            {leftItems.map((item) => <NavItem key={item.id} item={item} />)}
+        </div>
 
-        {/* Placeholder for the raised button */}
-        <div className="w-16 h-16" />
-
-        {rightItems.map((item) => <NavItem key={item.id} item={item} />)}
-        
-        {/* The actual button, absolutely positioned in the center */}
-        <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/3">
+        {/* Center Button Container */}
+        <div className="relative w-20 flex justify-center">
              <button
                 onClick={onAssistantClick}
-                className="w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-full flex items-center justify-center shadow-lg hover:from-primary-700 hover:to-primary-600 focus:outline-none ring-4 ring-white/90 dark:ring-dark-bg/90 transition-transform duration-200 hover:scale-110"
+                className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary-600 via-primary-500 to-primary-600 text-white rounded-full flex items-center justify-center hover:from-primary-700 hover:via-primary-600 hover:to-primary-700 focus:outline-none ring-4 ring-white/90 dark:ring-dark-bg/90 transition-all duration-300 hover:scale-110 active:scale-95 z-10 mb-4 sm:mb-5"
                 aria-label={t('aiAssistant')}
             >
-                <Sparkles size={28} />
+                <Sparkles size={28} className="sm:w-8 sm:h-8 animate-pulse" fill="white" />
             </button>
-            <span className="text-[10px] text-center font-medium text-primary-600 dark:text-primary-400 mt-1 block">
-                {t('aiAssistant')}
-            </span>
+        </div>
+
+        {/* Right Items */}
+        <div className="flex-1 flex justify-around">
+            {rightItems.map((item) => <NavItem key={item.id} item={item} />)}
         </div>
       </div>
     </div>

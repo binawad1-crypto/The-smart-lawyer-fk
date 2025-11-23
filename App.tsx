@@ -195,7 +195,7 @@ const App: React.FC = () => {
           />
       )}
       
-      <main className="flex-grow flex flex-col pb-16 md:pb-0">
+      <main className="flex-grow flex flex-col pb-20 lg:pb-0 safe-area-inset-bottom">
         {renderContent()}
       </main>
       
@@ -220,7 +220,7 @@ const App: React.FC = () => {
       />
       
       {!isBlocked && (
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
             <Footer />
         </div>
       )}
