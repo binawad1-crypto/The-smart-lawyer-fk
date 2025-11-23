@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle, Menu, X as XIcon } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -381,11 +380,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (window.innerWidth < 1024) {
             setIsResultModalOpen(true);
         } else {
-            // Desktop: Ensure output panel is visible/expanded
-            if (!isOutputExpanded) {
-                setIsOutputExpanded(true);
-                setIsExpanded(false); // Collapse service list if needed
-            }
+            // Desktop: Ensure output panel is visible but NOT automatically expanded
+            setIsExpanded(false); 
         }
 
         const handleRetry = (attempt: number, maxRetries: number) => {
@@ -481,11 +477,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         if (window.innerWidth < 1024) {
             setIsResultModalOpen(true);
         } else {
-            // Desktop: Switch to output view immediately to show loader
-            if (!isOutputExpanded) {
-                setIsOutputExpanded(true);
-                setIsExpanded(false);
-            }
+            // Desktop: Ensure output panel is visible but NOT automatically expanded
+            setIsExpanded(false);
         }
     
         let extractedTextFromFiles = '';
