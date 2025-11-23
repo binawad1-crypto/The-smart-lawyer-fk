@@ -8,7 +8,12 @@ import { STRIPE_PUBLISHABLE_KEY } from '../constants';
 import { Plan } from '../types';
 import { Loader2, CheckCircle2, Star } from 'lucide-react';
 
-declare const Stripe: any; // Use Stripe from the global scope
+// Ensure typescript knows about the global Stripe object
+declare global {
+    interface Window {
+        Stripe: any;
+    }
+}
 
 const SubscriptionPage: React.FC = () => {
     const { currentUser } = useAuth();
@@ -51,11 +56,20 @@ const SubscriptionPage: React.FC = () => {
 
     const handleCheckout = async (priceId: string) => {
         if (!currentUser) return;
+        
+        // Check if Stripe script is loaded
+        if (typeof window.Stripe === 'undefined') {
+            alert(language === 'ar' 
+                ? 'جاري تحميل نظام الدفع، يرجى الانتظار لحظة والمحاولة مرة أخرى.' 
+                : 'Payment system is loading, please wait a moment and try again.');
+            return;
+        }
+
         setLoadingPriceId(priceId);
 
         // STRICT CHECK: Ensure the key is a Publishable Key (pk_)
         if (!STRIPE_PUBLISHABLE_KEY || !STRIPE_PUBLISHABLE_KEY.startsWith('pk_')) {
-            alert(t('stripeKeysNotConfigured') + '\n\nCurrent Key: ' + STRIPE_PUBLISHABLE_KEY.substring(0, 10) + '...\nMust start with "pk_live_" or "pk_test_"');
+            alert(t('stripeKeysNotConfigured') + '\n\nCurrent Key: ' + (STRIPE_PUBLISHABLE_KEY ? STRIPE_PUBLISHABLE_KEY.substring(0, 10) + '...' : 'Missing'));
             setLoadingPriceId(null);
             return;
         }
@@ -71,30 +85,37 @@ const SubscriptionPage: React.FC = () => {
                 cancel_url: window.location.href,
             });
 
-            // Timeout safety: If extension doesn't respond in 15 seconds, abort.
+            // Timeout safety: If extension doesn't respond in 20 seconds, abort.
             const timeoutId = setTimeout(() => {
                 console.warn("Stripe checkout session creation timed out.");
                 setLoadingPriceId(null);
-                alert(t('paymentError') + " (Timeout: Server took too long)");
-            }, 15000);
+                alert(t('paymentError') + " (Timeout: Please verify your internet connection or try again later)");
+            }, 20000);
 
             // Listen for the session ID to be written back to the document by the extension
             const unsubscribe = onSnapshot(docRef, (snap) => {
-                const { error, sessionId } = snap.data() as { error?: { message: string }; sessionId?: string } || {};
+                const data = snap.data();
+                const { error, sessionId } = (data as { error?: { message: string }; sessionId?: string }) || {};
                 
                 if (error) {
                     clearTimeout(timeoutId);
                     unsubscribe();
                     console.error("Stripe checkout error:", error.message);
-                    alert(error.message);
+                    alert(`${t('paymentError')}: ${error.message}`);
                     setLoadingPriceId(null);
                 }
                 
                 if (sessionId) {
                     clearTimeout(timeoutId);
                     unsubscribe();
-                    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-                    stripe.redirectToCheckout({ sessionId });
+                    try {
+                        const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+                        stripe.redirectToCheckout({ sessionId });
+                    } catch (err) {
+                        console.error("Stripe redirect failed:", err);
+                        alert(t('paymentError'));
+                        setLoadingPriceId(null);
+                    }
                 }
             });
 

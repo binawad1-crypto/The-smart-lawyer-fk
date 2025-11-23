@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle, Menu, X as XIcon } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
@@ -381,7 +382,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setIsResultModalOpen(true);
         } else {
             // Desktop: Ensure output panel is visible but NOT automatically expanded
-            setIsExpanded(false); 
+            // Explicitly close modal to be safe
+            setIsResultModalOpen(false);
+            setIsExpanded(false);
+            setIsOutputExpanded(false); // Ensure it doesn't auto-maximize
         }
 
         const handleRetry = (attempt: number, maxRetries: number) => {
@@ -478,7 +482,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             setIsResultModalOpen(true);
         } else {
             // Desktop: Ensure output panel is visible but NOT automatically expanded
+            // Explicitly close modal to be safe
+            setIsResultModalOpen(false);
             setIsExpanded(false);
+            setIsOutputExpanded(false); // Ensure it doesn't auto-maximize
         }
     
         let extractedTextFromFiles = '';
@@ -694,8 +701,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
     // -------------------- FRAME 1: IDENTITY & NAVIGATION (SIDEBAR) --------------------
     const renderSidebar = () => {
-        const siteName = settings?.siteName[language] || (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant');
-        const siteSubtitle = settings?.siteSubtitle[language] || (language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law and Legal Consulting');
+        // Force specific Arabic text as requested, or default to English settings if not AR.
+        const siteName = language === 'ar' ? 'المساعد الذكي' : (settings?.siteName.en || 'Smart Assistant');
+        const siteSubtitle = language === 'ar' ? 'للمحاماة' : (settings?.siteSubtitle.en || 'For Law');
 
         return (
         <div className="flex flex-col h-full rounded-2xl bg-[#1c1c1e] shadow-lg border border-white/10 overflow-hidden w-full min-w-0">
@@ -764,7 +772,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                             {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
                                         </span>
                                         <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
-                                            {language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law and Legal Consulting'}
+                                            {language === 'ar' ? 'للمحاماة' : 'For Law'}
                                         </span>
                                     </div>
                                     
