@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin, History, Clock, FileText, ArrowRight, ArrowLeft, Copy, Printer, Trash2, LifeBuoy } from 'lucide-react';
+import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin, History, Clock, FileText, ArrowRight, ArrowLeft, Copy, Printer, Trash2, LifeBuoy, XCircle } from 'lucide-react';
 // @ts-ignore: Suppressing missing type definitions for firebase/functions
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '../services/firebase';
@@ -519,14 +519,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                         )}
 
                         {isPlanActive ? (
-                            <button 
-                                onClick={redirectToCustomerPortal} 
-                                disabled={isPortalLoading}
-                                className="w-full py-2.5 bg-white text-primary-800 font-bold rounded-lg hover:bg-primary-50 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
-                            >
-                                {isPortalLoading ? <Loader2 className="animate-spin" size={18} /> : null}
-                                {t('manageSubscription')}
-                            </button>
+                            <div className="flex flex-col gap-3">
+                                <button 
+                                    onClick={redirectToCustomerPortal} 
+                                    disabled={isPortalLoading}
+                                    className="w-full py-2.5 bg-white text-primary-800 font-bold rounded-lg hover:bg-primary-50 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                                >
+                                    {isPortalLoading ? <Loader2 className="animate-spin" size={18} /> : null}
+                                    {t('manageSubscription')}
+                                </button>
+                                <button 
+                                    onClick={redirectToCustomerPortal}
+                                    disabled={isPortalLoading}
+                                    className="w-full py-2.5 bg-red-500/20 hover:bg-red-500/30 text-white border border-red-200/30 font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                                >
+                                    <XCircle size={18} />
+                                    {t('cancelSubscription')}
+                                </button>
+                            </div>
                         ) : (
                              <button 
                                 onClick={() => onNavigate('subscriptions')}

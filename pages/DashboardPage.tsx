@@ -752,8 +752,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     }}
                                     className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
                                         isActive 
-                                        ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]' 
-                                        : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
+                                        ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] border-green-400/50 shadow-[0_0_15px_rgba(22,163,74,0.5)] scale-[1.02]' 
+                                        : 'bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#052e16] border-green-900/30 hover:border-green-500/50 hover:shadow-lg'
                                     } border`}
                                 >
                                     {/* Background Pattern */}
@@ -761,7 +761,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
 
                                     {/* Icon Container */}
-                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
+                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-green-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
                                         {/* Animated Icon: Sparkles with pulse effect and Gold color */}
                                         <Sparkles size={24} className="animate-pulse text-yellow-300" fill={isActive ? "#FDE047" : "none"} />
                                     </div>
@@ -771,7 +771,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                         <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
                                             {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
                                         </span>
-                                        <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
+                                        <span className="text-green-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
                                             {language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law & Legal Consulting'}
                                         </span>
                                     </div>
@@ -792,8 +792,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     }}
                                     className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group mt-3 ${
                                         selectedCategory === 'history'
-                                        ? 'bg-gradient-to-br from-[#8B0000] via-[#A52A2A] to-[#8B0000] border-red-400/50 shadow-[0_0_15px_rgba(139,0,0,0.5)] scale-[1.02]'
-                                        : 'bg-gradient-to-br from-[#581c1c] via-[#7f2828] to-[#581c1c] border-red-900/30 hover:border-red-500/50 hover:shadow-lg'
+                                        ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] border-green-400/50 shadow-[0_0_15px_rgba(22,163,74,0.5)] scale-[1.02]'
+                                        : 'bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#052e16] border-green-900/30 hover:border-green-500/50 hover:shadow-lg'
                                     } border`}
                                 >
                                     {/* Background Pattern */}
@@ -801,7 +801,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
 
                                     {/* Icon Container */}
-                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${selectedCategory === 'history' ? 'bg-white/20 text-white' : 'bg-black/20 text-red-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
+                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${selectedCategory === 'history' ? 'bg-white/20 text-white' : 'bg-black/20 text-green-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
                                         <History size={24} className="animate-pulse text-yellow-300" />
                                     </div>
 
@@ -810,7 +810,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                         <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
                                             {language === 'ar' ? 'المحفوظات' : 'Saved History'}
                                         </span>
-                                        <span className="text-red-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
+                                        <span className="text-green-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
                                             {language === 'ar' ? 'سجل العمليات السابقة' : 'Previous Log'}
                                         </span>
                                     </div>

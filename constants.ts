@@ -375,6 +375,7 @@ export const translations: Translations = {
     canceledOn: { en: 'Canceled, ends on', ar: 'ملغى، ينتهي في' },
     renewsOn: { en: 'Renews on', ar: 'يتجدد في' },
     manageSubscription: { en: 'Manage Subscription', ar: 'إدارة الاشتراك' },
+    cancelSubscription: { en: 'Cancel Subscription', ar: 'إلغاء الاشتراك' },
     upgradeNow: { en: 'Upgrade Now', ar: 'الترقية الآن' },
     editProfile: { en: 'Personal Information', ar: 'المعلومات الشخصية' },
     fullName: { en: 'Full Name', ar: 'الاسم الكامل' },
