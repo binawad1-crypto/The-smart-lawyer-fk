@@ -890,7 +890,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         const isActive = selectedCategory === cat.id;
                         const IconComponent = iconMap[cat.icon] || Gavel;
                         
-                        let buttonClasses = `font-cairo w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 group`;
+                        let buttonClasses = `font-cairo w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-base font-bold transition-all duration-200 group`;
             
                         if (isActive) {
                             buttonClasses += ' bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md';
