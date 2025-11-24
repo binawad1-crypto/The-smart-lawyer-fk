@@ -1,10 +1,10 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, File as FileIcon, Loader2, Printer, Copy, Check, Save, CheckCircle2 } from 'lucide-react';
+import { X, File as FileIcon, Loader2, Printer, Copy, Check, Save, CheckCircle2, Globe, ExternalLink } from 'lucide-react';
 import { Service, Language } from '../types';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
-import { runGemini } from '../services/geminiService';
+import { runGeminiStream } from '../services/geminiService';
 import { doc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 // @ts-ignore
@@ -100,6 +100,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [result, setResult] = useState<string>('');
+  const [groundingSources, setGroundingSources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
@@ -107,6 +108,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const [outputLanguage, setOutputLanguage] = useState<Language>(language);
   const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
   const [showSaveMessage, setShowSaveMessage] = useState(false);
+  const [useGoogleSearch, setUseGoogleSearch] = useState(false);
   
   useEffect(() => {
       setOutputLanguage(language);
@@ -116,6 +118,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
       if (isOpen) {
           setIsSaved(false);
           setShowSaveMessage(false);
+          setGroundingSources([]);
       }
   }, [isOpen, result]);
   
@@ -185,6 +188,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
     setIsLoading(true);
     setResult('');
+    setGroundingSources([]);
     setRetryMessage('');
     setIsSaved(false);
     setShowSaveMessage(false);
@@ -233,8 +237,12 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
         geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
+        if (useGoogleSearch) {
+            geminiConfig.tools = [{ googleSearch: {} }];
+            delete geminiConfig.responseMimeType;
+        }
+
         let modelToUse = service.geminiModel;
-        // Fallback logic for models
         const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
         if (
             !modelToUse ||
@@ -245,12 +253,26 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             modelToUse = 'gemini-2.5-flash';
         }
 
-        const response = await runGemini(modelToUse, prompt, fileToSend, handleRetry, geminiConfig);
-        const resultText = response.text;
-        setResult(resultText);
+        let accumulatedText = '';
+        const response = await runGeminiStream(
+            modelToUse, 
+            prompt, 
+            fileToSend, 
+            (chunkText) => {
+                accumulatedText += chunkText;
+                setResult(accumulatedText);
+            },
+            handleRetry, 
+            geminiConfig
+        );
 
-        if (resultText && service?.id) {
-            // 1. Increment Usage
+        // Extract sources
+        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (groundingChunks) {
+            setGroundingSources(groundingChunks);
+        }
+
+        if (response.text && service?.id) {
             try {
                 const serviceRef = doc(db, 'services', service.id);
                 await updateDoc(serviceRef, {
@@ -259,8 +281,6 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
             } catch (error) {
                 console.error("Failed to update usage count:", error);
             }
-
-            // 2. Deduct Tokens
             await deductTokens(response, prompt.length);
         }
     } catch (error) {
@@ -309,6 +329,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
   const handleClose = () => {
     setFormData({});
     setResult('');
+    setGroundingSources([]);
     setIsLoading(false);
     setRetryMessage('');
     setIsSaved(false);
@@ -354,6 +375,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
   const handleClear = () => {
     setResult('');
+    setGroundingSources([]);
     setIsSaved(false);
     setShowSaveMessage(false);
   };
@@ -419,28 +441,41 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         </button>
                         
                         <div className="flex flex-col md:flex-row items-center gap-4 w-full sm:w-auto justify-end">
+                            
+                            <button
+                                type="button"
+                                onClick={() => setUseGoogleSearch(!useGoogleSearch)}
+                                className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition-all ${
+                                    useGoogleSearch 
+                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
+                                }`}
+                            >
+                                <Globe size={14} />
+                                <span className="hidden sm:inline">{language === 'ar' ? 'بحث' : 'Search'}</span>
+                            </button>
+
                             {/* Output Length */}
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('outputLength')}</span>
                                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
                                     <button
                                         type="button"
                                         onClick={() => setOutputLength('short')}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                     >
                                         {t('short')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setOutputLength('medium')}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                     >
                                         {t('medium')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setOutputLength('default')}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                     >
                                         {t('default')}
                                     </button>
@@ -448,19 +483,18 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                             </div>
                             {/* Output Language */}
                             <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>
                                 <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
                                     <button
                                         type="button"
                                         onClick={() => setOutputLanguage(Language.AR)}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.AR ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                     >
                                         {t('arabic')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setOutputLanguage(Language.EN)}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                                        className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${outputLanguage === Language.EN ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                     >
                                         {t('english')}
                                     </button>
@@ -474,7 +508,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
 
             {/* Result Section */}
             <div className="lg:col-span-2 bg-[#fcfaf6] dark:bg-slate-900 rounded-lg flex flex-col relative">
-              {isLoading ? (
+              {isLoading && !result ? (
                   <div className="flex flex-col items-center justify-center h-full">
                       <Loader2 className="animate-spin text-primary-500" size={32}/>
                       <p className="mt-2 text-gray-500 text-center">{retryMessage || t('generatingResponse')}</p>
@@ -519,6 +553,26 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                             >
                                 {result}
                             </pre>
+                        )}
+                        
+                        {groundingSources.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                                    <Globe size={12} /> Sources
+                                </h4>
+                                <ul className="space-y-1">
+                                    {groundingSources.map((chunk, index) => (
+                                        chunk.web?.uri && (
+                                            <li key={index} className="text-xs truncate">
+                                                <a href={chunk.web.uri} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline flex items-center gap-1">
+                                                    <ExternalLink size={10} />
+                                                    {chunk.web.title || chunk.web.uri}
+                                                </a>
+                                            </li>
+                                        )
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                     </div>
                 </div>

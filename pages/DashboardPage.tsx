@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle, Menu, X as XIcon } from 'lucide-react';
+import { Loader2, Wand2, Send, Copy, Check, Printer, X, ArrowLeft, ArrowRight, File as FileIcon, MapPin, Sparkles, FileText, LayoutGrid, Search, Star, Settings2, Sliders, ChevronRight as ChevronRightIcon, Gavel, Shield, Building2, Users, Scale, Briefcase, AudioLines, Search as SearchIcon, Archive, ZoomIn, ZoomOut, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, AlertTriangle, Crown, Save, CheckCircle2, History, Clock, Trash2, MessageCircle, Menu, X as XIcon, Globe, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -8,7 +8,7 @@ import { useChat } from '../hooks/useChat';
 import { Service, Translations, Language, Category, ServiceHistoryEntry } from '../types';
 import { collection, getDocs, query, doc, updateDoc, increment, orderBy, addDoc, serverTimestamp, where, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { runGemini } from '../services/geminiService';
+import { runGeminiStream } from '../services/geminiService';
 import { iconMap } from '../constants';
 // @ts-ignore
 import mammoth from 'mammoth';
@@ -113,11 +113,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [prompt, setPrompt] = useState('');
     const [result, setResult] = useState('');
+    const [groundingSources, setGroundingSources] = useState<any[]>([]); // Store sources
     const [isGenerating, setIsGenerating] = useState(false);
     const [retryMessage, setRetryMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
-    const [fontSize, setFontSize] = useState(21); // Updated default font size
+    const [fontSize, setFontSize] = useState(21); 
     const [showSaveMessage, setShowSaveMessage] = useState(false);
     
     // Search and Filter States
@@ -126,6 +127,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [outputLanguage, setOutputLanguage] = useState<Language>(language);
     const [favorites, setFavorites] = useState<string[]>([]);
     const [outputLength, setOutputLength] = useState<'default' | 'short' | 'medium'>('default');
+    const [useGoogleSearch, setUseGoogleSearch] = useState(false);
     
     // History State
     const [historyEntries, setHistoryEntries] = useState<ServiceHistoryEntry[]>([]);
@@ -305,11 +307,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         return filtered;
     }, [services, selectedCategory, searchQuery, favorites]);
 
-    const sidebarCategories = useMemo(() => {
-        return categories; // Return raw categories, we will map them in render
-    }, [categories]);
-    
-
     const toggleFavorite = (e: React.MouseEvent, serviceId: string) => {
         e.stopPropagation();
         const newFavs = favorites.includes(serviceId)
@@ -391,20 +388,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         setIsGenerating(true);
         setResult('');
+        setGroundingSources([]);
         setRetryMessage('');
         setIsSaved(false);
         setShowSaveMessage(false);
 
         // Determine whether to show modal (Mobile) or Side Panel (Desktop)
-        // Using 1024px (lg) as the breakpoint.
         if (window.innerWidth < 1024) {
             setIsResultModalOpen(true);
         } else {
-            // Desktop: Ensure output panel is visible but NOT automatically expanded
-            // Explicitly close modal to be safe
             setIsResultModalOpen(false);
             setIsExpanded(false);
-            setIsOutputExpanded(false); // Ensure it doesn't auto-maximize
+            setIsOutputExpanded(false);
         }
 
         const handleRetry = (attempt: number, maxRetries: number) => {
@@ -431,12 +426,35 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 finalPrompt += `\n\nIMPORTANT: Provide the response strictly in English language.`;
                 geminiConfig = { ...geminiConfig, systemInstruction: professionalOutputInstructionSystemEN };
             }
+
+            if (useGoogleSearch) {
+                geminiConfig.tools = [{ googleSearch: {} }];
+                // Grounding requires no system instructions that conflict with search
+                // Also remove mime type if it was set
+                delete geminiConfig.responseMimeType;
+            }
             
-            const response = await runGemini('gemini-2.5-flash', finalPrompt, undefined, handleRetry, geminiConfig);
-            setResult(response.text);
+            let accumulatedText = '';
+            const finalResponse = await runGeminiStream(
+                'gemini-2.5-flash', 
+                finalPrompt, 
+                undefined, 
+                (chunkText) => {
+                    accumulatedText += chunkText;
+                    setResult(accumulatedText);
+                },
+                handleRetry, 
+                geminiConfig
+            );
             
-            if (response.text) {
-                await deductTokens(response, finalPrompt.length);
+            // Extract Grounding Metadata
+            const groundingChunks = finalResponse.candidates?.[0]?.groundingMetadata?.groundingChunks;
+            if (groundingChunks) {
+                setGroundingSources(groundingChunks);
+            }
+            
+            if (finalResponse.text) {
+                await deductTokens(finalResponse, finalPrompt.length);
             }
 
         } catch (error) {
@@ -463,6 +481,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         setSelectedService(service);
         setFormData({});
         setResult('');
+        setGroundingSources([]);
         setIsSaved(false);
         setShowSaveMessage(false);
     };
@@ -492,19 +511,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     
         setIsGenerating(true);
         setResult('');
+        setGroundingSources([]);
         setRetryMessage('');
         setIsSaved(false);
         setShowSaveMessage(false);
         
-        // Determine whether to show modal (Mobile) or Side Panel (Desktop)
         if (window.innerWidth < 1024) {
             setIsResultModalOpen(true);
         } else {
-            // Desktop: Ensure output panel is visible but NOT automatically expanded
-            // Explicitly close modal to be safe
             setIsResultModalOpen(false);
             setIsExpanded(false);
-            setIsOutputExpanded(false); // Ensure it doesn't auto-maximize
+            setIsOutputExpanded(false);
         }
     
         let extractedTextFromFiles = '';
@@ -513,13 +530,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         const fileInput = selectedService.formInputs.find(i => i.type === 'file');
         const file = fileInput ? formData[fileInput.name] as File : undefined;
 
-        // Check if the file needs text extraction (Word or Text)
         if (file) {
             const extractedText = await extractTextFromFile(file);
             if (extractedText) {
                 extractedTextFromFiles = `\n\n[ATTACHED DOCUMENT CONTENT]:\n${extractedText}\n[END OF DOCUMENT]\n`;
             } else {
-                // It's likely an image or PDF, send as binary to Gemini
                 fileToSend = file;
             }
         }
@@ -533,7 +548,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 prompt += `${inputConfig?.label.en || key}: ${formData[key]}\n`;
             }
             
-            // Append extracted text from Word/Txt files if any
             prompt += extractedTextFromFiles;
 
             const userLocation = currentUser?.location;
@@ -573,8 +587,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             
             geminiConfig = { ...geminiConfig, systemInstruction: finalSystemInstruction };
 
+            if (useGoogleSearch) {
+                geminiConfig.tools = [{ googleSearch: {} }];
+                delete geminiConfig.responseMimeType;
+            }
+
             let modelToUse = selectedService.geminiModel;
-            // Fallback logic for models
             const validModels = ['gemini-2.5-flash', 'gemini-3-pro-preview'];
             if (
                 !modelToUse ||
@@ -586,8 +604,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 modelToUse = 'gemini-2.5-flash';
             }
 
-            const response = await runGemini(modelToUse, promptText, fileToSend, handleRetry, geminiConfig);
-            setResult(response.text);
+            let accumulatedText = '';
+            const response = await runGeminiStream(
+                modelToUse, 
+                promptText, 
+                fileToSend, 
+                (chunkText) => {
+                    accumulatedText += chunkText;
+                    setResult(accumulatedText);
+                },
+                handleRetry, 
+                geminiConfig
+            );
+
+            // Extract Grounding Metadata
+            const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+            if (groundingChunks) {
+                setGroundingSources(groundingChunks);
+            }
 
             const isSuccess = !!response.text;
     
@@ -650,6 +684,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     const handleClear = () => {
         setResult('');
+        setGroundingSources([]);
         setIsSaved(false);
         setShowSaveMessage(false);
     };
@@ -666,10 +701,82 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const handleZoomIn = () => setFontSize(s => Math.min(s + 1, 32));
     const handleZoomOut = () => setFontSize(s => Math.max(s - 1, 8));
 
-    const renderOutputLanguageSelector = (showLabel = true) => (
-        <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
+    const renderGroundingSources = () => {
+        if (!groundingSources || groundingSources.length === 0) return null;
+        return (
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Globe size={16} />
+                    {language === 'ar' ? 'المصادر والمراجع' : 'Sources & References'}
+                </h4>
+                <ul className="space-y-2">
+                    {groundingSources.map((chunk, index) => {
+                        if (!chunk.web?.uri) return null;
+                        return (
+                            <li key={index} className="text-xs">
+                                <a 
+                                    href={chunk.web.uri} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-start gap-2 text-primary-600 dark:text-primary-400 hover:underline"
+                                >
+                                    <ExternalLink size={12} className="mt-0.5 flex-shrink-0" />
+                                    <span>{chunk.web.title || chunk.web.uri}</span>
+                                </a>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
+        );
+    };
+
+    const renderOptionsBar = () => (
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full sm:w-auto justify-end">
+            {/* Google Search Toggle */}
+            <button
+                type="button"
+                onClick={() => setUseGoogleSearch(!useGoogleSearch)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                    useGoogleSearch 
+                    ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-400' 
+                    : 'bg-gray-100 dark:bg-gray-800 border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200'
+                }`}
+                title={language === 'ar' ? 'استخدام بحث جوجل للحصول على معلومات حديثة' : 'Use Google Search for up-to-date info'}
+            >
+                <Globe size={14} />
+                {language === 'ar' ? 'بحث الويب' : 'Search Web'}
+            </button>
+
+            {/* Output Length */}
             <div className="flex items-center gap-2">
-                {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLanguage')}</span>}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden lg:inline">{t('outputLength')}</span>
+                <div className="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                    <button
+                        type="button"
+                        onClick={() => setOutputLength('short')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    >
+                        {t('short')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setOutputLength('medium')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    >
+                        {t('medium')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setOutputLength('default')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-slate-600 shadow text-primary-600 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                    >
+                        {t('default')}
+                    </button>
+                </div>
+            </div>
+            {/* Output Language */}
+            <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="flex bg-gray-200 dark:bg-dark-card-bg rounded-lg p-1 border dark:border-dark-border">
                     <button
                         type="button"
@@ -686,35 +793,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {t('english')}
                     </button>
                 </div>
-            </div>
-        </div>
-    );
-
-    const renderOutputLengthSelector = (showLabel = true) => (
-         <div className="flex items-center gap-2">
-            {showLabel && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{t('outputLength')}</span>}
-            <div className="flex bg-gray-200 dark:bg-dark-card-bg rounded-lg p-1 border dark:border-dark-border">
-                <button
-                    type="button"
-                    onClick={() => setOutputLength('short')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'short' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                >
-                    {t('short')}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setOutputLength('medium')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'medium' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                >
-                    {t('medium')}
-                </button>
-                 <button
-                    type="button"
-                    onClick={() => setOutputLength('default')}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${outputLength === 'default' ? 'bg-white dark:bg-primary-900/50 shadow text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                >
-                    {t('default')}
-                </button>
             </div>
         </div>
     );
@@ -762,6 +840,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     key={btn.id}
                                     onClick={() => {
                                         setSelectedCategory(btn.id);
+                                        setSearchQuery(''); // Clear search to prevent filtering issues
                                         setSelectedService(null);
                                         if (btn.onClickExtra) btn.onClickExtra();
                                         setIsSidebarCollapsed(true);
@@ -824,6 +903,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 key={cat.id}
                                 onClick={() => {
                                     setSelectedCategory(cat.id);
+                                    setSearchQuery(''); // Clear search query to prevent empty lists
                                     setSelectedService(null);
                                     setIsSidebarCollapsed(true);
                                 }}
@@ -953,10 +1033,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                         {isGenerating && <Loader2 className="animate-spin" size={20} />}
                                         {t('executeTask')}
                                     </button>
-                                    <div className="flex items-center gap-3 w-full md:w-auto">
-                                        {renderOutputLengthSelector(false)}
-                                        {renderOutputLanguageSelector(false)}
-                                    </div>
+                                    {renderOptionsBar()}
                                 </div>
                              </div>
                          </form>
@@ -1035,7 +1112,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-5 pb-4 xl:grid-cols-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 pb-4 xl:grid-cols-3">
                                         {paginatedServices.map(service => {
                                             const Icon = iconMap[service.icon] || FileText;
                                             const isFav = favorites.includes(service.id);
@@ -1184,7 +1261,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {t('savedSuccessfully')}
                     </div>
                 )}
-                {isGenerating ? (
+                {isGenerating && !result ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <div className="relative">
                             <div className="absolute inset-0 bg-primary-200 rounded-full opacity-20 animate-ping"></div>
@@ -1206,6 +1283,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 {result}
                             </pre>
                         )}
+                        {renderGroundingSources()}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
@@ -1235,9 +1313,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20}/>}
                     </button>
                 </div>
-                <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2 font-medium tracking-wide">
-                    {t('poweredByAI')}
-                </p>
+                
+                <div className="mt-2 flex justify-between items-center">
+                    <button
+                        type="button"
+                        onClick={() => setUseGoogleSearch(!useGoogleSearch)}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold transition-all ${
+                            useGoogleSearch 
+                            ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
+                            : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        }`}
+                    >
+                        <Globe size={12} />
+                        {language === 'ar' ? 'بحث الويب' : 'Search Web'}
+                    </button>
+                    <p className="text-center text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+                        {t('poweredByAI')}
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -1299,7 +1392,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
 
                 <div className="flex-grow overflow-y-auto custom-scrollbar bg-[#fcfaf6] dark:bg-dark-bg relative p-4 scrollbar-hide">
-                    {isGenerating ? (
+                    {isGenerating && !result ? (
                         <div className="flex flex-col items-center justify-center h-full">
                            <Loader2 className="animate-spin text-primary-600" size={40} />
                             <p className="text-gray-500 text-center font-medium mt-4">{retryMessage || t('generatingResponse')}</p>
@@ -1318,6 +1411,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     {result}
                                 </pre>
                             )}
+                            {renderGroundingSources()}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-center opacity-40">

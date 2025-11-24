@@ -29,10 +29,6 @@ const withRetry = async <T>(
       const errorMessage = error instanceof Error ? error.message : String(error);
       
       // Check for 429 (Quota Exceeded) specifically. 
-      // Usually, retrying immediately on quota exceeded (daily limit) is futile, 
-      // but if it's rate limiting (RPM), a backoff might work. 
-      // However, typically 429 from Gemini means "Resource Exhausted" which is often the hard limit.
-      // We will NOT retry 429 to avoid spamming the API when it's already rejecting us.
       const isRetryable = errorMessage.includes('503') || 
                           errorMessage.toLowerCase().includes('unavailable') || 
                           errorMessage.toLowerCase().includes('overloaded');
@@ -103,7 +99,6 @@ export const runGemini = async (
   
   try {
     const contents = file
-      // FIX: The new API expects contents to be a structured object, not a plain string.
       ? { parts: [{ text: prompt }, await fileToGenerativePart(file)] }
       : { parts: [{ text: prompt }] };
 
@@ -118,6 +113,55 @@ export const runGemini = async (
     );
 
     return response;
+  } catch (error) {
+    handleGeminiError(error);
+  }
+};
+
+// New streaming function
+export const runGeminiStream = async (
+  model: string,
+  prompt: string,
+  file: File | undefined,
+  onChunk: (text: string) => void,
+  onRetryAttempt?: (attempt: number, maxRetries: number) => void,
+  config?: any
+): Promise<GenerateContentResponse> => {
+  if (!API_KEY) {
+    throw new Error("Gemini API key is not configured.");
+  }
+
+  try {
+    const contents = file
+      ? { parts: [{ text: prompt }, await fileToGenerativePart(file)] }
+      : { parts: [{ text: prompt }] };
+
+    const streamResult = await withRetry(
+        () => ai.models.generateContentStream({
+            model: model,
+            contents: contents,
+            ...(config && { config: config })
+        }),
+        onRetryAttempt
+    );
+
+    let finalResponse: GenerateContentResponse | undefined;
+
+    // FIX: Cast streamResult to AsyncIterable<GenerateContentResponse> to resolve TS error regarding unknown type.
+    for await (const chunk of (streamResult as AsyncIterable<GenerateContentResponse>)) {
+        if (chunk.text) {
+            onChunk(chunk.text);
+        }
+        finalResponse = chunk as GenerateContentResponse;
+    }
+    
+    // If no chunks were received, finalResponse might be undefined, though unlikely if successful.
+    if (!finalResponse) {
+        throw new Error("No response received from stream.");
+    }
+
+    return finalResponse;
+
   } catch (error) {
     handleGeminiError(error);
   }
