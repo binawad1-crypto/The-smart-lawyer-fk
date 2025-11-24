@@ -306,22 +306,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     }, [services, selectedCategory, searchQuery, favorites]);
 
     const sidebarCategories = useMemo(() => {
-        const dynamicCategories = categories.map(cat => {
-            const IconComponent = iconMap[cat.icon] || Gavel;
-            return {
-                id: cat.id,
-                label: cat.title[language],
-                icon: IconComponent,
-                color: 'text-primary-600'
-            };
-        });
-    
-        return [
-            { id: 'all', label: t('allCategories'), icon: LayoutGrid, color: 'text-gray-400' },
-            { id: 'favorites', label: t('favorites'), icon: Star, color: 'text-primary-400' },
-            ...dynamicCategories
-        ];
-    }, [categories, language, t]);
+        return categories; // Return raw categories, we will map them in render
+    }, [categories]);
     
 
     const toggleFavorite = (e: React.MouseEvent, serviceId: string) => {
@@ -741,92 +727,83 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         return (
         <div className="flex flex-col h-full rounded-2xl bg-[#1c1c1e] shadow-lg border border-white/10 overflow-hidden w-full min-w-0">
-            {/* Header */}
-            <div className="h-auto py-6 min-h-[5rem] flex flex-col justify-center px-6 bg-gradient-to-r from-primary-700 to-primary-600 border-b border-primary-600/30 shrink-0 shadow-sm text-center">
-                 <div className="flex flex-col items-center min-w-0 overflow-hidden text-center w-full">
-                    <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo w-full">
-                        {siteName}
-                    </h2>
-                    <p className="text-xs text-primary-100 font-bold tracking-wide opacity-90 font-cairo w-full">
-                        {siteSubtitle}
-                    </p>
+            {/* Header - Gold Theme */}
+            <div className="bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 border-b border-primary-500/30 shrink-0 shadow-lg shadow-primary-500/20 relative overflow-hidden">
+                
+                {/* Title and Logo */}
+                <div className="px-6 py-4 flex items-center gap-3 relative z-10">
+                    {/* Logo */}
+                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 flex-shrink-0">
+                        <Sparkles className="text-white" size={24} strokeWidth={2.5} />
+                    </div>
+                    
+                    {/* Name */}
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-black tracking-tight leading-none text-white font-cairo drop-shadow-lg">
+                            {siteName}
+                        </h2>
+                        <p className="text-xs text-primary-50 font-semibold tracking-wide opacity-95 font-cairo mt-0.5 drop-shadow-md">
+                            {siteSubtitle}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Top Buttons Grid - Glassy White Style - Inside Header */}
+                <div className="px-4 pb-4 relative z-10" data-tutorial="sidebar-buttons">
+                    <div className="grid grid-cols-3 gap-2">
+                        {[
+                            { id: 'all', label: language === 'ar' ? 'المساعد' : 'Assistant' },
+                            { id: 'history', label: language === 'ar' ? 'المحفوظات' : 'History', onClickExtra: () => setResult('') },
+                            { id: 'favorites', label: language === 'ar' ? 'المفضلة' : 'Favorites' }
+                        ].map(btn => {
+                            const isActive = selectedCategory === btn.id;
+                            return (
+                                <button
+                                    key={btn.id}
+                                    onClick={() => {
+                                        setSelectedCategory(btn.id);
+                                        setSelectedService(null);
+                                        if (btn.onClickExtra) btn.onClickExtra();
+                                        setIsSidebarCollapsed(true);
+                                    }}
+                                    className={`
+                                        relative overflow-hidden flex items-center justify-center px-2 py-2.5 rounded-xl transition-all duration-300 group backdrop-blur-sm
+                                        ${isActive 
+                                            ? 'bg-white dark:bg-white border-2 border-primary-500/70 dark:border-primary-500/60 shadow-[0_0_8px_rgba(205,165,100,0.4)] dark:shadow-[0_0_8px_rgba(205,165,100,0.35)]'
+                                            : 'bg-white/90 dark:bg-white/80 border border-white/60 dark:border-white/50 hover:bg-white dark:hover:bg-white/90 hover:border-white/80 dark:hover:border-white/70 hover:shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                                        }
+                                    `}
+                                >
+                                    {/* Background Pattern */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                    {/* Text Content */}
+                                    <span className="text-primary-800 dark:text-primary-700 font-bold text-xs leading-tight font-cairo drop-shadow-sm text-center relative z-10 truncate">
+                                        {btn.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="p-4 border-b border-white/10">
+            {/* Search - Outside Header */}
+            <div className="p-4 border-b border-primary-500/20">
                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-3 rtl:left-auto" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-600 dark:text-primary-500 rtl:right-3 rtl:left-auto z-10" size={18} />
                     <input
                         type="text"
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         data-tutorial="search"
-                        className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white/5 text-white border border-white/10 focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm transition-all placeholder-gray-500"
+                        className="w-full py-2.5 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white/90 dark:bg-white/80 text-gray-900 dark:text-gray-900 border border-white/60 dark:border-white/50 focus:border-primary-500/70 dark:focus:border-primary-500/60 focus:ring-2 focus:ring-primary-500/30 focus:outline-none text-sm font-medium transition-all placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:bg-white dark:hover:bg-white/90 hover:border-white/80 dark:hover:border-white/70"
                     />
                 </div>
             </div>
 
             {/* Categories Navigation */}
-            <div className="flex-grow overflow-y-auto p-2 w-full min-w-0 scrollbar-hide">
-                
-                {/* Top Buttons Grid */}
-                <div className="grid grid-cols-3 gap-1.5 -mt-1 mb-2" data-tutorial="sidebar-buttons">
-                    {/* Assistant */}
-                    <button
-                        onClick={() => {
-                            setSelectedCategory('all');
-                            setSelectedService(null);
-                            setIsSidebarCollapsed(true);
-                        }}
-                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
-                            selectedCategory === 'all'
-                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
-                        }`}
-                    >
-                        {language === 'ar' ? 'المساعد' : 'Assistant'}
-                    </button>
-
-                    {/* History */}
-                    <button
-                        onClick={() => {
-                            setSelectedCategory('history');
-                            setSelectedService(null);
-                            setResult('');
-                            setIsSidebarCollapsed(true);
-                        }}
-                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
-                            selectedCategory === 'history'
-                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
-                        }`}
-                    >
-                        {language === 'ar' ? 'المحفوظات' : 'History'}
-                    </button>
-
-                    {/* Favorites */}
-                    <button
-                        onClick={() => {
-                            setSelectedCategory('favorites');
-                            setSelectedService(null);
-                            setIsSidebarCollapsed(true);
-                        }}
-                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
-                            selectedCategory === 'favorites'
-                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
-                        }`}
-                    >
-                        {language === 'ar' ? 'المفضلة' : 'Favorites'}
-                    </button>
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-white/10 my-2 mx-1"></div>
-
-                {/* Categories List */}
+            <div className="flex-grow overflow-y-auto p-2 space-y-2 w-full min-w-0 scrollbar-hide">
                 <div className="space-y-1" data-tutorial="categories">
                     {loadingCategories ? (
                         <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
@@ -834,13 +811,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         const isActive = selectedCategory === cat.id;
                         const IconComponent = iconMap[cat.icon] || Gavel;
                         
-                        // Dynamic classes based on prompt requirements
                         let buttonClasses = `font-cairo w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 group`;
             
                         if (isActive) {
                             buttonClasses += ' bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md';
                         } else {
-                            buttonClasses += ' text-gray-300 hover:bg-white/5';
+                            buttonClasses += ' text-primary-300 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/15';
                         }
 
                         return (
@@ -857,22 +833,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                     <>
                                         <div className="w-4">{isActive && <ArrowLeft size={14} />}</div>
                                         <span className="flex-grow text-right truncate">{cat.title[language]}</span>
-                                        <div className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                                            isActive ? 'bg-white/20' : 'bg-white/5'
+                                        <div className={`p-2 rounded-lg transition-all duration-200 ${
+                                            isActive 
+                                                ? 'bg-white/20 backdrop-blur-sm shadow-lg border border-white/30' 
+                                                : 'bg-primary-500/30 dark:bg-primary-500/25 backdrop-blur-sm border border-primary-500/40 dark:border-primary-500/30 group-hover:bg-primary-500/40 dark:group-hover:bg-primary-500/35'
                                         }`}>
                                             <IconComponent size={18} className={
-                                                isActive ? 'text-white' : 'text-primary-400'
-                                            } />
+                                                isActive ? 'text-white' : 'text-primary-400 dark:text-primary-500'
+                                            } strokeWidth={1.5} />
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                                            isActive ? 'bg-white/20' : 'bg-white/5'
+                                        <div className={`p-2 rounded-lg transition-all duration-200 ${
+                                            isActive 
+                                                ? 'bg-white/20 backdrop-blur-sm shadow-lg border border-white/30' 
+                                                : 'bg-primary-500/30 dark:bg-primary-500/25 backdrop-blur-sm border border-primary-500/40 dark:border-primary-500/30 group-hover:bg-primary-500/40 dark:group-hover:bg-primary-500/35'
                                         }`}>
                                             <IconComponent size={18} className={
-                                                isActive ? 'text-white' : 'text-primary-400'
-                                            } />
+                                                isActive ? 'text-white' : 'text-primary-400 dark:text-primary-500'
+                                            } strokeWidth={1.5} />
                                         </div>
                                         <span className="flex-grow text-left truncate">{cat.title[language]}</span>
                                         <div className="w-4">{isActive && <ChevronRightIcon size={14} />}</div>
@@ -897,8 +877,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         return (
             <div className="flex flex-col h-full rounded-2xl bg-gray-50 dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden relative w-full min-w-0">
-                 {/* Header for Main Content */}
-                 <div className="h-16 flex items-center px-6 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border text-white shrink-0 justify-between shadow-sm relative z-10">
+                 {/* Header for Main Content - Gold Theme */}
+                 <div className="h-16 flex items-center px-6 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 dark:from-primary-900 dark:via-primary-800 dark:to-primary-700 border-b border-primary-500/30 dark:border-primary-500/20 text-white shrink-0 justify-between shadow-lg shadow-primary-500/20 relative z-10">
                     {selectedService ? (
                         <div className="flex items-center gap-3 w-full">
                              <button onClick={handleBackToServices} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
@@ -913,7 +893,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                             <h3 className="font-cairo font-bold text-white text-lg">
                                 {selectedCategory === 'all' ? (language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant') 
                                 : selectedCategory === 'history' ? (language === 'ar' ? 'المحفوظات' : 'Saved History')
-                                : sidebarCategories.find(c => c.id === selectedCategory)?.label}
+                                : categories.find(c => c.id === selectedCategory)?.title[language]}
                             </h3>
                             <button
                                 onClick={handleToggleServices}
@@ -1064,7 +1044,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                                 <button
                                                     key={service.id}
                                                     onClick={() => handleServiceClick(service)}
-                                                    className="group relative flex flex-col p-4 sm:p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[140px] sm:min-h-[160px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
+                                                    className="group relative flex flex-col p-4 sm:p-5 bg-white dark:bg-dark-bg rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 dark:shadow-none border border-gray-200 dark:border-dark-border transition-all duration-300 h-auto min-h-[110px] sm:min-h-[120px] overflow-hidden text-right rtl:text-right ltr:text-left ring-1 ring-transparent hover:ring-primary-500/50 dark:hover:ring-primary-400/50"
                                                 >
                                                     <div className="flex items-start justify-between w-full mb-3 sm:mb-4">
                                                         <div className="p-1 text-gray-300 hover:text-primary-400 transition-colors" 
@@ -1079,10 +1059,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
                                                     <div className="flex flex-col justify-between flex-grow w-full">
                                                         <div>
-                                                            <h3 className="font-cairo text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2">
+                                                            <h3 className="font-cairo text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-0.5 leading-tight line-clamp-2 overflow-hidden">
                                                                 {service.title[language] || service.title['en']}
                                                             </h3>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed font-normal opacity-90 hidden sm:block">
+                                                            <p 
+                                                                className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal opacity-90 hidden sm:block mt-1 overflow-hidden"
+                                                                style={{ 
+                                                                    display: '-webkit-box', 
+                                                                    WebkitLineClamp: 2, 
+                                                                    WebkitBoxOrient: 'vertical', 
+                                                                    overflow: 'hidden', 
+                                                                    maxHeight: '2.8em', 
+                                                                    lineHeight: '1.4em', 
+                                                                    minHeight: '2.6em' 
+                                                                }}
+                                                            >
                                                                 {service.description[language] || service.description['en']}
                                                             </p>
                                                         </div>
@@ -1126,9 +1117,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
         <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0 relative" data-tutorial="output-panel">
-             <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
+             {/* Output Header - Gold Theme */}
+             <div className="h-16 flex items-center px-4 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 dark:from-primary-900 dark:via-primary-800 dark:to-primary-700 border-b border-primary-500/30 dark:border-primary-500/20 shrink-0 justify-between shadow-lg shadow-primary-500/20 relative z-10">
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Sparkles size={16} className="text-yellow-200"/>
+                    <Sparkles size={16} className="text-primary-100"/>
                     {t('results')}
                 </h3>
                 <div className="flex items-center gap-1">
@@ -1268,9 +1260,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10 rounded-t-2xl">
+                {/* Modal Header - Gold Theme */}
+                <div className="h-16 flex items-center px-4 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 dark:from-primary-900 dark:via-primary-800 dark:to-primary-700 border-b border-primary-500/30 dark:border-primary-500/20 shrink-0 justify-between shadow-lg shadow-primary-500/20 relative z-10 rounded-t-2xl">
                     <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        <Sparkles size={16} className="text-yellow-200"/>
+                        <Sparkles size={16} className="text-primary-100"/>
                         {t('results')}
                     </h3>
                     <div className="flex items-center gap-1">
