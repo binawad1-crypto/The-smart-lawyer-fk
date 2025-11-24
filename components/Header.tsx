@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle, LifeBuoy } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Shield, Gem, User as UserIcon, ChevronDown, Home, LayoutDashboard, Bell, Info, AlertTriangle, CheckCircle, LifeBuoy, HelpCircle } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { useTheme } from '../hooks/useTheme';
@@ -19,6 +19,7 @@ interface HeaderProps {
     onSupportClick: () => void;
     onHomeClick: () => void;
     onServicesClick?: () => void;
+    onTutorialClick?: () => void;
     view?: View;
 }
 
@@ -156,7 +157,7 @@ const NotificationsMenu: React.FC = () => {
                                         <div>
                                             <h5 className="text-sm font-bold text-gray-800 dark:text-primary-100 mb-1">{notif.title[language]}</h5>
                                             <p className="text-xs text-gray-600 dark:text-primary-300 leading-relaxed">{notif.message[language]}</p>
-                                            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 block">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 mt-2 block">
                                                 {notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleDateString() : ''}
                                             </span>
                                         </div>
@@ -172,7 +173,7 @@ const NotificationsMenu: React.FC = () => {
 };
 
 
-const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onSupportClick, onHomeClick, onServicesClick, view }) => {
+const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick, onProfileClick, onSupportClick, onHomeClick, onServicesClick, onTutorialClick, view }) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { currentUser } = useAuth();
@@ -201,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none truncate w-full group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {siteName}
                   </h1>
-                  <p className="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 font-bold tracking-wide truncate w-full mt-0.5">
+                  <p className="text-xs sm:text-sm text-primary-600 dark:text-primary-400 font-bold tracking-wide truncate w-full mt-0.5">
                     {siteSubtitle}
                   </p>
                 </div>
@@ -210,7 +211,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
           {/* Spacer for mobile/tablet centering if needed, or just allow tools to flex right */}
           <div className="lg:hidden flex-grow"></div>
 
-          <div className="flex items-center space-x-1 lg:space-x-2 flex-shrink-0">
+          <div className="flex items-center space-x-1 lg:space-x-2 flex-shrink-0" data-tutorial="header-buttons">
             {currentUser && onServicesClick && (
                 <div className="hidden lg:block">
                     <button onClick={onServicesClick} className="flex items-center gap-2 p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors" title={t('services')}>
@@ -230,6 +231,17 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onAdminClick, onLogoClick
 
              {/* Notification Bell */}
              {currentUser && <NotificationsMenu />}
+
+             {/* Tutorial Button */}
+             {currentUser && onTutorialClick && (
+                <button 
+                    onClick={onTutorialClick} 
+                    className="p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors"
+                    title={language === 'ar' ? 'تعلم استخدام التطبيق' : 'Learn how to use the app'}
+                >
+                    <HelpCircle size={20} />
+                </button>
+             )}
 
              <button onClick={toggleTheme} className="p-2 rounded-full text-slate-600 dark:text-primary-200 hover:bg-primary-50 dark:hover:bg-dark-card-bg transition-colors">
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}

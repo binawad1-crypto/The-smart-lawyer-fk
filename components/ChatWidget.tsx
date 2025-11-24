@@ -159,7 +159,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col">
                     <h3 className="font-bold text-lg text-gray-800 dark:text-white">{t('aiAssistant')}</h3>
                     {chatContext && (
-                        <span className="text-[10px] text-primary-600 dark:text-primary-400 flex items-center gap-1">
+                        <span className="text-xs text-primary-600 dark:text-primary-400 flex items-center gap-1">
                             <MessageSquarePlus size={10} />
                             {language === 'ar' ? 'مرتبط بالنتيجة الحالية' : 'Linked to current result'}
                         </span>

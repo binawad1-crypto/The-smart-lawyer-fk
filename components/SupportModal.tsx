@@ -227,7 +227,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                       {ticket.unreadUser && <div className="absolute top-0 right-0 rtl:left-0 w-2 h-full bg-primary-500"></div>}
                       <div className="flex justify-between items-start mb-2">
                         <h3 className={`font-bold text-sm truncate pr-2 rtl:pl-2 ${ticket.unreadUser ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{ticket.subject}</h3>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap border ${ticket.status === 'open' ? 'bg-primary-50 text-primary-700 border-primary-200' : ticket.status === 'answered' ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap border ${ticket.status === 'open' ? 'bg-primary-50 text-primary-700 border-primary-200' : ticket.status === 'answered' ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                           {t(ticket.status)}
                         </span>
                       </div>
@@ -309,7 +309,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({ className = '' }) => {
                    <div key={msg.id} className={`flex ${msg.senderRole === 'user' ? 'justify-end' : 'justify-start'}`}>
                      <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'user' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700'}`}>
                         <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        <div className={`text-[10px] mt-1 opacity-70 text-right`}>
+                        <div className={`text-xs mt-1 opacity-70 text-right`}>
                           {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
                         </div>
                      </div>

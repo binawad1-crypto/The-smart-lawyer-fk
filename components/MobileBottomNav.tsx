@@ -61,7 +61,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, onNaviga
         }`}
       >
         <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-        <span className="text-[10px] sm:text-[11px] font-medium truncate max-w-[60px]">
+        <span className="text-xs sm:text-sm font-medium truncate max-w-[60px]">
           {item.label}
         </span>
       </button>

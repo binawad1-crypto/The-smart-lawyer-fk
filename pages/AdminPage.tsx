@@ -1498,257 +1498,260 @@ const AdminPage = () => {
                                     <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteNameAr')}</label>
                                     <input type="text" value={siteSettings.siteName.ar} onChange={e => setSiteSettings({...siteSettings, siteName: {...siteSettings.siteName, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
                                 </div>
+                            </div>
+                            
+                            {/* Subtitles */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteSubtitleEn')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleEn')}</label>
                                     <input type="text" value={siteSettings.siteSubtitle.en} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('siteSubtitleAr')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('siteSubtitleAr')}</label>
                                     <input type="text" value={siteSettings.siteSubtitle.ar} onChange={e => setSiteSettings({...siteSettings, siteSubtitle: {...siteSettings.siteSubtitle, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" />
                                 </div>
                             </div>
 
-                            <div className="space-y-4 pt-4 border-t dark:border-gray-700">
-                                <h3 className="font-bold text-lg dark:text-white">Branding & Images</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Logo Config */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('logo')}</label>
-                                        <div className="flex flex-col gap-3">
-                                            {/* File Upload */}
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1">
-                                                    <input 
-                                                        type="file" 
-                                                        accept="image/*"
-                                                        onChange={e => setLogoFile(e.target.files?.[0] || null)} 
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
-                                                    />
-                                                    {logoFile && <p className="text-xs text-primary-600 mt-1 font-semibold">File selected: {logoFile.name}</p>}
-                                                </div>
-                                                {siteSettings.logoUrl && !logoFile && (
-                                                    <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-                                                        <img src={siteSettings.logoUrl} alt="Current Logo" className="h-10 w-auto object-contain" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* URL Input Fallback */}
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <LinkIcon size={14} className="text-gray-400"/>
-                                                </div>
-                                                <input 
-                                                    type="text" 
-                                                    value={siteSettings.logoUrl} 
-                                                    onChange={e => setSiteSettings({...siteSettings, logoUrl: e.target.value})}
-                                                    placeholder="Or paste Logo URL here directly" 
-                                                    className="w-full pl-10 p-2 text-xs border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                            {/* SEO */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionEn')}</label>
+                                <textarea value={siteSettings.metaDescription.en} onChange={e => setSiteSettings({...siteSettings, metaDescription: {...siteSettings.metaDescription, en: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" rows={3} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('metaDescriptionAr')}</label>
+                                <textarea value={siteSettings.metaDescription.ar} onChange={e => setSiteSettings({...siteSettings, metaDescription: {...siteSettings.metaDescription, ar: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" rows={3} />
+                            </div>
 
-                                    {/* Favicon Config */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('favicon')}</label>
-                                        <div className="flex flex-col gap-3">
-                                            {/* File Upload */}
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1">
-                                                    <input 
-                                                        type="file" 
-                                                        accept="image/*"
-                                                        onChange={e => setFaviconFile(e.target.files?.[0] || null)} 
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer bg-white dark:bg-gray-700" 
-                                                    />
-                                                    {faviconFile && <p className="text-xs text-primary-600 mt-1 font-semibold">File selected: {faviconFile.name}</p>}
-                                                </div>
-                                                {siteSettings.faviconUrl && !faviconFile && (
-                                                    <div className="border p-1 rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-                                                        <img src={siteSettings.faviconUrl} alt="Current Favicon" className="h-8 w-8 object-contain" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* URL Input Fallback */}
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <LinkIcon size={14} className="text-gray-400"/>
-                                                </div>
-                                                <input 
-                                                    type="text" 
-                                                    value={siteSettings.faviconUrl} 
-                                                    onChange={e => setSiteSettings({...siteSettings, faviconUrl: e.target.value})}
-                                                    placeholder="Or paste Favicon URL here directly" 
-                                                    className="w-full pl-10 p-2 text-xs border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                            {/* Images */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('logo')}</label>
+                                    <input type="file" accept="image/*" onChange={e => e.target.files && setLogoFile(e.target.files[0])} className="w-full p-2 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
+                                    {siteSettings.logoUrl && <img src={siteSettings.logoUrl} alt="Logo" className="h-10 object-contain mt-2" />}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('favicon')}</label>
+                                    <input type="file" accept="image/*" onChange={e => e.target.files && setFaviconFile(e.target.files[0])} className="w-full p-2 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
+                                    {siteSettings.faviconUrl && <img src={siteSettings.faviconUrl} alt="Favicon" className="h-8 w-8 object-contain mt-2" />}
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t dark:border-gray-700">
-                                <label className="flex items-center space-x-3 cursor-pointer">
-                                    <input type="checkbox" checked={siteSettings.isMaintenanceMode} onChange={e => setSiteSettings({...siteSettings, isMaintenanceMode: e.target.checked})} className="h-5 w-5 rounded text-primary-600 focus:ring-primary-500" />
-                                    <span className="font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('enableMaintenance')}</span>
-                                </label>
+                            {/* Maintenance Mode */}
+                            <div className="flex items-center space-x-3 pt-4">
+                                <input 
+                                    type="checkbox" 
+                                    id="maintenance" 
+                                    checked={siteSettings.isMaintenanceMode} 
+                                    onChange={e => setSiteSettings({...siteSettings, isMaintenanceMode: e.target.checked})} 
+                                    className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="maintenance" className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('enableMaintenance')}</label>
                             </div>
                         </form>
                     )}
 
                     {activeTab === 'marketing' && (
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-bold dark:text-white">{t('adPixels')}</h2>
-                            <p className="text-gray-500 text-sm">{t('adPixelsDesc')}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6 max-w-3xl">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold dark:text-white">{t('marketing')}</h2>
+                                <button onClick={handleSaveSettings} disabled={savingSettings} className="bg-primary-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700 shadow-lg disabled:bg-primary-400">
+                                    {savingSettings && <Loader2 className="animate-spin" size={18}/>} {t('saveSettings')}
+                                </button>
+                            </div>
+                            
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700/50">
+                                <h3 className="font-bold text-yellow-800 dark:text-yellow-400 mb-1">{t('adPixels')}</h3>
+                                <p className="text-sm text-yellow-700 dark:text-yellow-500">{t('adPixelsDesc')}</p>
+                            </div>
+
+                            <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('googleTagId')}</label>
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('googleTagId')}</label>
                                     <input type="text" value={siteSettings.adPixels?.googleTagId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, googleTagId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="G-XXXXXXXXXX" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('facebookPixelId')}</label>
-                                    <input type="text" value={siteSettings.adPixels?.facebookPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, facebookPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="1234567890" />
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('facebookPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.facebookPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, facebookPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('snapchatPixelId')}</label>
-                                    <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, snapchatPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('snapchatPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.snapchatPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, snapchatPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-card-bg">{t('tiktokPixelId')}</label>
-                                    <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, tiktokPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" placeholder="CXXXXXXXXXXXX" />
+                                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{t('tiktokPixelId')}</label>
+                                    <input type="text" value={siteSettings.adPixels?.tiktokPixelId || ''} onChange={e => setSiteSettings({...siteSettings, adPixels: {...siteSettings.adPixels, tiktokPixelId: e.target.value}})} className="w-full p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" />
                                 </div>
                             </div>
-                            <button onClick={handleSaveSettings} className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 shadow-md">{t('saveSettings')}</button>
                         </div>
                     )}
 
                     {activeTab === 'notifications' && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-bold dark:text-white">{t('createNotification')}</h2>
-                            <form onSubmit={handleCreateNotification} className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 space-y-4">
+                            <h2 className="text-xl font-bold dark:text-white">{t('notifications')}</h2>
+                            
+                            <form onSubmit={handleCreateNotification} className="bg-gray-50 dark:bg-dark-bg/50 p-6 rounded-xl border border-gray-200 dark:border-dark-border space-y-4">
+                                <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('createNotification')}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input type="text" placeholder={t('titleEn')} value={newNotification.title?.en} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
-                                    <input type="text" placeholder={t('titleAr')} value={newNotification.title?.ar} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required />
-                                    <textarea placeholder={t('messageEn')} value={newNotification.message?.en} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, en: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required rows={2} />
-                                    <textarea placeholder={t('messageAr')} value={newNotification.message?.ar} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, ar: e.target.value}})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required rows={2} />
+                                    <input type="text" placeholder={t('titleEn')} value={newNotification.title?.en} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, en: e.target.value}})} className="p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                    <input type="text" placeholder={t('titleAr')} value={newNotification.title?.ar} onChange={e => setNewNotification({...newNotification, title: {...newNotification.title!, ar: e.target.value}})} className="p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required />
+                                    <input type="text" placeholder={t('messageEn')} value={newNotification.message?.en} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, en: e.target.value}})} className="p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white" required />
+                                    <input type="text" placeholder={t('messageAr')} value={newNotification.message?.ar} onChange={e => setNewNotification({...newNotification, message: {...newNotification.message!, ar: e.target.value}})} className="p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white text-right" required />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <select value={newNotification.type} onChange={e => setNewNotification({...newNotification, type: e.target.value as any})} className="p-2 border rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-white">
-                                        <option value="info">Info</option>
-                                        <option value="success">Success</option>
-                                        <option value="warning">Warning</option>
-                                        <option value="alert">Alert</option>
-                                    </select>
-                                    <button type="submit" className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700">{t('createNotification')}</button>
+                                    <div className="flex gap-4">
+                                        <select value={newNotification.type} onChange={e => setNewNotification({...newNotification, type: e.target.value as any})} className="p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white">
+                                            <option value="info">{t('info')}</option>
+                                            <option value="success">{t('success')}</option>
+                                            <option value="warning">{t('warning')}</option>
+                                            <option value="alert">{t('alert')}</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" className="bg-primary-600 text-white px-6 py-2.5 rounded-xl hover:bg-primary-700 font-bold flex items-center gap-2">
+                                        <Send size={18} /> {t('add')}
+                                    </button>
                                 </div>
                             </form>
 
                             <div className="space-y-4">
-                                <h3 className="font-bold dark:text-white">Active Notifications</h3>
                                 {notifications.map(notif => (
-                                    <div key={notif.id} className={`p-4 rounded-lg border flex justify-between items-center ${notif.isActive ? 'bg-white dark:bg-dark-card-bg' : 'bg-gray-100 dark:bg-gray-900 opacity-60'}`}>
+                                    <div key={notif.id} className="bg-white dark:bg-dark-card-bg p-4 rounded-xl border border-gray-200 dark:border-dark-border flex justify-between items-center shadow-sm">
                                         <div>
-                                            <h4 className="font-bold text-gray-900 dark:text-white">{notif.title[language]}</h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">{notif.message[language]}</p>
-                                            <span className="text-xs text-gray-400">{new Date(notif.createdAt.seconds * 1000).toLocaleDateString()}</span>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="font-bold text-gray-900 dark:text-white">{notif.title[language]}</h4>
+                                                <span className={`text-xs px-2 py-0.5 rounded ${notif.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {notif.isActive ? t('active') : t('inactive')}
+                                                </span>
+                                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded capitalize">{notif.type}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">{notif.message[language]}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleDateString() : ''}</p>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <button onClick={() => toggleNotificationStatus(notif.id, notif.isActive)} className={`px-3 py-1 rounded-full text-xs ${notif.isActive ? 'bg-primary-100 text-primary-800' : 'bg-gray-200 text-gray-800'}`}>
-                                                {notif.isActive ? t('active') : t('inactive')}
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => toggleNotificationStatus(notif.id, notif.isActive)} className={`p-2 rounded-lg ${notif.isActive ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
+                                                {notif.isActive ? t('disable') : t('enable')}
                                             </button>
-                                            <button onClick={() => handleDeleteNotification(notif.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><Trash2 size={18}/></button>
+                                            <button onClick={() => handleDeleteNotification(notif.id)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
+                                {notifications.length === 0 && (
+                                    <div className="text-center text-gray-500 py-8">{t('noNotificationsFound')}</div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'support' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-                            {/* Ticket List */}
-                            <div className="lg:col-span-1 border-r border-gray-200 dark:border-gray-700 overflow-y-auto pr-2 custom-scrollbar">
-                                <div className="space-y-3">
-                                    {tickets.map(ticket => (
-                                        <div 
-                                            key={ticket.id}
-                                            onClick={() => setSelectedTicket(ticket)}
-                                            className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${selectedTicket?.id === ticket.id ? 'bg-primary-50 border-primary-500 dark:bg-primary-900/20' : 'bg-white dark:bg-dark-card-bg border-gray-200 dark:border-dark-border'} ${ticket.unreadAdmin ? 'border-l-4 border-l-primary-500' : ''}`}
-                                        >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">{ticket.subject}</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'open' ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-600'}`}>{ticket.status}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-500 truncate">{ticket.userEmail}</p>
-                                            <p className="text-[10px] text-gray-400 mt-2 text-right">{ticket.lastUpdate?.toDate().toLocaleDateString()}</p>
-                                        </div>
-                                    ))}
-                                    {tickets.length === 0 && <p className="text-center text-gray-500 py-10">{t('noTickets')}</p>}
-                                </div>
-                            </div>
-
-                            {/* Chat View */}
-                            <div className="lg:col-span-2 flex flex-col h-full bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden">
-                                {selectedTicket ? (
-                                    <>
-                                        <div className="p-4 bg-white dark:bg-dark-card-bg border-b border-gray-200 dark:border-gray-700 shadow-sm">
-                                            <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
-                                            <p className="text-xs text-gray-500">{selectedTicket.userEmail} - {selectedTicket.type}</p>
-                                        </div>
-                                        <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                                            {messages.map(msg => (
-                                                <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-dark-card-bg border border-gray-200 dark:border-gray-700 rounded-bl-none'}`}>
-                                                        <p className="whitespace-pre-wrap">{msg.content}</p>
-                                                        <p className="text-[10px] opacity-70 mt-1 text-right">{msg.createdAt?.toDate().toLocaleTimeString()}</p>
-                                                    </div>
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-bold dark:text-white">{t('support')}</h2>
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                                <div className="bg-gray-50 dark:bg-dark-bg/50 rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden flex flex-col">
+                                    <div className="p-4 border-b border-gray-200 dark:border-dark-border font-bold">Tickets</div>
+                                    <div className="flex-grow overflow-y-auto">
+                                        {tickets.map(ticket => (
+                                            <div 
+                                                key={ticket.id} 
+                                                onClick={() => setSelectedTicket(ticket)}
+                                                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-white dark:hover:bg-gray-700/50 ${selectedTicket?.id === ticket.id ? 'bg-white dark:bg-gray-700/50' : ''}`}
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h4 className={`font-bold text-sm truncate ${ticket.unreadAdmin ? 'text-primary-600' : 'text-gray-800 dark:text-white'}`}>{ticket.subject}</h4>
+                                                    {ticket.unreadAdmin && <span className="w-2 h-2 rounded-full bg-primary-600"></span>}
                                                 </div>
-                                            ))}
-                                            <div ref={messagesEndRef} />
-                                        </div>
-                                        <form onSubmit={handleReplyTicket} className="p-4 bg-white dark:bg-dark-card-bg border-t border-gray-200 dark:border-gray-700 flex gap-3">
-                                            <input 
-                                                type="text" 
-                                                value={replyMessage} 
-                                                onChange={e => setReplyMessage(e.target.value)} 
-                                                placeholder={t('typeReply')} 
-                                                className="flex-grow p-3 border rounded-xl bg-white dark:bg-gray-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none" 
-                                            />
-                                            <button type="submit" disabled={!replyMessage.trim()} className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 disabled:bg-gray-300"><Send size={20}/></button>
-                                        </form>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                        <MessageSquare size={48} className="mb-4 opacity-50" />
-                                        <p>{t('selectTicket')}</p>
+                                                <p className="text-xs text-gray-500">{ticket.userEmail}</p>
+                                                <div className="flex justify-between items-center mt-2">
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded ${ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{ticket.status}</span>
+                                                    <span className="text-[10px] text-gray-400">{ticket.lastUpdate?.toDate().toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                )}
+                                </div>
+
+                                <div className="lg:col-span-2 bg-white dark:bg-dark-card-bg rounded-xl border border-gray-200 dark:border-dark-border flex flex-col overflow-hidden">
+                                    {selectedTicket ? (
+                                        <>
+                                            <div className="p-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/30 flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 dark:text-white">{selectedTicket.subject}</h3>
+                                                    <p className="text-xs text-gray-500">{selectedTicket.id} - {selectedTicket.type}</p>
+                                                </div>
+                                                <div>
+                                                    <select 
+                                                        value={selectedTicket.status} 
+                                                        onChange={async (e) => {
+                                                            await updateDoc(doc(db, 'support_tickets', selectedTicket.id), { status: e.target.value });
+                                                            setSelectedTicket({...selectedTicket, status: e.target.value as any});
+                                                            fetchTickets();
+                                                        }}
+                                                        className="text-xs p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                                                    >
+                                                        <option value="open">Open</option>
+                                                        <option value="answered">Answered</option>
+                                                        <option value="closed">Closed</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-dark-bg/50">
+                                                {messages.map(msg => (
+                                                    <div key={msg.id} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                                        <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.senderRole === 'admin' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600'}`}>
+                                                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                                                            <p className="text-[10px] opacity-70 text-right mt-1">{msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString() : 'Sending...'}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <div ref={messagesEndRef} />
+                                            </div>
+
+                                            <form onSubmit={handleReplyTicket} className="p-4 border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card-bg">
+                                                <div className="flex gap-2">
+                                                    <input 
+                                                        type="text" 
+                                                        value={replyMessage} 
+                                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                                        placeholder={t('typeReply')}
+                                                        className="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                                                    />
+                                                    <button type="submit" disabled={!replyMessage.trim()} className="bg-primary-600 text-white p-2 rounded-lg hover:bg-primary-700 disabled:bg-gray-300">
+                                                        <Send size={20} className="rtl:rotate-180"/>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                            <MessageSquare size={48} className="mb-2 opacity-50" />
+                                            <p>{t('selectTicket')}</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Modals */}
-            {selectedUserForAction && (
-                <>
-                    <AddTokenModal 
-                        isOpen={isTokenModalOpen} 
-                        onClose={() => setIsTokenModalOpen(false)} 
-                        userId={selectedUserForAction.id}
-                        userEmail={selectedUserForAction.email}
-                        onSuccess={fetchUsers}
-                    />
-                    <GrantSubscriptionModal
-                        isOpen={isGrantModalOpen}
-                        onClose={() => setIsGrantModalOpen(false)}
-                        users={users}
-                        plans={plans}
-                        onGrant={fetchUsers}
-                        initialUserId={selectedUserForAction.id}
-                    />
-                </>
-            )}
+            <GrantSubscriptionModal 
+                isOpen={isGrantModalOpen} 
+                onClose={() => setIsGrantModalOpen(false)} 
+                users={users} 
+                plans={plans}
+                onGrant={fetchUsersWithSubscriptions}
+                initialUserId={selectedUserForAction?.id}
+            />
+
+            <AddTokenModal
+                isOpen={isTokenModalOpen}
+                onClose={() => setIsTokenModalOpen(false)}
+                userId={selectedUserForAction?.id || ''}
+                userEmail={selectedUserForAction?.email || ''}
+                onSuccess={fetchUsers}
+            />
         </div>
     );
 };

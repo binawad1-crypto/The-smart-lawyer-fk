@@ -191,6 +191,18 @@ const App: React.FC = () => {
             onSupportClick={() => handleNavigate('support')}
             onHomeClick={() => setView('landing')}
             onServicesClick={() => setView('dashboard')}
+            onTutorialClick={() => {
+                if (view !== 'dashboard') {
+                    setView('dashboard');
+                    setTimeout(() => {
+                        const event = new CustomEvent('openTutorial');
+                        window.dispatchEvent(event);
+                    }, 500);
+                } else {
+                    const event = new CustomEvent('openTutorial');
+                    window.dispatchEvent(event);
+                }
+            }}
             view={view}
           />
       )}

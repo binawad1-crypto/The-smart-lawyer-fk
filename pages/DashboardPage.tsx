@@ -12,6 +12,7 @@ import { runGemini } from '../services/geminiService';
 import { iconMap } from '../constants';
 // @ts-ignore
 import mammoth from 'mammoth';
+import TutorialGuide from '../components/TutorialGuide';
 
 interface DashboardPageProps {
     onNavigate: (view: 'dashboard' | 'admin' | 'profile' | 'subscriptions') => void;
@@ -139,6 +140,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     const [isResultModalOpen, setIsResultModalOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Mobile sidebar state
 
+    // Tutorial State
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
     const handleToggleServices = () => {
         const nextState = !isExpanded;
         setIsExpanded(nextState);
@@ -180,6 +184,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 console.error("Failed to parse favorites", e);
             }
         }
+    }, []);
+
+    // Check if user has seen tutorial before (only on first visit)
+    useEffect(() => {
+        if (currentUser) {
+            const hasSeenTutorial = localStorage.getItem(`tutorial_seen_${currentUser.uid}`);
+            if (!hasSeenTutorial) {
+                // Show tutorial after a short delay only on first visit
+                setTimeout(() => {
+                    setIsTutorialOpen(true);
+                }, 1000);
+            }
+        }
+    }, [currentUser]);
+
+    // Listen for tutorial open event from Header
+    useEffect(() => {
+        const handleOpenTutorial = () => {
+            setIsTutorialOpen(true);
+        };
+        window.addEventListener('openTutorial', handleOpenTutorial);
+        return () => window.removeEventListener('openTutorial', handleOpenTutorial);
     }, []);
 
     // Fetch History when category is 'history'
@@ -247,6 +273,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         fetchServices();
         fetchCategories();
     }, [t, language]);
+
+    const handleTutorialComplete = () => {
+        setIsTutorialOpen(false);
+        if (currentUser) {
+            localStorage.setItem(`tutorial_seen_${currentUser.uid}`, 'true');
+        }
+    };
 
     const filteredServices = useMemo(() => {
         let filtered = services;
@@ -614,7 +647,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   <title>Print Result</title>
                   <style>
                     @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
-                    body { font-family: 'Noto Naskh Arabic', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                    @import url('https://fonts.cdnfonts.com/css/dubai');
+                    body { font-family: 'Dubai', 'Noto Naskh Arabic', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                     pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
                   </style>
                 </head>
@@ -713,7 +747,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     <h2 className="text-2xl font-black tracking-tight leading-none text-white mb-2 font-cairo w-full">
                         {siteName}
                     </h2>
-                    <p className="text-[10px] text-primary-100 font-bold tracking-wide opacity-90 font-cairo w-full">
+                    <p className="text-xs text-primary-100 font-bold tracking-wide opacity-90 font-cairo w-full">
                         {siteSubtitle}
                     </p>
                 </div>
@@ -728,149 +762,126 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         placeholder={t('searchServicePlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        data-tutorial="search"
                         className="w-full py-2 pl-10 pr-4 rtl:pr-10 rtl:pl-4 rounded-xl bg-white/5 text-white border border-white/10 focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm transition-all placeholder-gray-500"
                     />
                 </div>
             </div>
 
             {/* Categories Navigation */}
-            <div className="flex-grow overflow-y-auto p-3 space-y-2 w-full min-w-0 scrollbar-hide">
-                {loadingCategories ? (
-                    <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
-                ) : sidebarCategories.map(cat => {
-                    const isActive = selectedCategory === cat.id;
-                    
-                    // SPECIAL HANDLING FOR 'all' (The "Smart Assistant" button)
-                    if (cat.id === 'all') {
-                        return (
-                            <React.Fragment key={cat.id}>
-                                <button
-                                    onClick={() => {
-                                        setSelectedCategory(cat.id);
-                                        setSelectedService(null);
-                                        setIsSidebarCollapsed(true);
-                                    }}
-                                    className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group ${
-                                        isActive 
-                                        ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] border-green-400/50 shadow-[0_0_15px_rgba(22,163,74,0.5)] scale-[1.02]' 
-                                        : 'bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#052e16] border-green-900/30 hover:border-green-500/50 hover:shadow-lg'
-                                    } border`}
-                                >
-                                    {/* Background Pattern */}
-                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-
-                                    {/* Icon Container */}
-                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-black/20 text-green-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
-                                        {/* Animated Icon: Sparkles with pulse effect and Gold color */}
-                                        <Sparkles size={24} className="animate-pulse text-yellow-300" fill={isActive ? "#FDE047" : "none"} />
-                                    </div>
-
-                                    {/* Text Content */}
-                                    <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
-                                        <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
-                                            {language === 'ar' ? 'المساعد الذكي' : 'Smart Assistant'}
-                                        </span>
-                                        <span className="text-green-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
-                                            {language === 'ar' ? 'للمحاماة والاستشارات القانونية' : 'For Law & Legal Consulting'}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Active Indicator */}
-                                    {isActive && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
-                                    )}
-                                </button>
-
-                                {/* NEW: History Button (Same Design) */}
-                                <button
-                                    onClick={() => {
-                                        setSelectedCategory('history');
-                                        setSelectedService(null);
-                                        setResult('');
-                                        setIsSidebarCollapsed(true);
-                                    }}
-                                    className={`relative overflow-hidden w-full flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 group mt-3 ${
-                                        selectedCategory === 'history'
-                                        ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] border-green-400/50 shadow-[0_0_15px_rgba(22,163,74,0.5)] scale-[1.02]'
-                                        : 'bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#052e16] border-green-900/30 hover:border-green-500/50 hover:shadow-lg'
-                                    } border`}
-                                >
-                                    {/* Background Pattern */}
-                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-
-                                    {/* Icon Container */}
-                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${selectedCategory === 'history' ? 'bg-white/20 text-white' : 'bg-black/20 text-green-200'} backdrop-blur-sm shadow-inner border border-white/10`}>
-                                        <History size={24} className="animate-pulse text-yellow-300" />
-                                    </div>
-
-                                    {/* Text Content */}
-                                    <div className="flex flex-col items-start text-right rtl:text-right ltr:text-left flex-grow min-w-0">
-                                        <span className="text-white font-black text-lg leading-none mb-1.5 font-cairo truncate w-full drop-shadow-sm">
-                                            {language === 'ar' ? 'المحفوظات' : 'Saved History'}
-                                        </span>
-                                        <span className="text-green-100/80 text-[10px] font-medium truncate w-full font-cairo leading-tight">
-                                            {language === 'ar' ? 'سجل العمليات السابقة' : 'Previous Log'}
-                                        </span>
-                                    </div>
-
-                                    {/* Active Indicator */}
-                                    {selectedCategory === 'history' && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/50 shadow-[0_0_10px_white]"></div>
-                                    )}
-                                </button>
-                            </React.Fragment>
-                        );
-                    }
-
-                    const IconComponent = cat.icon;
-                    let buttonClasses = `font-cairo w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200 group`;
+            <div className="flex-grow overflow-y-auto p-2 w-full min-w-0 scrollbar-hide">
                 
-                    if (isActive) {
-                        buttonClasses += ' bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md';
-                    } else {
-                        buttonClasses += ' text-gray-300 hover:bg-white/5';
-                    }
+                {/* Top Buttons Grid */}
+                <div className="grid grid-cols-3 gap-1.5 -mt-1 mb-2" data-tutorial="sidebar-buttons">
+                    {/* Assistant */}
+                    <button
+                        onClick={() => {
+                            setSelectedCategory('all');
+                            setSelectedService(null);
+                            setIsSidebarCollapsed(true);
+                        }}
+                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
+                            selectedCategory === 'all'
+                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
+                        }`}
+                    >
+                        {language === 'ar' ? 'المساعد' : 'Assistant'}
+                    </button>
 
-                    return (
-                        <button
-                            key={cat.id}
-                            onClick={() => {
-                                setSelectedCategory(cat.id);
-                                setSelectedService(null);
-                                setIsSidebarCollapsed(true);
-                            }}
-                            className={buttonClasses}
-                        >
-                            {language === 'ar' ? (
-                                <>
-                                    <div className="w-4">{isActive && <ArrowLeft size={16} />}</div>
-                                    <span className="flex-grow text-right">{cat.label}</span>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${
-                                        isActive ? 'bg-white/20' : 'bg-white/5'
-                                    }`}>
-                                        <IconComponent size={20} className={
-                                            isActive ? 'text-white' : 'text-primary-400'
-                                        } />
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className={`p-2 rounded-lg transition-colors duration-200 ${
-                                        isActive ? 'bg-white/20' : 'bg-white/5'
-                                    }`}>
-                                        <IconComponent size={20} className={
-                                            isActive ? 'text-white' : 'text-primary-400'
-                                        } />
-                                    </div>
-                                    <span className="flex-grow text-left">{cat.label}</span>
-                                    <div className="w-4">{isActive && <ChevronRightIcon size={16} />}</div>
-                                </>
-                            )}
-                        </button>
-                    )
-                })}
+                    {/* History */}
+                    <button
+                        onClick={() => {
+                            setSelectedCategory('history');
+                            setSelectedService(null);
+                            setResult('');
+                            setIsSidebarCollapsed(true);
+                        }}
+                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
+                            selectedCategory === 'history'
+                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
+                        }`}
+                    >
+                        {language === 'ar' ? 'المحفوظات' : 'History'}
+                    </button>
+
+                    {/* Favorites */}
+                    <button
+                        onClick={() => {
+                            setSelectedCategory('favorites');
+                            setSelectedService(null);
+                            setIsSidebarCollapsed(true);
+                        }}
+                        className={`py-2.5 px-1 rounded-lg text-xs font-bold text-center transition-all duration-200 truncate ${
+                            selectedCategory === 'favorites'
+                                ? 'bg-gradient-to-br from-[#14532d] via-[#15803d] to-[#14532d] text-white shadow-md border border-green-400/50'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200 border border-transparent'
+                        }`}
+                    >
+                        {language === 'ar' ? 'المفضلة' : 'Favorites'}
+                    </button>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-white/10 my-2 mx-1"></div>
+
+                {/* Categories List */}
+                <div className="space-y-1" data-tutorial="categories">
+                    {loadingCategories ? (
+                        <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary-500" /></div>
+                    ) : categories.map(cat => {
+                        const isActive = selectedCategory === cat.id;
+                        const IconComponent = iconMap[cat.icon] || Gavel;
+                        
+                        // Dynamic classes based on prompt requirements
+                        let buttonClasses = `font-cairo w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 group`;
+            
+                        if (isActive) {
+                            buttonClasses += ' bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md';
+                        } else {
+                            buttonClasses += ' text-gray-300 hover:bg-white/5';
+                        }
+
+                        return (
+                            <button
+                                key={cat.id}
+                                onClick={() => {
+                                    setSelectedCategory(cat.id);
+                                    setSelectedService(null);
+                                    setIsSidebarCollapsed(true);
+                                }}
+                                className={buttonClasses}
+                            >
+                                {language === 'ar' ? (
+                                    <>
+                                        <div className="w-4">{isActive && <ArrowLeft size={14} />}</div>
+                                        <span className="flex-grow text-right truncate">{cat.title[language]}</span>
+                                        <div className={`p-1.5 rounded-lg transition-colors duration-200 ${
+                                            isActive ? 'bg-white/20' : 'bg-white/5'
+                                        }`}>
+                                            <IconComponent size={18} className={
+                                                isActive ? 'text-white' : 'text-primary-400'
+                                            } />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className={`p-1.5 rounded-lg transition-colors duration-200 ${
+                                            isActive ? 'bg-white/20' : 'bg-white/5'
+                                        }`}>
+                                            <IconComponent size={18} className={
+                                                isActive ? 'text-white' : 'text-primary-400'
+                                            } />
+                                        </div>
+                                        <span className="flex-grow text-left truncate">{cat.title[language]}</span>
+                                        <div className="w-4">{isActive && <ChevronRightIcon size={14} />}</div>
+                                    </>
+                                )}
+                            </button>
+                        )
+                    })}
+                </div>
             </div>
         </div>
         );
@@ -894,7 +905,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 {language === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
                             </button>
                             <div>
-                                 <h3 className="font-cairo font-bold text-white text-sm leading-tight">{selectedService.title[language]}</h3>
+                                 <h3 className="font-cairo font-bold text-white text-base leading-tight">{selectedService.title[language]}</h3>
                             </div>
                         </div>
                     ) : (
@@ -922,20 +933,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                  <div className="flex-grow overflow-y-auto custom-scrollbar p-4 w-full min-w-0 scrollbar-hide">
                      {selectedService ? (
                          /* Active Service Form */
-                         <form onSubmit={handleServiceFormSubmit} className="space-y-5 animate-fade-in-up">
-                             <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-800/30 text-sm text-primary-800 dark:text-primary-300">
+                         <form onSubmit={handleServiceFormSubmit} className="space-y-3 animate-fade-in-up">
+                             <div className="p-3 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-800/30 text-base text-primary-800 dark:text-primary-300">
                                  {selectedService.description[language]}
                              </div>
                              
-                             <div className="space-y-4">
+                             <div className="space-y-3">
                                  {selectedService.formInputs.map(input => (
                                      <div key={input.name}>
-                                         <label className="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2 uppercase tracking-wide">{input.label[language]}</label>
-                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
-                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         <label className="block text-base font-bold text-slate-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">{input.label[language]}</label>
+                                         {input.type === 'textarea' && <textarea name={input.name} onChange={handleInputChange} rows={4} className="w-full p-2.5 text-lg border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'text' && <input type="text" name={input.name} onChange={handleInputChange} className="w-full p-2.5 text-lg border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
+                                         {input.type === 'date' && <input type="date" name={input.name} onChange={handleInputChange} className="w-full p-2.5 text-lg border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm" />}
                                          {input.type === 'select' && (
-                                             <select name={input.name} onChange={handleInputChange} className="w-full p-3 text-base border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm">
+                                             <select name={input.name} onChange={handleInputChange} className="w-full p-2.5 text-lg border border-gray-200 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none shadow-sm">
                                                  <option value="">{`Select ${input.label[language]}`}</option>
                                                  {input.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label[language]}</option>)}
                                              </select>
@@ -948,7 +959,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                                      <div className="flex text-xs text-gray-600 dark:text-gray-400 justify-center">
                                                          <span className="font-bold text-primary-600 dark:text-primary-400">{t('uploadFile')}</span>
                                                      </div>
-                                                     <p className="text-[10px] text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
+                                                     <p className="text-xs text-gray-500 dark:text-gray-500">{formData[input.name] ? (formData[input.name] as File).name : t('noFileSelected')}</p>
                                                  </div>
                                              </div>
                                          )}
@@ -1044,7 +1055,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 pb-4">
+                                    <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-5 pb-4 xl:grid-cols-3">
                                         {paginatedServices.map(service => {
                                             const Icon = iconMap[service.icon] || FileText;
                                             const isFav = favorites.includes(service.id);
@@ -1068,10 +1079,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
                                                     <div className="flex flex-col justify-between flex-grow w-full">
                                                         <div>
-                                                            <h3 className="font-cairo text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2">
+                                                            <h3 className="font-cairo text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2">
                                                                 {service.title[language] || service.title['en']}
                                                             </h3>
-                                                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed font-medium opacity-80 hidden sm:block">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed font-normal opacity-90 hidden sm:block">
                                                                 {service.description[language] || service.description['en']}
                                                             </p>
                                                         </div>
@@ -1114,7 +1125,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
     // -------------------- FRAME 3: OUTPUT & CHAT (LEFT) --------------------
     const renderOutputPanel = () => (
-        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0 relative">
+        <div className="flex flex-col h-full rounded-2xl bg-[#fcfaf6] dark:bg-dark-card-bg border border-gray-200 dark:border-dark-border shadow-lg overflow-hidden w-full min-w-0 relative" data-tutorial="output-panel">
              <div className="h-16 flex items-center px-4 bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-900 dark:to-primary-800 border-b border-primary-600 dark:border-dark-border shrink-0 justify-between shadow-sm relative z-10">
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
                     <Sparkles size={16} className="text-yellow-200"/>
@@ -1133,35 +1144,39 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         )}
                     </button>
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
-                    {/* Discuss Button */}
-                    {result && (
-                        <button 
-                            onClick={handleDiscussResult}
-                            title={language === 'ar' ? 'ناقش النتيجة مع المساعد' : 'Discuss result with AI'}
-                            className="p-1.5 rounded text-yellow-200 hover:bg-white/10 hover:text-yellow-100 transition-colors animate-pulse"
-                        >
-                            <MessageCircle size={16} />
-                        </button>
-                    )}
-                    <div className="w-px h-4 bg-white/20 mx-1"></div>
                     
-                    <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
-                    <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
-                    {currentUser && (
-                        <button 
-                            onClick={handleSave} 
-                            title={isSaved ? t('saved') : t('saveToHistory')} 
-                            className={`p-1.5 rounded transition-colors ${isSaved ? 'text-green-400 cursor-default' : 'text-primary-100 hover:bg-white/10 disabled:text-gray-400 disabled:cursor-not-allowed'}`}
-                            disabled={isSaved || !result}
-                        >
-                            {isSaved ? <Check size={16} /> : <Save size={16} />}
-                        </button>
-                    )}
-                    
-                    <div className="w-px h-4 bg-white/20 mx-1"></div>
-                    
-                    <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
-                    <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                    {/* Action Buttons Container with Tutorial Data Attribute */}
+                    <div className="flex items-center gap-1" data-tutorial="output-actions">
+                        {/* Discuss Button */}
+                        {result && (
+                            <button 
+                                onClick={handleDiscussResult}
+                                title={language === 'ar' ? 'ناقش النتيجة مع المساعد' : 'Discuss result with AI'}
+                                className="p-1.5 rounded text-yellow-200 hover:bg-white/10 hover:text-yellow-100 transition-colors animate-pulse"
+                            >
+                                <MessageCircle size={16} />
+                            </button>
+                        )}
+                        <div className="w-px h-4 bg-white/20 mx-1"></div>
+                        
+                        <button onClick={copyToClipboard} title={t('copy')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors">{isCopied ? <Check size={16} className="text-white"/> : <Copy size={16} />}</button>
+                        <button onClick={handlePrint} title={t('print')} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><Printer size={16} /></button>
+                        {currentUser && (
+                            <button 
+                                onClick={handleSave} 
+                                title={isSaved ? t('saved') : t('saveToHistory')} 
+                                className={`p-1.5 rounded transition-colors ${isSaved ? 'text-green-400 cursor-default' : 'text-primary-100 hover:bg-white/10 disabled:text-gray-400 disabled:cursor-not-allowed'}`}
+                                disabled={isSaved || !result}
+                            >
+                                {isSaved ? <Check size={16} /> : <Save size={16} />}
+                            </button>
+                        )}
+                        
+                        <div className="w-px h-4 bg-white/20 mx-1"></div>
+                        
+                        <button onClick={handleZoomOut} title={language === 'ar' ? 'تصغير' : 'Zoom Out'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomOut size={16} /></button>
+                        <button onClick={handleZoomIn} title={language === 'ar' ? 'تكبير' : 'Zoom In'} className="p-1.5 rounded text-primary-100 hover:bg-white/10 transition-colors"><ZoomIn size={16} /></button>
+                    </div>
                     
                     <div className="w-px h-4 bg-white/20 mx-1"></div>
 
@@ -1228,7 +1243,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20}/>}
                     </button>
                 </div>
-                <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-medium tracking-wide">
+                <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2 font-medium tracking-wide">
                     {t('poweredByAI')}
                 </p>
             </div>
@@ -1364,6 +1379,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
             </div>
             {isResultModalOpen && renderResultModal()}
+            
+            {/* Tutorial Guide */}
+            <TutorialGuide 
+                isOpen={isTutorialOpen}
+                onClose={() => setIsTutorialOpen(false)}
+                onComplete={handleTutorialComplete}
+            />
         </div>
     );
 };

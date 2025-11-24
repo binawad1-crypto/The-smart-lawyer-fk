@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin, History, Clock, FileText, ArrowRight, ArrowLeft, Copy, Printer, Trash2, LifeBuoy, XCircle } from 'lucide-react';
+import { Loader2, CreditCard, Gem, User, Shield, KeyRound, X, CheckCircle, AlertCircle, Calendar, Mail, Edit2, ChevronRight, LogOut, MapPin, History, Clock, FileText, ArrowRight, ArrowLeft, Copy, Printer, Trash2, LifeBuoy, XCircle, HelpCircle } from 'lucide-react';
 // @ts-ignore: Suppressing missing type definitions for firebase/functions
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '../services/firebase';
@@ -552,6 +552,39 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             {/* Right Column: Tabbed Interface */}
             <div className="lg:col-span-2 space-y-6">
                 
+                {/* Help Section - Tutorial Guide */}
+                <div className="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-xl p-4 border border-primary-200 dark:border-primary-800/30">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary-600 rounded-lg">
+                                <HelpCircle className="text-white" size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                                    {language === 'ar' ? 'تعلم استخدام التطبيق' : 'Learn how to use the app'}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                    {language === 'ar' ? 'شاهد دليل الاستخدام التفاعلي لتعرف على جميع الميزات' : 'Watch the interactive guide to learn about all features'}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => {
+                                // Navigate to dashboard and trigger tutorial
+                                onNavigate('dashboard');
+                                setTimeout(() => {
+                                    const event = new CustomEvent('openTutorial');
+                                    window.dispatchEvent(event);
+                                }, 500);
+                            }}
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+                        >
+                            <HelpCircle size={18} />
+                            <span>{language === 'ar' ? 'ابدأ الدليل' : 'Start Guide'}</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Tabs Navigation */}
                 <div className="flex space-x-2 rtl:space-x-reverse overflow-x-auto pb-1">
                     <button

@@ -337,7 +337,8 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
               <title>${service?.title[language] || 'Print'}</title>
               <style>
                 @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap');
-                body { font-family: 'Calibri', 'Noto Naskh Arabic', 'Tajawal', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
+                @import url('https://fonts.cdnfonts.com/css/dubai');
+                body { font-family: 'Calibri', 'Dubai', 'Noto Naskh Arabic', sans-serif; direction: ${language === 'ar' ? 'rtl' : 'ltr'}; padding: 20px; }
                 pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
               </style>
             </head>
@@ -514,7 +515,7 @@ const ServiceExecutionModal: React.FC<ServiceExecutionModalProps> = ({ isOpen, o
                         ) : (
                              <pre 
                                 className="whitespace-pre-wrap leading-loose text-left rtl:text-right bg-transparent p-0 m-0 transition-all duration-200 text-gray-800 dark:text-gray-200"
-                                style={{ fontSize: '18px', fontFamily: 'Calibri, Tajawal, sans-serif' }}
+                                style={{ fontSize: '18px', fontFamily: 'Calibri, Dubai, Tajawal, sans-serif' }}
                             >
                                 {result}
                             </pre>
