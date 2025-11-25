@@ -19,7 +19,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (storedTheme) {
       return storedTheme as Theme;
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? Theme.Dark : Theme.Light;
+    // Default to Light (Day) as requested ("Origin is Nahari")
+    return Theme.Light;
   });
 
   useEffect(() => {

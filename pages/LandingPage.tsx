@@ -1,23 +1,52 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, ArrowLeft, CheckCircle2, Shield, Zap, BrainCircuit, ChevronDown, Plus, Minus, HelpCircle, MapPin, Star, FileText, Scale, BookOpen, Gavel, Building2, Search } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
-import { useSiteSettings } from '../hooks/useSiteSettings';
 import { useAuth } from '../hooks/useAuth';
-import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin, Search, Briefcase, Handshake, MessageSquare, ScanLine, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { Plan } from '../types';
+import { useSiteSettings } from '../hooks/useSiteSettings';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Plan, LandingPageConfig } from '../types';
-import { iconMap } from '../constants';
 
 interface LandingPageProps {
   onSignUpClick: () => void;
   onGoToDashboard?: () => void;
 }
 
+interface AccordionItemProps {
+    item: { q: any; a: any };
+    isOpen: boolean;
+    onClick: () => void;
+    language: any;
+}
+
+const AccordionItem: React.FC<AccordionItemProps> = ({ item, isOpen, onClick, language }) => {
+    return (
+        <div className="border-b border-gray-200 dark:border-gray-700 last:border-0">
+            <button
+                onClick={onClick}
+                className="w-full flex items-center justify-between py-4 text-start focus:outline-none group"
+            >
+                <span className={`font-bold text-sm sm:text-base transition-colors ${isOpen ? 'text-primary-600' : 'text-slate-800 dark:text-gray-200 group-hover:text-primary-600'}`}>
+                    {item.q[language]}
+                </span>
+                <div className={`p-1 rounded-full transition-colors ${isOpen ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                    {isOpen ? <Minus size={16} /> : <Plus size={16} />}
+                </div>
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100 pb-4' : 'max-h-0 opacity-0'}`}>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {item.a[language]}
+                </p>
+            </div>
+        </div>
+    );
+};
+
 const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboard }) => {
-  const { t, language } = useLanguage();
-  const { settings } = useSiteSettings();
+  const { t, language, dir } = useLanguage();
   const { currentUser } = useAuth();
+  const { settings } = useSiteSettings();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -27,13 +56,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
         setLoadingPlans(true);
         try {
             const plansCollection = collection(db, 'subscription_plans');
-            const q = query(plansCollection, where('status', '==', 'active'), orderBy('tokens'));
+            const q = query(plansCollection, where('status', '==', 'active'));
             const snapshot = await getDocs(q);
             if (!snapshot.empty) {
-                setPlans(snapshot.docs.map(doc => doc.data() as Plan));
+                const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plan));
+                plansData.sort((a, b) => a.tokens - b.tokens);
+                setPlans(plansData);
             }
-        } catch (err) {
-            console.error("Error fetching subscription plans for landing page:", err);
+        } catch (error) {
+            console.error("Error fetching plans", error);
         } finally {
             setLoadingPlans(false);
         }
@@ -41,111 +72,87 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
     fetchPlans();
   }, []);
 
-  // Determine content source: Dynamic Settings or Default Constants
-  const content: LandingPageConfig = useMemo(() => {
-    if (settings?.landingPageConfig) {
-        return settings.landingPageConfig;
-    }
-    // Fallback to hardcoded constants if no dynamic config exists
-    return {
-        heroTitleMain: { en: t('heroTitleMain'), ar: t('heroTitleMain') }, 
-        heroTitleHighlight: { en: t('heroTitleHighlight'), ar: t('heroTitleHighlight') },
-        heroSubtitle: { en: t('heroSubtitle'), ar: t('heroSubtitle') },
-        featuresTitle: { en: t('featuresTitle'), ar: t('featuresTitle') },
-        features: [] // populated below
-    };
-  }, [settings, t]);
-  
-  const heroTitleMain = settings?.landingPageConfig ? settings.landingPageConfig.heroTitleMain[language] : t('heroTitleMain');
-  const heroTitleHighlight = settings?.landingPageConfig ? settings.landingPageConfig.heroTitleHighlight[language] : t('heroTitleHighlight');
-  const heroSubtitle = settings?.landingPageConfig ? settings.landingPageConfig.heroSubtitle[language] : t('heroSubtitle');
-  const featuresTitle = settings?.landingPageConfig ? settings.landingPageConfig.featuresTitle[language] : t('featuresTitle');
-  
-  // All features now use the Gold theme
-  const featureList = settings?.landingPageConfig ? settings.landingPageConfig.features : [
-    { icon: 'FileText', title: { [language]: t('feature1Title') }, description: { [language]: t('feature1Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'Search', title: { [language]: t('feature2Title') }, description: { [language]: t('feature2Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'Briefcase', title: { [language]: t('feature3Title') }, description: { [language]: t('feature3Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'Handshake', title: { [language]: t('feature4Title') }, description: { [language]: t('feature4Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'Gavel', title: { [language]: t('feature5Title') }, description: { [language]: t('feature5Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'MessageSquare', title: { [language]: t('feature6Title') }, description: { [language]: t('feature6Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'ShieldCheck', title: { [language]: t('feature7Title') }, description: { [language]: t('feature7Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'BrainCircuit', title: { [language]: t('feature8Title') }, description: { [language]: t('feature8Desc') }, color: 'from-primary-400 to-primary-600' },
-    { icon: 'ScanLine', title: { [language]: t('feature9Title') }, description: { [language]: t('feature9Desc') }, color: 'from-primary-400 to-primary-600' },
-  ];
-
   const handlePrimaryAction = () => {
-      if (currentUser && onGoToDashboard) {
-          onGoToDashboard();
+      if (currentUser) {
+          if (onGoToDashboard) onGoToDashboard();
       } else {
           onSignUpClick();
       }
-  }
+  };
+
+  const features = [
+      { icon: FileText, titleKey: 'feature1Title', descKey: 'feature1Desc' },
+      { icon: Search, titleKey: 'feature2Title', descKey: 'feature2Desc' },
+      { icon: BrainCircuit, titleKey: 'feature8Title', descKey: 'feature8Desc' },
+      { icon: Scale, titleKey: 'feature5Title', descKey: 'feature5Desc' },
+      { icon: BookOpen, titleKey: 'feature4Title', descKey: 'feature4Desc' },
+      { icon: Shield, titleKey: 'feature7Title', descKey: 'feature7Desc' },
+  ];
 
   const faqs = [
     {
-      question: { en: "What is The Smart Assistant?", ar: "ما هو المساعد الذكي؟" },
-      answer: { en: "The Smart Assistant is an advanced AI-powered platform designed specifically for legal professionals. It automates tasks like document drafting, case analysis, and legal research to save time and improve accuracy.", ar: "المساعد الذكي هو منصة متقدمة مدعومة بالذكاء الاصطناعي مصممة خصيصاً للمتخصصين القانونيين. تقوم بأتمتة المهام مثل صياغة المستندات، وتحليل القضايا، والبحث القانوني لتوفير الوقت وتحسين الدقة." }
+        q: { en: "What is the Smart Assistant?", ar: "ما هو المساعد الذكي؟" },
+        a: { en: "The Smart Assistant is an AI-powered platform designed to assist lawyers and legal consultants in drafting contracts, analyzing cases, and conducting legal research efficiently.", ar: "المساعد الذكي هو منصة مدعومة بالذكاء الاصطناعي صممت لمساعدة المحامين والمستشارين القانونيين في صياغة العقود وتحليل القضايا وإجراء البحوث القانونية بكفاءة." }
     },
     {
-      question: { en: "Does this tool replace a human lawyer?", ar: "هل تغني هذه الأداة عن المحامي البشري؟" },
-      answer: { en: "No. The Smart Assistant is a tool to aid lawyers and legal consultants, not replace them. It provides drafts and insights, but all outputs must be reviewed and verified by a qualified professional.", ar: "لا. المساعد الذكي هو أداة لمساعدة المحامين والمستشارين القانونيين وليس لاستبدالهم. يقدم مسودات ورؤى، ولكن يجب مراجعة جميع المخرجات والتحقق منها من قبل متخصص مؤهل." }
+        q: { en: "Is the output legally binding?", ar: "هل المخرجات ملزمة قانونياً؟" },
+        a: { en: "No, the outputs are preliminary drafts and consultations. They must be reviewed and approved by a qualified lawyer before use. The tool aids professionals but does not replace them.", ar: "لا، المخرجات هي مسودات واستشارات أولية. يجب مراجعتها واعتمادها من قبل محامي مؤهل قبل الاستخدام. الأداة تساعد المهنيين ولا تستبدلهم." }
     },
     {
-      question: { en: "How secure is my data and client information?", ar: "ما مدى أمان بياناتي ومعلومات العملاء؟" },
-      answer: { en: "We prioritize security. We use enterprise-grade encryption for data transmission and storage. We do not use your private data to train our public models without your explicit consent.", ar: "نحن نعطي الأولوية للأمان. نستخدم تشفيرًا من الدرجة الأولى لنقل البيانات وتخزينها. لا نستخدم بياناتك الخاصة لتدريب نماذجنا العامة دون موافقتك الصريحة." }
+        q: { en: "How accurate is the AI?", ar: "ما مدى دقة الذكاء الاصطناعي؟" },
+        a: { en: "The model is trained on vast legal datasets, but like all AI, it can make errors. Human review is always necessary to ensure complete accuracy.", ar: "تم تدريب النموذج على مجموعات بيانات قانونية ضخمة، ولكن مثل كل الذكاء الاصطناعي، قد يخطئ. المراجعة البشرية ضرورية دائماً لضمان الدقة التامة." }
     },
     {
-      question: { en: "Which legal systems are supported?", ar: "ما هي الأنظمة القانونية المدعومة؟" },
-      answer: { en: "The system is primarily optimized for Saudi Arabian laws and regulations, but it also has general knowledge of international law and common legal principles in the MENA region.", ar: "تم تحسين النظام بشكل أساسي للقوانين واللوائح في المملكة العربية السعودية، ولكنه يمتلك أيضًا معرفة عامة بالقانون الدولي والمبادئ القانونية المشتركة في منطقة الشرق الأوسط وشمال إفريقيا." }
+        q: { en: "Is my data secure?", ar: "هل بياناتي آمنة؟" },
+        a: { en: "Yes, we use advanced encryption to protect your data. We adhere to strict privacy policies to ensure client confidentiality.", ar: "نعم، نستخدم تقنيات تشفير متقدمة لحماية بياناتك. نحن نلتزم بسياسات خصوصية صارمة لضمان سرية العملاء." }
     },
     {
-      question: { en: "Can I upload documents for analysis?", ar: "هل يمكنني رفع المستندات للتحليل؟" },
-      answer: { en: "Yes, you can upload PDF, Word, and image files. The AI can extract text, summarize content, analyze contracts, and answer questions based on the uploaded documents.", ar: "نعم، يمكنك رفع ملفات PDF وWord والصور. يمكن للذكاء الاصطناعي استخراج النص وتلخيص المحتوى وتحليل العقود والإجابة على الأسئلة بناءً على المستندات المرفوعة." }
+        q: { en: "What documents can I analyze?", ar: "ما هي المستندات التي يمكنني تحليلها؟" },
+        a: { en: "You can analyze contracts, court judgments, regulations, and defense memos. The system supports PDF, Word, and text files.", ar: "يمكنك تحليل العقود، الأحكام القضائية، اللوائح، ومذكرات الدفاع. النظام يدعم ملفات PDF و Word والنصوص." }
     },
     {
-      question: { en: "Is there a free trial?", ar: "هل توجد فترة تجربة مجانية؟" },
-      answer: { en: "Yes, new users receive a complimentary token balance upon registration to try out the core features of the platform before subscribing.", ar: "نعم، يحصل المستخدمون الجدد على رصيد مجاني من الرموز عند التسجيل لتجربة الميزات الأساسية للمنصة قبل الاشتراك." }
+        q: { en: "Does it support local laws?", ar: "هل يدعم الأنظمة المحلية؟" },
+        a: { en: "Yes, the assistant is optimized to understand and apply regulations relevant to the region, including Saudi and UAE laws.", ar: "نعم، تم تحسين المساعد ليفهم ويطبق اللوائح ذات الصلة بالمنطقة، بما في ذلك الأنظمة السعودية والإماراتية." }
     },
     {
-      question: { en: "What are 'Tokens'?", ar: "ما هي 'الرموز' (Tokens)؟" },
-      answer: { en: "Tokens are the units used to measure AI usage. Roughly, 1,000 tokens equal about 750 words. Complex tasks like analyzing large documents consume more tokens.", ar: "الرموز هي الوحدات المستخدمة لقياس استخدام الذكاء الاصطناعي. تقريباً، 1000 رمز تعادل حوالي 750 كلمة. تستهلك المهام المعقدة مثل تحليل المستندات الكبيرة المزيد من الرموز." }
+        q: { en: "Can I try it for free?", ar: "هل يمكنني تجربته مجاناً؟" },
+        a: { en: "Yes, we offer a free trial upon registration that gives you a limited token balance to explore the features.", ar: "نعم، نقدم تجربة مجانية عند التسجيل تمنحك رصيداً محدوداً من الرموز لاستكشاف الميزات." }
     },
     {
-      question: { en: "Can I cancel my subscription at any time?", ar: "هل يمكنني إلغاء اشتراكي في أي وقت؟" },
-      answer: { en: "Yes, you can cancel your subscription at any time from your profile settings. You will continue to have access until the end of your current billing period.", ar: "نعم، يمكنك إلغاء اشتراكك في أي وقت من إعدادات ملفك الشخصي. سيستمر وصولك للخدمة حتى نهاية فترة الفوترة الحالية." }
+        q: { en: "How does the token system work?", ar: "كيف يعمل نظام الرموز؟" },
+        a: { en: "Each task (e.g., drafting, analysis) consumes tokens based on complexity and length. Your balance decreases as you use the services.", ar: "تستهلك كل مهمة (مثل الصياغة والتحليل) رموزاً بناءً على التعقيد والطول. ينقص رصيدك كلما استخدمت الخدمات." }
     },
     {
-      question: { en: "Does the AI write lawsuits and memos?", ar: "هل يكتب الذكاء الاصطناعي لوائح الدعاوى والمذكرات؟" },
-      answer: { en: "Yes, the assistant can draft lawsuits, responsive memos, and appeals based on the facts and details you provide, formatted professionally.", ar: "نعم، يمكن للمساعد صياغة لوائح الدعاوى والمذكرات الجوابية واللوائح الاعتراضية بناءً على الوقائع والتفاصيل التي تقدمها، بتنسيق احترافي." }
+        q: { en: "Can I upgrade my plan later?", ar: "هل يمكنني ترقية خطتي لاحقاً؟" },
+        a: { en: "Absolutely. You can upgrade your subscription at any time from your profile to get more tokens and features.", ar: "بالتأكيد. يمكنك ترقية اشتراكك في أي وقت من ملفك الشخصي للحصول على المزيد من الرموز والميزات." }
     },
     {
-      question: { en: "What languages does the platform support?", ar: "ما هي اللغات التي تدعمها المنصة؟" },
-      answer: { en: "The platform interface and AI generation fully support both Arabic and English.", ar: "تدعم واجهة المنصة وتوليد الذكاء الاصطناعي اللغتين العربية والإنجليزية بشكل كامل." }
+        q: { en: "Does it support English?", ar: "هل يدعم اللغة الإنجليزية؟" },
+        a: { en: "Yes, the Smart Assistant is fully bilingual (Arabic & English) and can translate legal concepts accurately between them.", ar: "نعم، المساعد الذكي ثنائي اللغة بالكامل (العربية والإنجليزية) ويمكنه ترجمة المفاهيم القانونية بدقة بينهما." }
     },
     {
-      question: { en: "Is the AI output legally binding?", ar: "هل مخرجات الذكاء الاصطناعي ملزمة قانونياً؟" },
-      answer: { en: "No, the AI output is for guidance and drafting assistance only. It is not a legal judgment or a binding opinion. Always verify with official sources.", ar: "لا، مخرجات الذكاء الاصطناعي هي للمساعدة والتوجيه والصياغة فقط. ليست حكماً قانونياً أو رأياً ملزماً. تحقق دائماً من المصادر الرسمية." }
+        q: { en: "What happens if I run out of tokens?", ar: "ماذا يحدث إذا نفدت الرموز؟" },
+        a: { en: "You will need to upgrade your plan or wait for your monthly renewal to continue using paid features.", ar: "ستحتاج إلى ترقية خطتك أو انتظار التجديد الشهري لمتابعة استخدام الميزات المدفوعة." }
     },
     {
-      question: { en: "Can I use the Smart Assistant on my mobile phone?", ar: "هل يمكنني استخدام المساعد الذكي على الجوال؟" },
-      answer: { en: "Yes, the platform is fully responsive and works seamlessly on smartphones, tablets, and desktop computers.", ar: "نعم، المنصة متجاوبة بالكامل وتعمل بسلاسة على الهواتف الذكية والأجهزة اللوحية وأجهزة الكمبيوتر المكتبية." }
+        q: { en: "Can I cancel anytime?", ar: "هل يمكنني الإلغاء في أي وقت؟" },
+        a: { en: "Yes, you can cancel your subscription auto-renewal at any time from your account settings without penalty.", ar: "نعم، يمكنك إلغاء التجديد التلقائي لاشتراكك في أي وقت من إعدادات حسابك دون أي غرامات." }
     },
     {
-      question: { en: "How accurate is the legal information?", ar: "ما مدى دقة المعلومات القانونية؟" },
-      answer: { en: "The AI is trained on vast legal datasets and updated frequently. However, laws change, and AI can hallucinate. Professional verification is mandatory.", ar: "تم تدريب الذكاء الاصطناعي على مجموعات بيانات قانونية ضخمة ويتم تحديثه بشكل متكرر. ومع ذلك، تتغير القوانين وقد يخطئ الذكاء الاصطناعي. التحقق المهني إلزامي." }
+        q: { en: "Do you offer enterprise solutions?", ar: "هل تقدمون حلولاً للشركات؟" },
+        a: { en: "Yes, we have tailored packages for law firms and enterprises. Please contact our support team for details.", ar: "نعم، لدينا باقات مخصصة لمكاتب المحاماة والشركات. يرجى التواصل مع فريق الدعم للحصول على التفاصيل." }
     },
     {
-      question: { en: "Is this suitable for law students?", ar: "هل هذا مناسب لطلاب القانون؟" },
-      answer: { en: "Absolutely. It is an excellent tool for research, learning drafting styles, and understanding complex legal concepts.", ar: "بالتأكيد. إنها أداة ممتازة للبحث وتعلم أساليب الصياغة وفهم المفاهيم القانونية المعقدة." }
+        q: { en: "How fast is the generation?", ar: "ما مدى سرعة الإنشاء؟" },
+        a: { en: "Most documents and analyses are generated within seconds to a minute, saving you hours of manual work.", ar: "يتم إنشاء معظم المستندات والتحليلات في غضون ثوانٍ إلى دقيقة، مما يوفر عليك ساعات من العمل اليدوي." }
     },
     {
-      question: { en: "Can I customize the output style?", ar: "هل يمكنني تخصيص أسلوب المخرجات؟" },
-      answer: { en: "Yes, you can instruct the AI to adjust the tone, length, and format of the response to suit your specific needs.", ar: "نعم، يمكنك توجيه الذكاء الاصطناعي لتعديل النبرة والطول وتنسيق الرد ليناسب احتياجاتك المحددة." }
+        q: { en: "Can I upload handwritten files?", ar: "هل يمكنني رفع ملفات بخط اليد؟" },
+        a: { en: "The system supports OCR, but accuracy depends on handwriting clarity. Typed documents provide the best results.", ar: "النظام يدعم التعرف الضوئي (OCR)، لكن الدقة تعتمد على وضوح الخط. المستندات المطبوعة تعطي أفضل النتائج." }
     },
     {
-      question: { en: "How do I contact technical support?", ar: "كيف أتواصل مع الدعم الفني؟" },
-      answer: { en: "You can open a support ticket directly from your dashboard or profile page, or email us at the address provided in the footer.", ar: "يمكنك فتح تذكرة دعم فني مباشرة من لوحة التحكم أو صفحة الملف الشخصي، أو مراسلتنا عبر البريد الإلكتروني الموجود في تذييل الصفحة." }
+        q: { en: "Is technical support available?", ar: "هل يتوفر دعم فني؟" },
+        a: { en: "Yes, our support team is available via the ticketing system in the app or email to assist you.", ar: "نعم، فريق الدعم لدينا متاح عبر نظام التذاكر في التطبيق أو البريد الإلكتروني لمساعدتك." }
     }
   ];
 
@@ -154,118 +161,92 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
   const rightFaqs = faqs.slice(midIndex);
 
   return (
-    <div className="bg-primary-50 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-dark-bg font-sans">
+      
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-24 overflow-hidden">
-        {/* Background Gradients & Grid */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-primary-50 dark:bg-dark-bg">
-            <div
-                className="absolute inset-0 opacity-30 dark:opacity-10"
-                style={{
-                    backgroundImage: `
-                        linear-gradient(to right, rgba(188, 149, 92, 0.1) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(188, 149, 92, 0.1) 1px, transparent 1px)
-                    `,
-                    backgroundSize: '30px 30px',
-                }}
-            ></div>
-            <div className="absolute -top-48 -right-48 w-[40rem] h-[40rem] bg-primary-300/20 dark:bg-primary-900/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-[-20rem] -left-48 w-[40rem] h-[40rem] bg-primary-400/20 dark:bg-primary-900/10 rounded-full blur-3xl"></div>
-        </div>
-
-
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="mx-auto mb-8 inline-flex items-center justify-center p-5 bg-white dark:bg-dark-card-bg rounded-3xl shadow-xl shadow-primary-900/10 ring-1 ring-primary-900/5 dark:ring-primary-500/20">
-            <Scale size={48} className="text-primary-600 dark:text-primary-400" />
+      <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-5 dark:opacity-10"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/80 via-white/50 to-white dark:from-dark-bg/90 dark:via-dark-bg/80 dark:to-dark-bg"></div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-bold mb-8 animate-fade-in-down">
+            <Zap size={16} className="fill-primary-600 text-primary-600" />
+            {t('poweredByAI')}
           </div>
           
-          <h1 className="flex flex-col items-center justify-center mb-6 leading-tight">
-            <span className="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 animate-gradient-x mb-2 md:mb-4">
-                {heroTitleMain}
-            </span>
-            <span className="text-2xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {heroTitleHighlight}
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white mb-6 tracking-tight leading-tight animate-fade-in-up">
+            {t('heroTitleMain')} <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">
+              {t('heroTitleHighlight')}
             </span>
           </h1>
           
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
-            {heroSubtitle}
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            {t('heroSubtitle')}
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-                onClick={handlePrimaryAction}
-                className="px-8 py-4 bg-gradient-to-r from-primary-700 to-primary-600 text-white font-bold rounded-full shadow-lg shadow-primary-600/30 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg flex items-center gap-2 border border-primary-500"
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <button 
+              onClick={handlePrimaryAction}
+              className="w-full sm:w-auto px-8 py-4 bg-primary-600 text-white text-lg font-bold rounded-xl shadow-lg shadow-primary-600/30 hover:bg-primary-700 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
             >
-                {currentUser ? t('goToDashboard') : t('startFreeTrial')}
-                {currentUser ? <LayoutDashboard size={20} /> : (language === 'ar' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />)}
+              {currentUser ? t('goToDashboard') : t('startFreeTrial')}
+              {dir === 'rtl' ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
             </button>
           </div>
         </div>
       </section>
 
-      {/* Location Awareness Section - Premium Style */}
-      <div className="relative z-20 px-4 sm:px-6 -mt-8 mb-12">
-        <div className="container mx-auto max-w-5xl">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-dark-bg via-primary-900 to-dark-bg shadow-2xl shadow-primary-900/30 border border-primary-500/30">
-                
-                {/* Background Pattern/Glow */}
-                <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary-500/10 to-transparent opacity-70"></div>
-                <div className="absolute -left-20 top-0 w-64 h-64 bg-primary-600/20 rounded-full blur-3xl"></div>
-
-                <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 p-8 md:p-10 text-center md:text-start rtl:md:text-right">
-                    {/* Animated Icon Container */}
-                    <div className="flex-shrink-0 relative group">
-                        <div className="absolute inset-0 bg-primary-500 blur-xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-                        <div className="relative p-5 bg-gradient-to-br from-primary-600 to-primary-500 rounded-full text-white shadow-lg border border-white/10">
-                            <MapPin size={36} strokeWidth={2} />
-                        </div>
-                    </div>
-
-                    {/* Text Content */}
-                    <div className="max-w-3xl">
-                         <p className="text-lg md:text-xl font-bold text-white leading-loose tracking-wide drop-shadow-md">
-                            {t('locationAwarenessMessage')}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-      </div>
+      {/* Location Awareness Section (UAE Themed - Activity/Night) */}
+      <section className="py-12 bg-white dark:bg-dark-card-bg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center opacity-20 group-hover:scale-105 transition-transform duration-[20s]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-slate-900/90"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-start">
+                  <div className="bg-primary-500/20 p-4 rounded-full backdrop-blur-sm border border-primary-500/30 shadow-[0_0_30px_rgba(205,165,100,0.3)] animate-pulse">
+                      <MapPin size={32} className="text-primary-400" />
+                  </div>
+                  <div className="max-w-2xl">
+                      <h3 className="text-2xl font-bold text-white mb-2">{t('locationAwarenessMessage')}</h3>
+                      <p className="text-primary-200 text-sm font-medium opacity-90">
+                          {language === 'ar' ? 'نحن هنا لدعمك في دبي، الرياض، وكل المنطقة.' : 'We are here to support you in Dubai, Riyadh, and the entire region.'}
+                      </p>
+                  </div>
+              </div>
+          </div>
+      </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 relative">
-         <div className="absolute inset-0 bg-white dark:bg-dark-bg/50 transform -skew-y-3 z-0 origin-top-left border-t border-primary-100 dark:border-dark-border"></div>
-        <div className="container mx-auto px-6 relative z-10">
+      <section id="features" className="py-24 bg-gray-50 dark:bg-dark-bg">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{featuresTitle}</h2>
-            <div className="w-24 h-1.5 bg-gradient-to-r from-primary-600 to-primary-400 mx-auto rounded-full"></div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t('featuresTitle')}</h2>
+            <div className="h-1 w-24 bg-primary-500 mx-auto rounded-full"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            {featureList.map((feature: any, index: number) => {
-              // Resolve Icon
-              const IconComponent = iconMap[feature.icon] || FileText;
-              // Resolve Text
-              const title = feature.title[language] || feature.title;
-              const description = feature.description[language] || feature.description;
-
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
               return (
-              <div key={index} className="group bg-white dark:bg-dark-card-bg rounded-3xl p-8 shadow-lg hover:shadow-2xl hover:shadow-primary-900/10 transition-all duration-300 border border-primary-100 dark:border-dark-border hover:border-primary-500/50 transform hover:-translate-y-2">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-400 flex items-center justify-center text-white mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
-                  <IconComponent size={32} strokeWidth={2.5} />
+                <div key={index} className="bg-white dark:bg-dark-card-bg p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-dark-border group hover:-translate-y-2">
+                  <div className="w-14 h-14 bg-gray-100 dark:bg-primary-900/20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-600 transition-colors duration-300">
+                    <Icon size={28} className="text-primary-600 dark:text-primary-400 group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{t(feature.titleKey as any)}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {t(feature.descKey as any)}
+                  </p>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">{title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{description}</p>
-              </div>
-            )})}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Pricing Section - Changed bg to white/gray as requested */}
       { !loadingPlans && plans.length > 0 && (
-        <section id="pricing" className="py-24 bg-primary-50 dark:bg-dark-bg">
+        <section id="pricing" className="py-24 bg-white dark:bg-dark-card-bg border-t border-gray-100 dark:border-dark-border">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t('pricingTitle')}</h2>
@@ -274,7 +255,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
               {plans.map((plan: Plan) => (
-                <div key={plan.id} className={`relative flex flex-col bg-white dark:bg-dark-card-bg rounded-3xl transition-all duration-300 ${plan.isPopular ? 'border-2 border-primary-500 shadow-2xl scale-105 z-10' : 'border border-primary-100 dark:border-dark-border shadow-lg hover:shadow-xl'}`}>
+                <div key={plan.id} className={`relative flex flex-col bg-gray-50 dark:bg-dark-bg rounded-3xl transition-all duration-300 ${plan.isPopular ? 'border-2 border-primary-500 shadow-2xl scale-105 z-10' : 'border border-gray-200 dark:border-dark-border shadow-lg hover:shadow-xl'}`}>
                   {plan.isPopular && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                       <span className="bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg flex items-center gap-2 uppercase tracking-wide">
@@ -288,15 +269,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
                     <div className="flex justify-center items-baseline mb-2">
                          <span className="text-4xl font-black text-primary-700 dark:text-primary-400">{plan.price[language]}</span>
                     </div>
-                    <p className="text-center text-primary-600 dark:text-primary-300 font-medium bg-primary-50 dark:bg-primary-900/20 py-1 px-3 rounded-full text-sm inline-block mx-auto w-full mb-8">
+                    <p className="text-center text-primary-600 dark:text-primary-300 font-medium bg-white dark:bg-primary-900/20 py-1 px-3 rounded-full text-sm inline-block mx-auto w-full mb-8 shadow-sm border border-gray-100 dark:border-primary-800/30">
                         {plan.tokens.toLocaleString()} {t('tokens')}
                     </p>
                     
                     <ul className="space-y-4">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mt-0.5">
-                            <CheckCircle2 className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mt-0.5">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                           </div>
                           <p className="ml-3 text-slate-600 dark:text-slate-300 text-sm font-medium">{feature[language]}</p>
                         </li>
@@ -306,7 +287,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
                   <div className="p-8 pt-0">
                     <button
                       onClick={handlePrimaryAction}
-                      className={`w-full py-4 text-base font-bold rounded-xl transition-all duration-300 transform hover:-translate-y-1 shadow-md hover:shadow-lg ${plan.isPopular ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-primary-50 hover:bg-primary-100 dark:bg-dark-bg dark:hover:bg-gray-800 text-slate-900 dark:text-white border border-primary-200 dark:border-dark-border'}`}
+                      className={`w-full py-4 text-base font-bold rounded-xl transition-all duration-300 transform hover:-translate-y-1 shadow-md hover:shadow-lg ${plan.isPopular ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-white hover:bg-gray-50 dark:bg-dark-card-bg dark:hover:bg-gray-700 text-slate-900 dark:text-white border border-gray-200 dark:border-dark-border'}`}
                     >
                       {currentUser ? t('goToDashboard') : t('choosePlan')}
                     </button>
@@ -318,109 +299,64 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
         </section>
       )}
 
-      {/* FAQ Section - New Addition */}
-      <section id="faq" className="py-24 relative bg-white dark:bg-dark-card-bg">
-        <div className="container mx-auto px-6 max-w-7xl">
-            <div className="text-center mb-16">
-                <div className="inline-flex items-center justify-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-full mb-4 text-primary-600 dark:text-primary-400">
-                    <HelpCircle size={24} />
-                </div>
-                <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
-                    {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
-                </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400">
-                    {language === 'ar' ? 'إليك إجابات على أهم الأسئلة التي قد تدور في ذهنك' : 'Here are answers to the most common questions you might have'}
-                </p>
-            </div>
+      {/* FAQ Section */}
+      <section className="py-24 bg-gray-50 dark:bg-dark-bg">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-16">
+                  <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
+                      {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                      {language === 'ar' 
+                          ? 'إجابات على أهم استفساراتك حول المساعد الذكي وخدماته.' 
+                          : 'Answers to your most important questions about the Smart Assistant and its services.'}
+                  </p>
+              </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                {/* Left Column */}
-                <div className="space-y-4">
-                    {leftFaqs.map((faq, index) => {
-                        const isOpen = openFaqIndex === index;
-                        return (
-                            <div 
-                                key={index} 
-                                className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isOpen ? 'border-primary-500 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-900/10 shadow-md' : 'border-gray-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700'}`}
-                            >
-                                <button
-                                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                                    className="w-full flex items-center justify-between p-5 text-start focus:outline-none"
-                                >
-                                    <h3 className={`font-bold text-lg ${isOpen ? 'text-primary-700 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
-                                        {faq.question[language]}
-                                    </h3>
-                                    <div className={`p-2 rounded-full transition-colors flex-shrink-0 ${isOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
-                                        {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                    </div>
-                                </button>
-                                
-                                <div 
-                                    className={`px-5 text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
-                                >
-                                    {faq.answer[language]}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
-                    {rightFaqs.map((faq, index) => {
-                        const realIndex = index + midIndex;
-                        const isOpen = openFaqIndex === realIndex;
-                        return (
-                            <div 
-                                key={realIndex} 
-                                className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isOpen ? 'border-primary-500 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-900/10 shadow-md' : 'border-gray-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700'}`}
-                            >
-                                <button
-                                    onClick={() => setOpenFaqIndex(isOpen ? null : realIndex)}
-                                    className="w-full flex items-center justify-between p-5 text-start focus:outline-none"
-                                >
-                                    <h3 className={`font-bold text-lg ${isOpen ? 'text-primary-700 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
-                                        {faq.question[language]}
-                                    </h3>
-                                    <div className={`p-2 rounded-full transition-colors flex-shrink-0 ${isOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
-                                        {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                    </div>
-                                </button>
-                                
-                                <div 
-                                    className={`px-5 text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
-                                >
-                                    {faq.answer[language]}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        </div>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
+                  <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      {leftFaqs.map((item, index) => (
+                          <AccordionItem 
+                            key={index} 
+                            item={item} 
+                            isOpen={openFaqIndex === index}
+                            onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                            language={language}
+                          />
+                      ))}
+                  </div>
+                  <div className="bg-white dark:bg-dark-card-bg rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      {rightFaqs.map((item, index) => (
+                          <AccordionItem 
+                            key={index + midIndex} 
+                            item={item} 
+                            isOpen={openFaqIndex === index + midIndex}
+                            onClick={() => setOpenFaqIndex(openFaqIndex === index + midIndex ? null : index + midIndex)}
+                            language={language}
+                          />
+                      ))}
+                  </div>
+              </div>
+          </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-24 relative overflow-hidden bg-dark-bg border-t border-primary-900">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-           <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-primary-900/20 to-black/80 pointer-events-none"></div>
-        
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-            {t('finalCtaTitle')}
-          </h2>
-          <p className="max-w-2xl mx-auto text-xl text-primary-100 mb-10 font-light">
+      {/* Final CTA */}
+      <section className="py-20 bg-gradient-to-br from-primary-700 to-primary-500 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-3xl md:text-5xl font-black mb-6">{t('finalCtaTitle')}</h2>
+          <p className="text-xl text-primary-100 max-w-2xl mx-auto mb-10">
             {t('finalCtaSubtitle')}
           </p>
-          <button
+          <button 
             onClick={handlePrimaryAction}
-            className="px-10 py-5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold rounded-full shadow-2xl hover:shadow-primary-500/20 transform hover:scale-105 transition-all duration-300 text-xl flex items-center gap-2 mx-auto border border-primary-400/50"
+            className="px-10 py-5 bg-white text-primary-700 text-xl font-bold rounded-full shadow-2xl hover:shadow-white/20 hover:scale-105 transition-all duration-300"
           >
             {currentUser ? t('goToDashboard') : t('signUpForFree')}
-             {currentUser ? <LayoutDashboard size={20} /> : null}
           </button>
         </div>
       </section>
+
     </div>
   );
 };

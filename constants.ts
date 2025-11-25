@@ -108,7 +108,7 @@ export const translations: Translations = {
     savedSuccessfully: { en: 'Saved successfully to history', ar: 'تم الحفظ في السجل بنجاح' },
 
     // Landing Page
-    heroTitleMain: { en: 'The Smart Assistant', ar: 'المساعد الذكي' },
+    heroTitleMain: { en: 'The Smart Legal Assistant', ar: 'المساعد القانوني الذكي' },
     heroTitleHighlight: { en: 'For Law and Legal Consulting', ar: 'للمحاماة والاستشارات القانونية' },
     heroSubtitle: { en: 'Automate legal drafting, analyze case files in seconds, and manage your practice with unparalleled efficiency. Focus on winning cases, and let AI handle the routine tasks.', ar: 'أتمتة صياغة المذكرات، وحلل ملفات القضايا في ثوانٍ، وأدر مكتبك بكفاءة لا مثيل لها. ركز على كسب قضاياك، ودع الذكاء الاصطناعي يتولى المهام الروتينية.' },
     featuresTitle: { en: 'Our Key Features', ar: 'أبرز مميزاتنا' },
