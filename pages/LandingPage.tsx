@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { useAuth } from '../hooks/useAuth';
-import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin, Search, Briefcase, Handshake, MessageSquare, ScanLine } from 'lucide-react';
+import { Gavel, FileText, BrainCircuit, Scale, CheckCircle2, Star, Loader2, ArrowRight, ArrowLeft, ShieldCheck, Workflow, Building2, Users, BookOpen, Archive, LayoutDashboard, MapPin, Search, Briefcase, Handshake, MessageSquare, ScanLine, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Plan, LandingPageConfig } from '../types';
@@ -20,6 +20,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
   const { currentUser } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -81,6 +82,76 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
       }
   }
 
+  const faqs = [
+    {
+      question: { en: "What is The Smart Assistant?", ar: "ما هو المساعد الذكي؟" },
+      answer: { en: "The Smart Assistant is an advanced AI-powered platform designed specifically for legal professionals. It automates tasks like document drafting, case analysis, and legal research to save time and improve accuracy.", ar: "المساعد الذكي هو منصة متقدمة مدعومة بالذكاء الاصطناعي مصممة خصيصاً للمتخصصين القانونيين. تقوم بأتمتة المهام مثل صياغة المستندات، وتحليل القضايا، والبحث القانوني لتوفير الوقت وتحسين الدقة." }
+    },
+    {
+      question: { en: "Does this tool replace a human lawyer?", ar: "هل تغني هذه الأداة عن المحامي البشري؟" },
+      answer: { en: "No. The Smart Assistant is a tool to aid lawyers and legal consultants, not replace them. It provides drafts and insights, but all outputs must be reviewed and verified by a qualified professional.", ar: "لا. المساعد الذكي هو أداة لمساعدة المحامين والمستشارين القانونيين وليس لاستبدالهم. يقدم مسودات ورؤى، ولكن يجب مراجعة جميع المخرجات والتحقق منها من قبل متخصص مؤهل." }
+    },
+    {
+      question: { en: "How secure is my data and client information?", ar: "ما مدى أمان بياناتي ومعلومات العملاء؟" },
+      answer: { en: "We prioritize security. We use enterprise-grade encryption for data transmission and storage. We do not use your private data to train our public models without your explicit consent.", ar: "نحن نعطي الأولوية للأمان. نستخدم تشفيرًا من الدرجة الأولى لنقل البيانات وتخزينها. لا نستخدم بياناتك الخاصة لتدريب نماذجنا العامة دون موافقتك الصريحة." }
+    },
+    {
+      question: { en: "Which legal systems are supported?", ar: "ما هي الأنظمة القانونية المدعومة؟" },
+      answer: { en: "The system is primarily optimized for Saudi Arabian laws and regulations, but it also has general knowledge of international law and common legal principles in the MENA region.", ar: "تم تحسين النظام بشكل أساسي للقوانين واللوائح في المملكة العربية السعودية، ولكنه يمتلك أيضًا معرفة عامة بالقانون الدولي والمبادئ القانونية المشتركة في منطقة الشرق الأوسط وشمال إفريقيا." }
+    },
+    {
+      question: { en: "Can I upload documents for analysis?", ar: "هل يمكنني رفع المستندات للتحليل؟" },
+      answer: { en: "Yes, you can upload PDF, Word, and image files. The AI can extract text, summarize content, analyze contracts, and answer questions based on the uploaded documents.", ar: "نعم، يمكنك رفع ملفات PDF وWord والصور. يمكن للذكاء الاصطناعي استخراج النص وتلخيص المحتوى وتحليل العقود والإجابة على الأسئلة بناءً على المستندات المرفوعة." }
+    },
+    {
+      question: { en: "Is there a free trial?", ar: "هل توجد فترة تجربة مجانية؟" },
+      answer: { en: "Yes, new users receive a complimentary token balance upon registration to try out the core features of the platform before subscribing.", ar: "نعم، يحصل المستخدمون الجدد على رصيد مجاني من الرموز عند التسجيل لتجربة الميزات الأساسية للمنصة قبل الاشتراك." }
+    },
+    {
+      question: { en: "What are 'Tokens'?", ar: "ما هي 'الرموز' (Tokens)؟" },
+      answer: { en: "Tokens are the units used to measure AI usage. Roughly, 1,000 tokens equal about 750 words. Complex tasks like analyzing large documents consume more tokens.", ar: "الرموز هي الوحدات المستخدمة لقياس استخدام الذكاء الاصطناعي. تقريباً، 1000 رمز تعادل حوالي 750 كلمة. تستهلك المهام المعقدة مثل تحليل المستندات الكبيرة المزيد من الرموز." }
+    },
+    {
+      question: { en: "Can I cancel my subscription at any time?", ar: "هل يمكنني إلغاء اشتراكي في أي وقت؟" },
+      answer: { en: "Yes, you can cancel your subscription at any time from your profile settings. You will continue to have access until the end of your current billing period.", ar: "نعم، يمكنك إلغاء اشتراكك في أي وقت من إعدادات ملفك الشخصي. سيستمر وصولك للخدمة حتى نهاية فترة الفوترة الحالية." }
+    },
+    {
+      question: { en: "Does the AI write lawsuits and memos?", ar: "هل يكتب الذكاء الاصطناعي لوائح الدعاوى والمذكرات؟" },
+      answer: { en: "Yes, the assistant can draft lawsuits, responsive memos, and appeals based on the facts and details you provide, formatted professionally.", ar: "نعم، يمكن للمساعد صياغة لوائح الدعاوى والمذكرات الجوابية واللوائح الاعتراضية بناءً على الوقائع والتفاصيل التي تقدمها، بتنسيق احترافي." }
+    },
+    {
+      question: { en: "What languages does the platform support?", ar: "ما هي اللغات التي تدعمها المنصة؟" },
+      answer: { en: "The platform interface and AI generation fully support both Arabic and English.", ar: "تدعم واجهة المنصة وتوليد الذكاء الاصطناعي اللغتين العربية والإنجليزية بشكل كامل." }
+    },
+    {
+      question: { en: "Is the AI output legally binding?", ar: "هل مخرجات الذكاء الاصطناعي ملزمة قانونياً؟" },
+      answer: { en: "No, the AI output is for guidance and drafting assistance only. It is not a legal judgment or a binding opinion. Always verify with official sources.", ar: "لا، مخرجات الذكاء الاصطناعي هي للمساعدة والتوجيه والصياغة فقط. ليست حكماً قانونياً أو رأياً ملزماً. تحقق دائماً من المصادر الرسمية." }
+    },
+    {
+      question: { en: "Can I use the Smart Assistant on my mobile phone?", ar: "هل يمكنني استخدام المساعد الذكي على الجوال؟" },
+      answer: { en: "Yes, the platform is fully responsive and works seamlessly on smartphones, tablets, and desktop computers.", ar: "نعم، المنصة متجاوبة بالكامل وتعمل بسلاسة على الهواتف الذكية والأجهزة اللوحية وأجهزة الكمبيوتر المكتبية." }
+    },
+    {
+      question: { en: "How accurate is the legal information?", ar: "ما مدى دقة المعلومات القانونية؟" },
+      answer: { en: "The AI is trained on vast legal datasets and updated frequently. However, laws change, and AI can hallucinate. Professional verification is mandatory.", ar: "تم تدريب الذكاء الاصطناعي على مجموعات بيانات قانونية ضخمة ويتم تحديثه بشكل متكرر. ومع ذلك، تتغير القوانين وقد يخطئ الذكاء الاصطناعي. التحقق المهني إلزامي." }
+    },
+    {
+      question: { en: "Is this suitable for law students?", ar: "هل هذا مناسب لطلاب القانون؟" },
+      answer: { en: "Absolutely. It is an excellent tool for research, learning drafting styles, and understanding complex legal concepts.", ar: "بالتأكيد. إنها أداة ممتازة للبحث وتعلم أساليب الصياغة وفهم المفاهيم القانونية المعقدة." }
+    },
+    {
+      question: { en: "Can I customize the output style?", ar: "هل يمكنني تخصيص أسلوب المخرجات؟" },
+      answer: { en: "Yes, you can instruct the AI to adjust the tone, length, and format of the response to suit your specific needs.", ar: "نعم، يمكنك توجيه الذكاء الاصطناعي لتعديل النبرة والطول وتنسيق الرد ليناسب احتياجاتك المحددة." }
+    },
+    {
+      question: { en: "How do I contact technical support?", ar: "كيف أتواصل مع الدعم الفني؟" },
+      answer: { en: "You can open a support ticket directly from your dashboard or profile page, or email us at the address provided in the footer.", ar: "يمكنك فتح تذكرة دعم فني مباشرة من لوحة التحكم أو صفحة الملف الشخصي، أو مراسلتنا عبر البريد الإلكتروني الموجود في تذييل الصفحة." }
+    }
+  ];
+
+  const midIndex = Math.ceil(faqs.length / 2);
+  const leftFaqs = faqs.slice(0, midIndex);
+  const rightFaqs = faqs.slice(midIndex);
 
   return (
     <div className="bg-primary-50 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
@@ -246,6 +317,88 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSignUpClick, onGoToDashboar
           </div>
         </section>
       )}
+
+      {/* FAQ Section - New Addition */}
+      <section id="faq" className="py-24 relative bg-white dark:bg-dark-card-bg">
+        <div className="container mx-auto px-6 max-w-7xl">
+            <div className="text-center mb-16">
+                <div className="inline-flex items-center justify-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-full mb-4 text-primary-600 dark:text-primary-400">
+                    <HelpCircle size={24} />
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
+                    {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'إليك إجابات على أهم الأسئلة التي قد تدور في ذهنك' : 'Here are answers to the most common questions you might have'}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Left Column */}
+                <div className="space-y-4">
+                    {leftFaqs.map((faq, index) => {
+                        const isOpen = openFaqIndex === index;
+                        return (
+                            <div 
+                                key={index} 
+                                className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isOpen ? 'border-primary-500 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-900/10 shadow-md' : 'border-gray-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700'}`}
+                            >
+                                <button
+                                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                                    className="w-full flex items-center justify-between p-5 text-start focus:outline-none"
+                                >
+                                    <h3 className={`font-bold text-lg ${isOpen ? 'text-primary-700 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        {faq.question[language]}
+                                    </h3>
+                                    <div className={`p-2 rounded-full transition-colors flex-shrink-0 ${isOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                        {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
+                                </button>
+                                
+                                <div 
+                                    className={`px-5 text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
+                                >
+                                    {faq.answer[language]}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                    {rightFaqs.map((faq, index) => {
+                        const realIndex = index + midIndex;
+                        const isOpen = openFaqIndex === realIndex;
+                        return (
+                            <div 
+                                key={realIndex} 
+                                className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isOpen ? 'border-primary-500 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-900/10 shadow-md' : 'border-gray-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700'}`}
+                            >
+                                <button
+                                    onClick={() => setOpenFaqIndex(isOpen ? null : realIndex)}
+                                    className="w-full flex items-center justify-between p-5 text-start focus:outline-none"
+                                >
+                                    <h3 className={`font-bold text-lg ${isOpen ? 'text-primary-700 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        {faq.question[language]}
+                                    </h3>
+                                    <div className={`p-2 rounded-full transition-colors flex-shrink-0 ${isOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                        {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
+                                </button>
+                                
+                                <div 
+                                    className={`px-5 text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
+                                >
+                                    {faq.answer[language]}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+      </section>
 
       {/* Final CTA Section */}
       <section className="py-24 relative overflow-hidden bg-dark-bg border-t border-primary-900">
